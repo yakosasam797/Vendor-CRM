@@ -36,7 +36,7 @@ export const OPEN_VENDOR_TASKS: VendorTask[] = [
   {
     id: "tsk-2",
     title: "Collect signed contract amendment",
-    context: "Finance & docs · Commercial",
+    context: "Docs · Commercial",
     assigneeName: "Meera Joseph",
     assigneeRole: "Operations",
     assigneeInitials: "MJ",

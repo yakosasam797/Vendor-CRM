@@ -30,18 +30,23 @@ import {
   IconBed,
   IconCar,
   IconCard,
+  IconCheck,
   IconClose,
   IconCompass,
   IconHotel,
   IconIdCard,
+  IconImage,
   IconImport,
   IconEye,
+  IconPencil,
   IconPin,
   IconPlane,
   IconPlay,
   IconPlus,
   IconRefresh,
+  IconTrash,
 } from "../icons";
+import { RecordHeader } from "./RecordHeader";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SheetLeadButton } from "./SheetLeadButton";
 import "./ServicesPanel.css";
@@ -269,115 +274,268 @@ function MediaCard({ item }: { item: ServiceMedia }) {
   );
 }
 
-function ServiceDetail({
-  service,
-  onOpenRateCard,
-}: {
+type ServiceDraft = {
+  category: string;
+  duration: string;
+  ageSuitability: string;
+  difficulty: string;
+  seasonality: string;
+  searchText: string;
+  description: string;
+  inclusions: string;
+  exclusions: string;
+};
+
+function draftFromService(service: VendorService): ServiceDraft {
+  return {
+    ...service.profile,
+    description: service.about,
+    inclusions: service.inclusions.join("\n"),
+    exclusions: service.profile.exclusions.join("\n"),
+  };
+}
+
+function lines(value: string) {
+  return value.split("\n").map((item) => item.trim()).filter(Boolean);
+}
+
+function ServiceMediaImage({ item }: { item: ServiceMedia }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div className="svc-gallery__fallback" role="img" aria-label={item.imageAlt}>
+        <IconImage size={20} />
+        <span>Preview unavailable</span>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={item.imageUrl}
+      alt={item.imageAlt}
+      width={320}
+      height={180}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+function ServiceDetail({ service, vendorName, canEdit, onOpenRateCard }: {
   service: VendorService;
+  vendorName: string;
+  canEdit: boolean;
   onOpenRateCard?: (id: string) => void;
 }) {
-  const hero =
-    service.media.find((m) => m.usedInBanner) ?? service.media[0] ?? null;
-  const gallery = service.media.filter((m) => m.id !== hero?.id);
+  const [profile, setProfile] = useState<ServiceDraft>(() => draftFromService(service));
+  const [draft, setDraft] = useState<ServiceDraft>(() => draftFromService(service));
+  const [editing, setEditing] = useState(false);
+  const [mediaItems, setMediaItems] = useState<ServiceMedia[]>(service.media);
+  const [editingMedia, setEditingMedia] = useState(false);
+  const uploadRef = useRef<HTMLInputElement>(null);
+
+  const detailFields = [
+    { key: "category", label: "Category" },
+    { key: "duration", label: "Duration" },
+    { key: "ageSuitability", label: "Age suitability" },
+    { key: "difficulty", label: "Difficulty" },
+    { key: "seasonality", label: "Seasonality" },
+  ] as const;
+
+  const orderedMedia = [...mediaItems].sort(
+    (a, b) => Number(Boolean(b.usedInBanner)) - Number(Boolean(a.usedInBanner)),
+  );
+
+  const beginEditing = () => {
+    setDraft(profile);
+    setEditing(true);
+  };
+
+  const uploadMedia = (files: FileList | null) => {
+    if (!files?.length) return;
+    const selectedFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (!selectedFiles.length) return;
+    setMediaItems((current) => {
+      const needsPrimary = !current.some((item) => item.usedInBanner);
+      const additions = selectedFiles.map((file, index) => ({
+        id: `upload-${Date.now()}-${index}`,
+        title: file.name.replace(/\.[^.]+$/, ""),
+        imageUrl: URL.createObjectURL(file),
+        imageAlt: file.name.replace(/\.[^.]+$/, ""),
+        kind: "image" as const,
+        usedInBanner: needsPrimary && index === 0,
+      }));
+      return [...current, ...additions];
+    });
+    if (uploadRef.current) uploadRef.current.value = "";
+  };
+
+  const setPrimaryMedia = (id: string) => {
+    setMediaItems((current) =>
+      current.map((item) => ({ ...item, usedInBanner: item.id === id })),
+    );
+  };
+
+  const removeMedia = (id: string) => {
+    setMediaItems((current) => {
+      const removed = current.find((item) => item.id === id);
+      const remaining = current.filter((item) => item.id !== id);
+      if (removed?.imageUrl.startsWith("blob:")) URL.revokeObjectURL(removed.imageUrl);
+      if (removed?.usedInBanner && remaining[0]) {
+        return remaining.map((item, index) => ({ ...item, usedInBanner: index === 0 }));
+      }
+      return remaining;
+    });
+  };
 
   return (
     <div className="svc-detail">
-      <div className="svc-detail__hero">
-        {hero ? (
-          <img
-            className="svc-detail__hero-img"
-            src={hero.imageUrl}
-            alt={hero.imageAlt}
-            width={1200}
-            height={520}
-            decoding="async"
-          />
-        ) : (
-          <div className="svc-detail__hero-empty">No primary image</div>
-        )}
-        <div className="svc-detail__hero-copy">
-          <p className="svc-detail__eyebrow">
-            {service.type} · {service.location}
-          </p>
-          <h2 className="svc-detail__title">{service.name}</h2>
-          <p className="svc-detail__lede">{service.details}</p>
+      <RecordHeader
+        title={service.name}
+        tags={
           <StatusChipWithDot tone={SERVICE_STATUS_TONE[service.status]}>
             {SERVICE_STATUS_LABEL[service.status]}
           </StatusChipWithDot>
-        </div>
-      </div>
+        }
+        date={<span className="record-header__date"><IconPin size={13} />{service.location}</span>}
+        recordId={service.id.toUpperCase()}
+        idTip="Service ID"
+        metaExtra={
+          <span className="svc-detail__header-meta">
+            <span>{service.type}</span>
+            <span>Vendor <strong>{vendorName}</strong></span>
+          </span>
+        }
+        aside={canEdit ? (
+          <Button variant="primary" size="sm" onClick={beginEditing}>
+            <IconPencil />
+            Edit service
+          </Button>
+        ) : undefined}
+      />
 
-      <div className="svc-detail__grid">
-        <section className="svc-detail__section" aria-labelledby="svc-about">
-          <h3 id="svc-about" className="svc-detail__section-title">
-            About
-          </h3>
-          <p className="svc-detail__about">{service.about}</p>
-        </section>
-
-        <section className="svc-detail__section" aria-labelledby="svc-include">
-          <h3 id="svc-include" className="svc-detail__section-title">
-            Included
-          </h3>
-          <ul className="svc-detail__list">
-            {service.inclusions.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="svc-detail__section svc-detail__section--cards" aria-labelledby="svc-rc">
-          <h3 id="svc-rc" className="svc-detail__section-title">
-            Rate cards
-          </h3>
-          <p className="svc-detail__hint">
-            Linked tariffs for this service — open a card to work rates.
-          </p>
-          <div className="svc-rate-cards">
-            {service.rateCards.length === 0 ? (
-              <p className="svc-detail__empty">No rate card linked yet.</p>
-            ) : (
-              service.rateCards.map((rc) => (
-                <button
-                  key={rc.id}
-                  type="button"
-                  className="svc-rate-card"
-                  onClick={() => onOpenRateCard?.(rc.id)}
-                >
-                  <span className="svc-rate-card__icon" aria-hidden="true">
-                    <IconCard size={16} />
-                  </span>
-                  <span className="svc-rate-card__name">{rc.name}</span>
-                  <span className="svc-rate-card__go">Open</span>
-                </button>
-              ))
-            )}
+      <section className="svc-profile" aria-labelledby="svc-profile-title">
+        <div className="svc-section-head">
+          <div>
+            <h2 id="svc-profile-title" className="svc-section-head__title">Service profile</h2>
+            <p className="svc-section-head__sub">
+              The information used when selecting, pricing, and presenting this service.
+            </p>
           </div>
-        </section>
-      </div>
+          {editing ? (
+            <div className="svc-section-head__actions">
+              <Button variant="brand" size="sm" onClick={() => { setDraft(profile); setEditing(false); }}>
+                Cancel
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => { setProfile(draft); setEditing(false); }}>
+                <IconCheck />
+                Save details
+              </Button>
+            </div>
+          ) : canEdit ? (
+            <Button variant="brand" size="sm" onClick={beginEditing}>
+              <IconPencil />
+              Edit details
+            </Button>
+          ) : null}
+        </div>
 
-      <section className="svc-detail__gallery" aria-labelledby="svc-gallery">
-        <h3 id="svc-gallery" className="svc-detail__section-title">
-          Gallery
-        </h3>
-        {service.media.length === 0 ? (
-          <p className="svc-detail__empty">No gallery images yet.</p>
+        <dl className="svc-profile__summary">
+          <div><dt>Service type</dt><dd>{service.type}</dd></div>
+          <div><dt>Status</dt><dd>{SERVICE_STATUS_LABEL[service.status]}</dd></div>
+          <div>
+            <dt>Search keywords</dt>
+            <dd>{editing ? (
+              <input aria-label="Search keywords" className="svc-profile__input" value={draft.searchText} onChange={(event) => setDraft({ ...draft, searchText: event.target.value })} />
+            ) : profile.searchText}</dd>
+          </div>
+        </dl>
+
+        <dl className="svc-profile__fields">
+          <div><dt>Title</dt><dd>{service.name}</dd></div>
+          {detailFields.map((field) => (
+            <div key={field.key}>
+              <dt>{field.label}</dt>
+              <dd>{editing ? (
+                <input aria-label={field.label} className="svc-profile__input" value={draft[field.key]} onChange={(event) => setDraft({ ...draft, [field.key]: event.target.value })} />
+              ) : profile[field.key]}</dd>
+            </div>
+          ))}
+          <div>
+            <dt>Description</dt>
+            <dd>{editing ? (
+              <textarea aria-label="Description" className="svc-profile__input svc-profile__input--area" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} />
+            ) : profile.description}</dd>
+          </div>
+          <div>
+            <dt>Included</dt>
+            <dd>{editing ? (
+              <textarea aria-label="Included items" className="svc-profile__input svc-profile__input--area" value={draft.inclusions} onChange={(event) => setDraft({ ...draft, inclusions: event.target.value })} />
+            ) : <span className="svc-profile__inline-list">{lines(profile.inclusions).join(", ")}</span>}</dd>
+          </div>
+          <div>
+            <dt>Excluded</dt>
+            <dd>{editing ? (
+              <textarea aria-label="Excluded items" className="svc-profile__input svc-profile__input--area" value={draft.exclusions} onChange={(event) => setDraft({ ...draft, exclusions: event.target.value })} />
+            ) : <span className="svc-profile__inline-list">{lines(profile.exclusions).join(", ")}</span>}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="svc-library" aria-labelledby="svc-media-title">
+        <div className="svc-section-head">
+          <div>
+            <h2 id="svc-media-title" className="svc-section-head__title">Media</h2>
+            <p className="svc-section-head__sub">
+              {mediaItems.length} image{mediaItems.length === 1 ? "" : "s"}. The primary image is used as the service banner.
+            </p>
+          </div>
+          {canEdit ? (
+            <div className="svc-section-head__actions">
+              <Button variant="brand" size="sm" onClick={() => setEditingMedia((value) => !value)}>
+                <IconPencil />
+                {editingMedia ? "Done editing" : "Edit media"}
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => uploadRef.current?.click()}>
+                <IconPlus />
+                Upload media
+              </Button>
+              <input ref={uploadRef} className="svc-library__file" type="file" accept="image/*" multiple onChange={(event) => uploadMedia(event.target.files)} />
+            </div>
+          ) : null}
+        </div>
+
+        {orderedMedia.length === 0 ? (
+          <button type="button" className="svc-library__empty" onClick={() => uploadRef.current?.click()} disabled={!canEdit}>
+            <IconImage size={22} />
+            <strong>No media uploaded</strong>
+            <span>Upload the first image to use it as the primary banner.</span>
+          </button>
         ) : (
           <ul className="svc-gallery">
-            {(hero ? [hero, ...gallery] : gallery).map((item) => (
-              <li key={item.id} className="svc-gallery__item">
-                <img
-                  src={item.imageUrl}
-                  alt={item.imageAlt}
-                  width={320}
-                  height={220}
-                  loading="lazy"
-                  decoding="async"
-                />
+            {orderedMedia.map((item) => (
+              <li key={item.id} className={`svc-gallery__item${item.usedInBanner ? " svc-gallery__item--primary" : ""}`}>
+                <div className="svc-gallery__image-wrap">
+                  <ServiceMediaImage item={item} />
+                  {item.usedInBanner ? <span className="svc-gallery__primary">Primary banner</span> : null}
+                </div>
                 <div className="svc-gallery__meta">
-                  <span className="svc-gallery__title">{item.title}</span>
-                  {item.usedInBanner ? (
-                    <StatusChip tone="progress">Primary</StatusChip>
+                  {editingMedia ? (
+                    <input
+                      className="svc-gallery__title-input"
+                      value={item.title}
+                      aria-label={`Media title for ${item.title}`}
+                      onChange={(event) => setMediaItems((current) => current.map((media) => media.id === item.id ? { ...media, title: event.target.value } : media))}
+                    />
+                  ) : <span className="svc-gallery__title">{item.title}</span>}
+                  {editingMedia ? (
+                    <div className="svc-gallery__actions">
+                      {!item.usedInBanner ? <button type="button" onClick={() => setPrimaryMedia(item.id)}>Set as primary</button> : null}
+                      <IconButton label={`Remove ${item.title}`} onClick={() => removeMedia(item.id)}><IconTrash /></IconButton>
+                    </div>
                   ) : null}
                 </div>
               </li>
@@ -385,17 +543,39 @@ function ServiceDetail({
           </ul>
         )}
       </section>
+
+      <section className="svc-linked-rates" aria-labelledby="svc-rates-title">
+        <div className="svc-section-head">
+          <div>
+            <h2 id="svc-rates-title" className="svc-section-head__title">Linked rate cards</h2>
+            <p className="svc-section-head__sub">Pricing records that cover this service. Open a card to continue in Rate cards.</p>
+          </div>
+        </div>
+        <div className="svc-rate-cards">
+          {service.rateCards.length === 0 ? <p className="svc-detail__empty">No rate card linked yet.</p> : service.rateCards.map((rc) => (
+            <button key={rc.id} type="button" className="svc-rate-card" onClick={() => onOpenRateCard?.(rc.id)}>
+              <span className="svc-rate-card__icon" aria-hidden="true"><IconCard size={16} /></span>
+              <span className="svc-rate-card__name">{rc.name}</span>
+              <span className="svc-rate-card__go">Open rate card</span>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
 
 export function ServicesPanel({
   vendorId = "exhosp",
+  vendorName = "Example Hospitality",
+  canEdit = false,
   openServiceId = null,
   onOpenServiceIdChange,
   onOpenRateCard,
 }: {
   vendorId?: string;
+  vendorName?: string;
+  canEdit?: boolean;
   openServiceId?: string | null;
   onOpenServiceIdChange?: (id: string | null) => void;
   onOpenRateCard?: (id: string) => void;
@@ -448,7 +628,10 @@ export function ServicesPanel({
   if (openService) {
     return (
       <ServiceDetail
+        key={openService.id}
         service={openService}
+        vendorName={vendorName}
+        canEdit={canEdit}
         onOpenRateCard={onOpenRateCard}
       />
     );

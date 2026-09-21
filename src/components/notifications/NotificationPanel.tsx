@@ -1,4 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Button, IconButton } from "@paryatech/design-system";
 import { IconClose } from "../../icons";
 import {
@@ -26,16 +34,36 @@ export function NotificationPanel({
   const dialogRef = useRef<HTMLDivElement>(null);
   const [filter, setFilter] = useState<Filter>("unread");
   const [items, setItems] = useState<AppNotification[]>(SEED_NOTIFICATIONS);
+  const [position, setPosition] = useState({ top: 68, right: 16 });
 
   const visible = useMemo(
     () => (filter === "unread" ? items.filter((n) => n.unread) : items),
     [filter, items],
   );
 
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const updatePosition = () => {
+      const host = returnFocusRef?.current;
+      const anchor = host?.querySelector?.("button") ?? host;
+      if (!anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + 8,
+        right: Math.max(12, window.innerWidth - rect.right),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    return () => window.removeEventListener("resize", updatePosition);
+  }, [open, returnFocusRef]);
+
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const host = returnFocusRef?.current;
+    const returnTarget = host?.querySelector?.("button") ?? host;
     const t = window.setTimeout(() => {
       dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
     }, 0);
@@ -49,11 +77,8 @@ export function NotificationPanel({
     window.addEventListener("keydown", onKey);
     return () => {
       window.clearTimeout(t);
-      document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
-      const host = returnFocusRef?.current;
-      const btn = host?.querySelector?.("button") ?? host;
-      if (btn && "focus" in btn) (btn as HTMLElement).focus();
+      if (returnTarget && "focus" in returnTarget) (returnTarget as HTMLElement).focus();
     };
   }, [open, onClose, returnFocusRef]);
 
@@ -61,7 +86,7 @@ export function NotificationPanel({
 
   return (
     <div
-      className="settings-launcher-overlay"
+      className="settings-launcher-overlay notif-popover-overlay"
       role="presentation"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
@@ -69,10 +94,15 @@ export function NotificationPanel({
     >
       <div
         ref={dialogRef}
-        className="settings-launcher notif-modal"
+        className="settings-launcher notif-modal notif-popover"
         role="dialog"
-        aria-modal="true"
         aria-labelledby={titleId}
+        style={
+          {
+            "--notif-top": `${position.top}px`,
+            "--notif-right": `${position.right}px`,
+          } as CSSProperties
+        }
       >
         <div className="settings-launcher__head">
           <div>

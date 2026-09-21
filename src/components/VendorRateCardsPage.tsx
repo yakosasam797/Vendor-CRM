@@ -22,6 +22,7 @@ import {
   STATUS_TONE,
 } from "../data/rateCards";
 import { getVendor, vendorIdea, type Vendor } from "../data/vendors";
+import { vendorActivityForVendor } from "../data/vendorOverview";
 import { can, type OrgRole } from "../permissions";
 import { IconCalendar, IconFilter, IconImport, IconPin, IconPlus, IconRefresh } from "../icons";
 import { CommunicationPanel } from "./CommunicationPanel";
@@ -32,6 +33,8 @@ import { ServicesPanel } from "./ServicesPanel";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { TasksPanel } from "./TasksPanel";
 import { VendorBookingsPanel } from "./VendorBookingsPanel";
+import { VendorActivityPanel } from "./VendorActivityPanel";
+import { VendorDocsPanel } from "./VendorDocsPanel";
 import { VendorFinancePanel } from "./VendorFinancePanel";
 import { VendorFormModal } from "./VendorFormModal";
 import { VendorOverview } from "./VendorOverview";
@@ -46,9 +49,11 @@ const BASE_TABS: TabItem[] = [
   { id: "rate-cards", label: "Rate cards", count: 1 },
   { id: "packages", label: "Packages", count: 2 },
   { id: "bookings", label: "Bookings", count: 12 },
-  { id: "finance", label: "Finance & docs", count: 2 },
+  { id: "finance", label: "Finance", count: 2 },
+  { id: "docs", label: "Docs", count: 2 },
   { id: "tasks", label: "Tasks", count: 5 },
   { id: "comms", label: "Communications", count: 2 },
+  { id: "activity", label: "Activity" },
 ];
 
 export function VendorRateCardsPage({
@@ -83,19 +88,31 @@ export function VendorRateCardsPage({
   const [selected, setSelected] = useState<string[]>([]);
   const [editLauncherOpen, setEditLauncherOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [documentRequestDraft, setDocumentRequestDraft] = useState<{
+    id: number;
+    body: string;
+  } | null>(null);
   const canEdit = can(orgRole, "vendor.edit");
 
-  const serviceCount = servicesForVendor(vendor.id).length;
+  const vendorServices = servicesForVendor(vendor.id);
+  const serviceCount = vendorServices.length;
+  const activeService = openServiceId
+    ? vendorServices.find((service) => service.id === openServiceId)
+    : undefined;
+  const activityCount = vendorActivityForVendor(vendor).length;
   const tabs: TabItem[] = useMemo(
     () =>
-      BASE_TABS.map((t) =>
-        t.id === "services" ? { ...t, count: serviceCount || undefined } : t,
-      ),
-    [serviceCount],
+      BASE_TABS.map((t) => {
+        if (t.id === "services") return { ...t, count: serviceCount || undefined };
+        if (t.id === "activity") return { ...t, count: activityCount || undefined };
+        return t;
+      }),
+    [activityCount, serviceCount],
   );
 
   const setVendorTab = (next: string) => {
     if (next !== "services") onOpenServiceIdChange?.(null);
+    if (next !== "comms") setDocumentRequestDraft(null);
     setTab(next);
   };
 
@@ -141,24 +158,41 @@ export function VendorRateCardsPage({
     });
   };
 
+  const openDocumentRequest = (
+    documentName?: string,
+    action?: "request-renewal" | "chase",
+  ) => {
+    const body = documentName
+      ? action === "request-renewal"
+        ? `Hi, could you please share a renewed copy of ${documentName} for ${vendor.name}? Thank you!`
+        : `Hi, following up on ${documentName} for ${vendor.name}. Could you please send the completed document? Thank you!`
+      : `Hi, could you please share the pending compliance documents for ${vendor.name} at your earliest convenience? Thank you!`;
+    setDocumentRequestDraft({ id: Date.now(), body });
+    setVendorTab("comms");
+  };
+
   return (
     <div className="vendor-page">
-      <VendorProfileHeader
-        code={vendor.code}
-        location={vendor.location}
-        name={vendor.name}
-        idea={vendorIdea(vendor)}
-        status={vendor.status}
-        ownerName={vendor.owner}
-        ownerRole="Owner · Vendor desk"
-        ownerInitials={vendor.ownerInitials}
-        canEdit={canEdit}
-        onEdit={() => setEditLauncherOpen(true)}
-      />
+      {activeService ? null : (
+        <>
+          <VendorProfileHeader
+            code={vendor.code}
+            location={vendor.location}
+            name={vendor.name}
+            idea={vendorIdea(vendor)}
+            status={vendor.status}
+            ownerName={vendor.owner}
+            ownerRole="Owner · Vendor desk"
+            ownerInitials={vendor.ownerInitials}
+            canEdit={canEdit}
+            onEdit={() => setEditLauncherOpen(true)}
+          />
 
-      <div className="vendor-page__tabs">
-        <TabBar items={tabs} value={tab} onValueChange={setVendorTab} aria-label="Vendor sections" />
-      </div>
+          <div className="vendor-page__tabs">
+            <TabBar items={tabs} value={tab} onValueChange={setVendorTab} aria-label="Vendor sections" />
+          </div>
+        </>
+      )}
 
       {tab === "overview" ? (
         <VendorOverview
@@ -171,9 +205,13 @@ export function VendorRateCardsPage({
           }}
           onEditProfile={() => setEditLauncherOpen(true)}
         />
+      ) : tab === "activity" ? (
+        <VendorActivityPanel vendor={vendor} />
       ) : tab === "services" ? (
         <ServicesPanel
           vendorId={vendor.id}
+          vendorName={vendor.name}
+          canEdit={canEdit}
           openServiceId={openServiceId}
           onOpenServiceIdChange={(id) => {
             onOpenServiceIdChange?.(id);
@@ -187,14 +225,19 @@ export function VendorRateCardsPage({
         <VendorBookingsPanel />
       ) : tab === "finance" ? (
         <VendorFinancePanel />
+      ) : tab === "docs" ? (
+        <VendorDocsPanel onRequestDocuments={openDocumentRequest} />
       ) : tab === "tasks" ? (
         <TasksPanel />
       ) : tab === "comms" ? (
-        <CommunicationPanel linkLabel="linked to this vendor" />
+        <CommunicationPanel
+          linkLabel="linked to this vendor"
+          requestDraft={documentRequestDraft}
+        />
       ) : tab !== "rate-cards" ? (
         <EmptyState
           title="Nothing in this section yet"
-          description="This trial recreates Overview, Services, Packages, Bookings, Finance & docs, Tasks, and Rate cards."
+          description="This trial recreates Overview, Services, Packages, Bookings, Finance, Docs, Tasks, Communications, and Activity."
         />
       ) : (
         <>

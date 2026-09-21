@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import {
-  Avatar,
   Button,
   Checkbox,
   DataSheet,
@@ -18,9 +17,6 @@ import {
   type CheckboxState,
 } from "@paryatech/design-system";
 import {
-  COMPLIANCE_DOCS,
-  DOC_ACTION_LABEL,
-  DOC_STATUS_TONE,
   FINANCE_METRICS,
   PAYABLE_ACTION_LABEL,
   PAYABLE_STATUS_LABEL,
@@ -31,7 +27,6 @@ import {
   IconCalendar,
   IconCard,
   IconDownload,
-  IconFile,
   IconFilter,
   IconPin,
   IconPlus,
@@ -54,11 +49,8 @@ const METRIC_ICONS = {
 
 export function VendorFinancePanel() {
   const [payQuery, setPayQuery] = useState("");
-  const [docQuery, setDocQuery] = useState("");
   const [paySelected, setPaySelected] = useState<string[]>([]);
-  const [docSelected, setDocSelected] = useState<string[]>([]);
   const [payPage, setPayPage] = useState(1);
-  const [docPage, setDocPage] = useState(1);
 
   const payables = useMemo(() => {
     const q = payQuery.trim().toLowerCase();
@@ -71,17 +63,6 @@ export function VendorFinancePanel() {
     );
   }, [payQuery]);
 
-  const docs = useMemo(() => {
-    const q = docQuery.trim().toLowerCase();
-    if (!q) return COMPLIANCE_DOCS;
-    return COMPLIANCE_DOCS.filter(
-      (row) =>
-        row.name.toLowerCase().includes(q) ||
-        row.file.toLowerCase().includes(q) ||
-        row.reference.toLowerCase().includes(q),
-    );
-  }, [docQuery]);
-
   const payHeader: CheckboxState =
     paySelected.length === 0
       ? "off"
@@ -89,33 +70,12 @@ export function VendorFinancePanel() {
         ? "on"
         : "indeterminate";
 
-  const docHeader: CheckboxState =
-    docSelected.length === 0
-      ? "off"
-      : docSelected.length === docs.length && docs.length > 0
-        ? "on"
-        : "indeterminate";
-
   const togglePayAll = (state: CheckboxState) => {
     setPaySelected(state === "on" ? payables.map((r) => r.id) : []);
   };
 
-  const toggleDocAll = (state: CheckboxState) => {
-    setDocSelected(state === "on" ? docs.map((r) => r.id) : []);
-  };
-
   const togglePay = (id: string, state: CheckboxState) => {
     setPaySelected((current) =>
-      state === "on"
-        ? current.includes(id)
-          ? current
-          : [...current, id]
-        : current.filter((item) => item !== id),
-    );
-  };
-
-  const toggleDoc = (id: string, state: CheckboxState) => {
-    setDocSelected((current) =>
       state === "on"
         ? current.includes(id)
           ? current
@@ -293,129 +253,6 @@ export function VendorFinancePanel() {
         </div>
       </section>
 
-      <section className="vendor-finance__section" aria-labelledby="docs-title">
-        <div className="vendor-finance__section-head">
-          <h2 id="docs-title" className="vendor-finance__title">
-            Compliance documents
-          </h2>
-        </div>
-
-        <div className="vendor-finance__toolbar">
-          <SearchField
-            fullWidth
-            value={docQuery}
-            onChange={(event) => {
-              setDocQuery(event.target.value);
-              setDocPage(1);
-              setDocSelected([]);
-            }}
-            placeholder="Search document"
-            aria-label="Search document"
-          />
-          <div className="vendor-finance__tools">
-            <Tooltip tip="Filter">
-              <IconButton label="Filter documents">
-                <IconFilter />
-              </IconButton>
-            </Tooltip>
-            <Button variant="brand" size="sm">
-              Request documents
-            </Button>
-            <Button variant="primary" size="sm">
-              <IconPlus />
-              Upload file
-            </Button>
-          </div>
-        </div>
-
-        <div className="vendor-finance__sheet">
-          {docs.length === 0 ? (
-            <EmptyState
-              title="No documents match this search"
-              description="Try another document name or reference."
-            />
-          ) : (
-            <>
-              <DataSheet className="docs-sheet" aria-label="Compliance documents">
-                <DataSheetHeader>
-                  <DataSheetCell check>
-                    <Checkbox
-                      state={docHeader}
-                      onCheckedChange={toggleDocAll}
-                      label="Select all documents"
-                    />
-                  </DataSheetCell>
-                  <DataSheetCell>Document</DataSheetCell>
-                  <DataSheetCell>Reference</DataSheetCell>
-                  <DataSheetCell>Valid to</DataSheetCell>
-                  <DataSheetCell>Owner</DataSheetCell>
-                  <DataSheetCell>Status</DataSheetCell>
-                  <DataSheetCell>Action</DataSheetCell>
-                </DataSheetHeader>
-                {docs.map((row) => (
-                  <DataSheetRow key={row.id}>
-                    <DataSheetCell check>
-                      <Checkbox
-                        state={docSelected.includes(row.id) ? "on" : "off"}
-                        onCheckedChange={(state) => toggleDoc(row.id, state)}
-                        label={`Select ${row.name}`}
-                      />
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <LeadCell
-                        icon={<IconFile size={15} />}
-                        title={row.name}
-                        subtitle={row.file}
-                      />
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <span className="docs-sheet__ref pt-mono">{row.reference}</span>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <span
-                        className={
-                          row.validTone === "warn"
-                            ? "docs-sheet__valid docs-sheet__valid--warn"
-                            : "docs-sheet__valid"
-                        }
-                      >
-                        {row.validTo}
-                      </span>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <span className="docs-sheet__owner">
-                        <Avatar tone="pink" size={26}>
-                          {row.ownerInitials}
-                        </Avatar>
-                        {row.ownerName}
-                      </span>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <StatusChipWithDot tone={DOC_STATUS_TONE[row.status]}>
-                        {row.statusLabel}
-                      </StatusChipWithDot>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <Button
-                        variant={row.action === "request-renewal" ? "primary" : "brand"}
-                        size="sm"
-                      >
-                        {DOC_ACTION_LABEL[row.action]}
-                      </Button>
-                    </DataSheetCell>
-                  </DataSheetRow>
-                ))}
-              </DataSheet>
-              <Pagination
-                rangeLabel={`Showing 1–${docs.length} of ${docs.length} documents`}
-                page={docPage}
-                pageCount={1}
-                onPageChange={setDocPage}
-              />
-            </>
-          )}
-        </div>
-      </section>
     </div>
   );
 }

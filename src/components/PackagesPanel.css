@@ -48,8 +48,8 @@
   /* Package · Services · Priced · Sell · Status · Action — check stays first (left) */
   --pkg-cols: var(--pkg-check) minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 0.95fr)
     minmax(0, 0.55fr) minmax(0, 0.7fr) var(--pkg-action);
-  width: 100%;
-  max-width: 100%;
+  width: auto;
+  max-width: none;
 }
 
 .packages-sheet .pt-sheet__scroll {

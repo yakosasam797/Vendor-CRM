@@ -32,9 +32,11 @@ export type ActivityRow = {
 export function ActivityPanel({
   rows,
   searchPlaceholder = "Search event, member or module",
+  ariaLabel = "Activity",
 }: {
   rows: ActivityRow[];
   searchPlaceholder?: string;
+  ariaLabel?: string;
 }) {
   const [query, setQuery] = useState("");
   const [module, setModule] = useState<string>("All modules");
@@ -101,7 +103,7 @@ export function ActivityPanel({
       </div>
 
       <div className="act-sheet-wrap">
-        <DataSheet className="act-sheet" aria-label="Activity">
+        <DataSheet className="act-sheet" aria-label={ariaLabel}>
           <DataSheetHeader>
             <DataSheetCell check>
               <Checkbox

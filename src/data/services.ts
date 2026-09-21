@@ -32,6 +32,16 @@ export interface ServiceRateCardLink {
   name: string;
 }
 
+export interface ServiceProfile {
+  category: string;
+  duration: string;
+  ageSuitability: string;
+  difficulty: string;
+  seasonality: string;
+  searchText: string;
+  exclusions: string[];
+}
+
 export interface VendorService {
   id: string;
   vendorId: string;
@@ -42,6 +52,7 @@ export interface VendorService {
   about: string;
   location: string;
   inclusions: string[];
+  profile: ServiceProfile;
   pricingLabel: string;
   rateCardCount: number;
   /** Linked rate cards — name only in the UI */
@@ -91,6 +102,15 @@ export const VENDOR_SERVICES: VendorService[] = [
       "Pool and jetty access for in-house guests",
       "Early check-in subject to availability",
     ],
+    profile: {
+      category: "Resort stay",
+      duration: "Overnight or multi-night",
+      ageSuitability: "All ages",
+      difficulty: "Not applicable",
+      seasonality: "Year-round; peak season from October to March.",
+      searchText: "Alleppey lake resort Vembanad backwater stay pool jetty",
+      exclusions: ["Transfers unless included in the package", "Meals outside the selected plan", "Personal expenses"],
+    },
     pricingLabel: "Accommodation tariff · 2026–27",
     rateCardCount: 2,
     rateCards: [
@@ -145,6 +165,15 @@ export const VENDOR_SERVICES: VendorService[] = [
       "Bottled water",
       "Transfer from Hill Retreat when bundled",
     ],
+    profile: {
+      category: "Sightseeing and nature",
+      duration: "4 hours",
+      ageSuitability: "8 years and above",
+      difficulty: "Easy",
+      seasonality: "Best from October to March; monsoon visits depend on conditions.",
+      searchText: "cardamom plantation tour Thekkady spice walk drying yard",
+      exclusions: ["Meals", "Personal purchases", "Transfer when booked separately"],
+    },
     pricingLabel: "Accommodation tariff · 2026–27",
     rateCardCount: 2,
     rateCards: [
@@ -187,6 +216,15 @@ export const VENDOR_SERVICES: VendorService[] = [
       "Bonfire on request",
       "Airport SUV transfer add-on",
     ],
+    profile: {
+      category: "Hill resort stay",
+      duration: "Overnight or multi-night",
+      ageSuitability: "All ages",
+      difficulty: "Not applicable",
+      seasonality: "Year-round; best visibility from September to May.",
+      searchText: "Munnar hill retreat valley resort family suite bonfire",
+      exclusions: ["Airport transfers", "Bonfire unless confirmed", "Meals outside the selected plan"],
+    },
     pricingLabel: "Hill Retreat tariff · 2026–27",
     rateCardCount: 1,
     rateCards: [{ id: "rc-hill-2627", name: "Hill Retreat tariff · 2026–27" }],
@@ -231,6 +269,15 @@ export const VENDOR_SERVICES: VendorService[] = [
       "Tea estate overlook stop",
       "Bottled water",
     ],
+    profile: {
+      category: "Outdoor activity",
+      duration: "4–5 hours",
+      ageSuitability: "12 years and above",
+      difficulty: "Moderate",
+      seasonality: "October to March; closed during unsafe monsoon conditions.",
+      searchText: "Munnar ridge trek tea estate guided hike hill activity",
+      exclusions: ["Hotel transfers", "Meals", "Personal trekking equipment"],
+    },
     pricingLabel: "Activity tariff · 2026",
     rateCardCount: 1,
     rateCards: [{ id: "rc-acc-2627", name: "Activity tariff · 2026" }],
@@ -280,6 +327,15 @@ export const VENDOR_SERVICES: VendorService[] = [
       "Local pilot for first-timers",
       "Canal launch point pickup when bundled",
     ],
+    profile: {
+      category: "Water activity",
+      duration: "2–3 hours",
+      ageSuitability: "10 years and above",
+      difficulty: "Moderate",
+      seasonality: "October to May; weather dependent during monsoon.",
+      searchText: "Alleppey backwater kayak canal paddle Kerala activity",
+      exclusions: ["Meals", "Hotel transfer when booked separately", "Waterproof personal storage"],
+    },
     pricingLabel: "Activity tariff · 2026",
     rateCardCount: 1,
     rateCards: [{ id: "rc-acc-2627", name: "Activity tariff · 2026" }],
@@ -327,6 +383,15 @@ export const VENDOR_SERVICES: VendorService[] = [
       "Toll and parking as quoted",
       "45 min free waiting",
     ],
+    profile: {
+      category: "Private transfer",
+      duration: "Route based",
+      ageSuitability: "All ages",
+      difficulty: "Not applicable",
+      seasonality: "Available year-round, subject to vehicle availability.",
+      searchText: "Cochin airport transfer COK sedan tempo Kerala transport",
+      exclusions: ["Waiting beyond 45 minutes", "Unscheduled route changes", "Driver gratuity"],
+    },
     pricingLabel: "Airport transfer rates · 2026",
     rateCardCount: 1,
     rateCards: [{ id: "rc-air-2026", name: "Airport transfer rates · 2026" }],

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { IconButton, SearchField } from "@paryatech/design-system";
 import { IconClose } from "../../icons";
 import type { OrgRole } from "../../permissions";
@@ -25,18 +25,21 @@ export function SettingsLauncherModal({
   orgRole,
   onClose,
   onNavigate,
+  anchorRef,
   returnFocusRef,
 }: {
   open: boolean;
   orgRole: OrgRole;
   onClose: () => void;
   onNavigate: (id: SettingsDestinationId) => void;
+  anchorRef?: React.RefObject<HTMLElement | null>;
   returnFocusRef?: React.RefObject<HTMLElement | null>;
 }) {
   const titleId = useId();
   const descId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
+  const [position, setPosition] = useState<React.CSSProperties>();
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -50,6 +53,37 @@ export function SettingsLauncherModal({
       );
     });
   }, [orgRole, query]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+
+    const updatePosition = () => {
+      const anchor = anchorRef?.current;
+      if (!anchor) {
+        setPosition(undefined);
+        return;
+      }
+
+      const rect = anchor.getBoundingClientRect();
+      const viewportInset = 12;
+      const gap = 8;
+      const top = rect.bottom + gap;
+
+      setPosition({
+        top,
+        right: Math.max(viewportInset, window.innerWidth - rect.right),
+        maxHeight: Math.max(240, window.innerHeight - top - viewportInset),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [anchorRef, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,6 +140,7 @@ export function SettingsLauncherModal({
       <div
         ref={dialogRef}
         className="settings-launcher"
+        style={position}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

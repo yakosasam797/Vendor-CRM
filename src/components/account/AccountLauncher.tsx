@@ -89,29 +89,29 @@ export function AccountLauncher({
             onClick={() => onNavigate(dest.id)}
           >
             <Icon size={16} />
-            <span style={{ flex: 1, minWidth: 0 }}>
+            <span className="account-launcher__item-copy">
               <span className="account-launcher__item-title">{dest.title}</span>
               <span className="account-launcher__item-desc">{dest.description}</span>
             </span>
-            <IconChevronRight size={14} />
+            <span className="account-launcher__item-chevron" aria-hidden="true">
+              <IconChevronRight size={14} />
+            </span>
           </button>
         );
       })}
 
-      <div className="account-launcher__signout">
-        <button
-          type="button"
-          role="menuitem"
-          className="account-launcher__item"
-          onClick={onSignOut}
-        >
-          <IconLogout size={16} />
-          <span>
-            <span className="account-launcher__item-title">Sign out</span>
-            <span className="account-launcher__item-desc">End this session on this device.</span>
-          </span>
-        </button>
-      </div>
+      <button
+        type="button"
+        role="menuitem"
+        className="account-launcher__item account-launcher__item--signout"
+        onClick={onSignOut}
+      >
+        <IconLogout size={16} />
+        <span className="account-launcher__item-copy">
+          <span className="account-launcher__item-title">Sign out</span>
+          <span className="account-launcher__item-desc">End this session on this device.</span>
+        </span>
+      </button>
     </div>
   );
 }

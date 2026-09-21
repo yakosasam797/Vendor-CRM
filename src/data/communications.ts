@@ -1,4 +1,4 @@
-export type ConvoChannel = "WhatsApp" | "Email";
+export type ConvoChannel = "Email";
 
 export interface Conversation {
   id: string;
@@ -28,7 +28,7 @@ export const VENDOR_CONVERSATIONS: Conversation[] = [
     initials: "AM",
     avatarTone: "pink",
     role: "Vendor desk · Example Hospitality",
-    channel: "WhatsApp",
+    channel: "Email",
     time: "11:42",
     preview: "Net rate column confirmed for Lake Resort 2026–27.",
     unread: true,
@@ -39,7 +39,7 @@ export const VENDOR_CONVERSATIONS: Conversation[] = [
     initials: "MI",
     avatarTone: "warn",
     role: "Operations",
-    channel: "WhatsApp",
+    channel: "Email",
     time: "Yesterday",
     preview: "Hill Retreat winter rates still not released.",
     unread: true,
@@ -111,7 +111,7 @@ export const VENDOR_MESSAGES: Record<string, ThreadMessage[]> = {
       body: "Gala dinner supplements attached for festive window. Both are mandatory per adult.",
       meta: "Example Lake Resort · 2 Sep 17:40",
       attachTitle: "Festive gala schedule",
-      attachFile: "lake-resort-galas-2026.pdf · saved to Finance",
+      attachFile: "lake-resort-galas-2026.pdf · saved to Documents",
     },
   ],
   cv4: [

@@ -13,7 +13,6 @@ import {
   ListBulkBar,
   Pagination,
   SearchField,
-  StatusChip,
   TabBar,
   type CheckboxState,
   type TabItem,
@@ -249,8 +248,6 @@ export function VendorsListPage({
                 <DataSheetCell>Vendor</DataSheetCell>
                 <DataSheetCell>Type of service</DataSheetCell>
                 <DataSheetCell>Location</DataSheetCell>
-                <DataSheetCell>Status</DataSheetCell>
-                <DataSheetCell>Updated</DataSheetCell>
                 <DataSheetCell>Action</DataSheetCell>
               </DataSheetHeader>
               {filtered.map((vendor) => (
@@ -301,22 +298,6 @@ export function VendorsListPage({
                       <IconPin size={14} />
                       {vendor.location}
                     </span>
-                  </DataSheetCell>
-                  <DataSheetCell>
-                    <StatusChip
-                      tone={
-                        vendor.status === "Active"
-                          ? "done"
-                          : vendor.status === "Setup incomplete"
-                            ? "progress"
-                            : "open"
-                      }
-                    >
-                      {vendor.status}
-                    </StatusChip>
-                  </DataSheetCell>
-                  <DataSheetCell>
-                    <span className="vendors-sheet__updated">{vendor.updated}</span>
                   </DataSheetCell>
                   <DataSheetCell>
                     <div className="vendors-sheet__acts">

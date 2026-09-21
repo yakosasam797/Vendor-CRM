@@ -20,26 +20,22 @@ function AvatarBubble({
 }
 
 function ChannelChip({ channel }: { channel: Conversation["channel"] }) {
-  return (
-    <span className={`comm-chan ${channel === "WhatsApp" ? "comm-chan--wa" : "comm-chan--em"}`}>
-      {channel}
-    </span>
-  );
+  return <span className="comm-chan comm-chan--em">{channel}</span>;
 }
 
 export function CommunicationPanel({
   linkLabel = "linked to this vendor",
+  requestDraft,
 }: {
   linkLabel?: string;
+  requestDraft?: { id: number; body: string } | null;
 }) {
   const [convos, setConvos] = useState(VENDOR_CONVERSATIONS);
   const [messages, setMessages] = useState(VENDOR_MESSAGES);
   const [activeId, setActiveId] = useState(convos[0]?.id ?? "");
-  const [reply, setReply] = useState("");
+  const [reply, setReply] = useState(requestDraft?.body ?? "");
   const [newOpen, setNewOpen] = useState(false);
-  const [draftRecipient, setDraftRecipient] = useState("");
-  const [draftChannel, setDraftChannel] = useState<"WhatsApp" | "Email">("WhatsApp");
-  const [draftBody, setDraftBody] = useState("");
+  const [selectedRecipientId, setSelectedRecipientId] = useState(activeId);
 
   const active = convos.find((c) => c.id === activeId) ?? convos[0];
   const thread = messages[active?.id ?? ""] ?? [];
@@ -68,35 +64,15 @@ export function CommunicationPanel({
     setReply("");
   };
 
-  const sendNew = () => {
-    const name = draftRecipient.trim();
-    const body = draftBody.trim();
-    if (!name || !body) return;
-    const id = `cv-${Date.now()}`;
-    const convo: Conversation = {
-      id,
-      name,
-      initials: name
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((p) => p[0]?.toUpperCase() ?? "")
-        .join(""),
-      avatarTone: "pink",
-      role: "New conversation",
-      channel: draftChannel,
-      time: "Just now",
-      preview: body,
-      unread: false,
-    };
-    setConvos((list) => [convo, ...list]);
-    setMessages((all) => ({
-      ...all,
-      [id]: [{ dir: "out", body, meta: "You · just now" }],
-    }));
-    setActiveId(id);
+  const openRecipientPicker = () => {
+    setSelectedRecipientId(active.id);
+    setNewOpen(true);
+  };
+
+  const openRecipientConversation = () => {
+    if (!selectedRecipientId) return;
+    selectConvo(selectedRecipientId);
     setNewOpen(false);
-    setDraftRecipient("");
-    setDraftBody("");
   };
 
   if (!active) return null;
@@ -105,12 +81,12 @@ export function CommunicationPanel({
     <div className="comm">
       <div className="comm-list">
         <div className="comm-lhead">
-          <span className="comm-lhead__lbl">Conversations</span>
+          <span className="comm-lhead__lbl">Emails</span>
           <div className="comm-lhead__acts">
             <span className="comm-lhead__sum">{unread} unread</span>
-            <Button variant="primary" size="sm" onClick={() => setNewOpen(true)}>
+            <Button variant="primary" size="sm" onClick={openRecipientPicker}>
               <IconPlus />
-              New message
+              New email
             </Button>
           </div>
         </div>
@@ -133,10 +109,11 @@ export function CommunicationPanel({
                 </div>
               </div>
               <div className="comm-convo__prev">{c.preview}</div>
-              <div className="comm-convo__chips">
-                <ChannelChip channel={c.channel} />
-                {c.unread ? <span className="comm-unread">Unread</span> : null}
-              </div>
+              {c.unread ? (
+                <div className="comm-convo__chips">
+                  <span className="comm-unread">Unread</span>
+                </div>
+              ) : null}
             </button>
           ))}
         </div>
@@ -187,8 +164,8 @@ export function CommunicationPanel({
             rows={2}
             value={reply}
             onChange={(e) => setReply(e.target.value)}
-            placeholder={`Reply on ${active.channel}…`}
-            aria-label="Reply"
+            placeholder="Write an email…"
+            aria-label="Email reply"
           />
           <div className="comm-composer__row">
             <div className="comm-composer__left">
@@ -197,14 +174,22 @@ export function CommunicationPanel({
                   <IconAttach />
                 </IconButton>
               </Tooltip>
-              <Button variant="brand" size="sm">
+              <Button
+                variant="brand"
+                size="sm"
+                onClick={() =>
+                  setReply(
+                    "Hi, could you please share the pending compliance document at your earliest convenience? Thank you!",
+                  )
+                }
+              >
                 <IconNotes size={14} />
                 Request document
               </Button>
             </div>
             <Button variant="primary" size="sm" onClick={sendReply}>
               <IconSend />
-              Send via {active.channel}
+              Send email
             </Button>
           </div>
         </div>
@@ -213,17 +198,20 @@ export function CommunicationPanel({
       {newOpen ? (
         <div className="rc-modal-backdrop" role="presentation" onClick={() => setNewOpen(false)}>
           <div
-            className="rc-modal"
+            className="rc-modal comm-recipient-modal"
             role="dialog"
+            aria-modal="true"
             aria-labelledby="comm-new-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+            <div className="comm-modal-head">
               <div>
-                <p className="comm-modal-eyebrow">Communication</p>
                 <h2 id="comm-new-title" className="rc-modal__title">
-                  New message
+                  Select recipient
                 </h2>
+                <p id="comm-recipient-help" className="comm-modal-help">
+                  Choose who you want to email. You can write your message in the conversation.
+                </p>
               </div>
               <IconButton label="Close" onClick={() => setNewOpen(false)}>
                 <IconClose />
@@ -231,39 +219,31 @@ export function CommunicationPanel({
             </div>
             <div className="comm-field">
               <label htmlFor="nm-recipient">Recipient</label>
-              <input
-                id="nm-recipient"
-                value={draftRecipient}
-                onChange={(e) => setDraftRecipient(e.target.value)}
-                placeholder="Customer or vendor"
-              />
-            </div>
-            <div className="comm-field">
-              <label htmlFor="nm-channel">Channel</label>
               <select
-                id="nm-channel"
-                value={draftChannel}
-                onChange={(e) => setDraftChannel(e.target.value as "WhatsApp" | "Email")}
+                id="nm-recipient"
+                value={selectedRecipientId}
+                onChange={(e) => setSelectedRecipientId(e.target.value)}
+                aria-describedby="comm-recipient-help"
+                autoFocus
               >
-                <option>WhatsApp</option>
-                <option>Email</option>
+                {convos.map((conversation) => (
+                  <option key={conversation.id} value={conversation.id}>
+                    {conversation.name} — {conversation.role}
+                  </option>
+                ))}
               </select>
-            </div>
-            <div className="comm-field">
-              <label htmlFor="nm-msg">Message</label>
-              <textarea
-                id="nm-msg"
-                rows={4}
-                value={draftBody}
-                onChange={(e) => setDraftBody(e.target.value)}
-              />
             </div>
             <div className="comm-modal-foot">
               <Button variant="ghost" size="sm" onClick={() => setNewOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="primary" size="sm" onClick={sendNew}>
-                Send
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={!selectedRecipientId}
+                onClick={openRecipientConversation}
+              >
+                Open conversation
               </Button>
             </div>
           </div>

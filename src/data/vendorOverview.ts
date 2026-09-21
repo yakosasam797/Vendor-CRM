@@ -1,4 +1,6 @@
 import type { StatusTone } from "@paryatech/design-system";
+import type { ActivityRow } from "../components/ActivityPanel";
+import type { Vendor } from "./vendors";
 
 export interface TradeMetric {
   id: string;
@@ -7,12 +9,6 @@ export interface TradeMetric {
   note: string;
   tab?: string;
   tone?: "warn" | "ok";
-}
-
-export interface AttentionItem {
-  id: string;
-  label: string;
-  tab: string;
 }
 
 export interface ServiceCoverage {
@@ -78,16 +74,9 @@ export interface VendorBooking {
   ownerInitials: string;
 }
 
-/** Attention strip — only when something needs action. */
-export const ATTENTION_ITEMS: AttentionItem[] = [
-  { id: "rate-expiry", label: "Rate card expires in 12 days", tab: "rate-cards" },
-  { id: "blackout", label: "Peak blackout window starts 20 Dec", tab: "services" },
-  { id: "at-risk", label: "1 booking at risk this week", tab: "bookings" },
-];
-
 /**
  * Operational snapshot — coverage / commercial / ops only.
- * Finance lives on Finance & docs, so it is not repeated here.
+ * Finance lives on its own tab, so it is not repeated here.
  */
 export const SNAPSHOT_METRICS: TradeMetric[] = [
   {
@@ -561,3 +550,248 @@ export const VENDOR_CONTACTS: VendorContact[] = [
     email: "samuel.joseph@examplehosp.in",
   },
 ];
+
+const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
+  {
+    id: "vendor-act-1",
+    date: "18 Sep",
+    time: "16:42",
+    member: "Anjali Menon",
+    role: "Vendor desk",
+    initials: "AM",
+    avatarTone: "pink",
+    event: "Updated the reservations contact and operating phone number",
+    module: "Vendor",
+  },
+  {
+    id: "vendor-act-2",
+    date: "16 Sep",
+    time: "12:10",
+    member: "Vrushabh Jain",
+    role: "Operations",
+    initials: "VJ",
+    avatarTone: "default",
+    event: "Marked booking BK-2026-000003 as at risk",
+    module: "Bookings",
+  },
+  {
+    id: "vendor-act-3",
+    date: "12 Sep",
+    time: "09:35",
+    member: "Deepa Thomas",
+    role: "Finance",
+    initials: "DT",
+    avatarTone: "default",
+    event: "Recorded partial settlement against the September supplier statement",
+    module: "Finance",
+  },
+  {
+    id: "vendor-act-4",
+    date: "09 Sep",
+    time: "14:18",
+    member: "Anjali Menon",
+    role: "Vendor desk",
+    initials: "AM",
+    avatarTone: "pink",
+    event: "Uploaded the renewed GST registration certificate",
+    module: "Docs",
+  },
+  {
+    id: "vendor-act-5",
+    date: "05 Sep",
+    time: "11:24",
+    member: "Anjali Menon",
+    role: "Vendor desk",
+    initials: "AM",
+    avatarTone: "pink",
+    event: "Published Accommodation tariff 2026–27",
+    module: "Rate cards",
+  },
+  {
+    id: "vendor-act-6",
+    date: "02 Sep",
+    time: "17:05",
+    member: "Rahul Sharma",
+    role: "Operations",
+    initials: "RS",
+    avatarTone: "default",
+    event: "Added the peak-season blackout window to Lake & garden stay",
+    module: "Services",
+  },
+  {
+    id: "vendor-act-7",
+    date: "28 Aug",
+    time: "10:40",
+    member: "Meera Iyer",
+    role: "Operations",
+    initials: "MI",
+    avatarTone: "default",
+    event: "Completed supplier handoff for the Kapoor group booking",
+    module: "Bookings",
+  },
+  {
+    id: "vendor-act-8",
+    date: "24 Aug",
+    time: "15:12",
+    member: "Vrushabh Jain",
+    role: "Operations",
+    initials: "VJ",
+    avatarTone: "default",
+    event: "Sent a WhatsApp request for updated room inventory",
+    module: "Communications",
+  },
+];
+
+function standardVendorActivity(vendor: Vendor): ActivityRow[] {
+  const primaryCategory = vendor.categories[0] ?? "supplier";
+
+  return [
+    {
+      id: `${vendor.id}-activity-coverage`,
+      date: "17 Sep",
+      time: "15:20",
+      member: vendor.owner,
+      role: "Vendor desk",
+      initials: vendor.ownerInitials,
+      avatarTone: "pink",
+      event: `Reviewed operating coverage for ${primaryCategory}`,
+      module: "Services",
+    },
+    {
+      id: `${vendor.id}-activity-location`,
+      date: "11 Sep",
+      time: "10:45",
+      member: vendor.owner,
+      role: "Vendor desk",
+      initials: vendor.ownerInitials,
+      avatarTone: "pink",
+      event: `Confirmed ${vendor.city} as the vendor's base location`,
+      module: "Vendor",
+    },
+    {
+      id: `${vendor.id}-activity-owner`,
+      date: "04 Sep",
+      time: "12:30",
+      member: "Vrushabh Jain",
+      role: "Operations",
+      initials: "VJ",
+      avatarTone: "default",
+      event: `Assigned ${vendor.owner} as the internal owner`,
+      module: "Vendor",
+    },
+    {
+      id: `${vendor.id}-activity-contact`,
+      date: "29 Aug",
+      time: "16:10",
+      member: vendor.owner,
+      role: "Vendor desk",
+      initials: vendor.ownerInitials,
+      avatarTone: "pink",
+      event: `Verified supplier contact routing for ${vendor.name}`,
+      module: "Communications",
+    },
+    {
+      id: `${vendor.id}-activity-directory`,
+      date: "22 Aug",
+      time: "09:15",
+      member: "Vrushabh Jain",
+      role: "Operations",
+      initials: "VJ",
+      avatarTone: "default",
+      event: `Added the vendor to the ${primaryCategory} directory`,
+      module: "Vendor",
+    },
+  ];
+}
+
+function initialsFor(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+export function vendorActivityForVendor(vendor: Vendor): ActivityRow[] {
+  const profileEvents = vendor.activity.map((event) => ({
+    id: event.id,
+    date: event.at === "Just now" ? "Today" : event.at,
+    time: event.at === "Just now" ? "Now" : "—",
+    member: event.actor,
+    role: event.role,
+    initials: initialsFor(event.actor),
+    avatarTone: "pink" as const,
+    event: event.event,
+    module: event.area,
+  }));
+
+  const recentProfileEvents = profileEvents.filter((event) => event.date !== "Imported");
+  const importedProfileEvents = profileEvents.filter((event) => event.date === "Imported");
+  const history = vendor.id === "exhosp" ? EXAMPLE_VENDOR_ACTIVITY : standardVendorActivity(vendor);
+
+  return [...recentProfileEvents, ...history, ...importedProfileEvents];
+}
+
+export function operatingHistoryForVendor(vendor: Vendor): TradeMetric[] {
+  if (vendor.id === "exhosp") {
+    return [
+      {
+        id: "relationship",
+        label: "Partner since",
+        value: "Apr 2024",
+        note: "2 years 5 months",
+      },
+      {
+        id: "fulfilled",
+        label: "Bookings fulfilled",
+        value: "38",
+        note: "Across 6 destinations",
+        tone: "ok",
+      },
+      {
+        id: "last-fulfilled",
+        label: "Last fulfilled",
+        value: "28 Aug 2026",
+        note: "Kapoor group · Alleppey",
+      },
+      {
+        id: "exceptions",
+        label: "Open exceptions",
+        value: "1",
+        note: "Booking currently at risk",
+        tone: "warn",
+      },
+    ];
+  }
+
+  const activityCount = vendorActivityForVendor(vendor).length;
+
+  return [
+    {
+      id: "relationship",
+      label: "Relationship record",
+      value: "Imported",
+      note: "Legacy vendor profile",
+    },
+    {
+      id: "activity",
+      label: "Recent activity",
+      value: String(activityCount),
+      note: `${activityCount} recent events`,
+    },
+    {
+      id: "scope",
+      label: "Operating scope",
+      value: String(vendor.categories.length),
+      note: vendor.categories.join(" · ") || "No categories set",
+    },
+    {
+      id: "updated",
+      label: "Last updated",
+      value: vendor.updated,
+      note: `Owned by ${vendor.owner}`,
+    },
+  ];
+}

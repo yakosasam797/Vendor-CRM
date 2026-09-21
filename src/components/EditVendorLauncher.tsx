@@ -5,6 +5,7 @@ import {
   IconCard,
   IconClose,
   IconFinance,
+  IconFile,
   IconPackages,
   IconPencil,
 } from "../icons";
@@ -17,7 +18,8 @@ export type VendorEditDestination =
   | "services"
   | "rate-cards"
   | "packages"
-  | "finance";
+  | "finance"
+  | "docs";
 
 const DESTINATIONS: {
   id: VendorEditDestination;
@@ -56,10 +58,17 @@ const DESTINATIONS: {
   },
   {
     id: "finance",
-    title: "Finance & docs",
-    description: "Payables, settlements, and compliance documents.",
+    title: "Finance",
+    description: "Payables, settlements, and payment activity.",
     group: "commercial",
     Icon: IconFinance,
+  },
+  {
+    id: "docs",
+    title: "Docs",
+    description: "Compliance documents, agreements, and certificates.",
+    group: "commercial",
+    Icon: IconFile,
   },
 ];
 
@@ -134,7 +143,7 @@ export function EditVendorLauncherModal({
             </h2>
             <p id={descId} className="settings-launcher__desc">
               Edit <strong>{vendorName}</strong> on Overview, or open Services, Rate cards,
-              Packages, or Finance &amp; docs to work those on their tabs.
+              Packages, Finance, or Docs to work those on their tabs.
             </p>
           </div>
           <IconButton label="Close" onClick={onClose}>

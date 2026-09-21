@@ -485,6 +485,17 @@ export function IconMore({ size = 16 }: IconProps) {
   );
 }
 
+export function IconTrash({ size = 15 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="m19 6-1 15H6L5 6" />
+      <path d="M10 11v5M14 11v5" />
+    </Svg>
+  );
+}
+
 /** ND03 row action — View */
 export function IconEye({ size = 14 }: IconProps) {
   return (

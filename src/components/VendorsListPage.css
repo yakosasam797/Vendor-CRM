@@ -134,14 +134,14 @@
 
 .vendors-sheet {
   --ven-check: calc(var(--page-pad, 16px) + 46px);
-  --ven-cols: var(--ven-check) minmax(220px, 1.7fr) minmax(200px, 1.35fr) minmax(140px, 1fr) minmax(120px, 0.9fr) minmax(100px, 0.8fr) minmax(150px, 0.95fr);
+  --ven-cols: var(--ven-check) minmax(260px, 1.45fr) minmax(280px, 1.35fr) minmax(190px, 1fr) 160px;
 }
 
 .vendors-sheet .pt-sheet__row {
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--ven-cols);
-  min-width: 920px;
+  min-width: 820px;
 }
 
 .vendors-sheet__logo {
@@ -216,13 +216,6 @@
 
 .vendors-sheet__empty {
   color: var(--ink-4, var(--ink-3));
-}
-
-.vendors-sheet__updated {
-  font-family: var(--type-body-secondary-family, var(--font-sans));
-  font-size: var(--type-body-secondary-size, 12.5px);
-  font-style: italic;
-  color: var(--ink-3);
 }
 
 .vendors-sheet__acts {

@@ -1,4 +1,4 @@
-/* Vendor Finance & docs — ND03 trip-summary + open sheets */
+/* Vendor finance and documents — ND03 trip-summary + open sheets */
 
 .vendor-finance {
   display: flex;
@@ -159,7 +159,7 @@
 .docs-sheet {
   --doc-check: calc(var(--page-pad, 16px) + 46px);
   --doc-cols: var(--doc-check) minmax(200px, 1.8fr) minmax(110px, 0.9fr) minmax(110px, 0.85fr)
-    minmax(140px, 1.1fr) minmax(130px, 1fr) 140px;
+    minmax(140px, 1.1fr) minmax(130px, 1fr) 184px;
 }
 
 .docs-sheet .pt-sheet__row {
@@ -194,6 +194,107 @@
   font-size: 13px;
   font-weight: 500;
   color: var(--ink);
+}
+
+.docs-sheet__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.docs-sheet__more {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.docs-row-menu {
+  position: fixed;
+  z-index: 180;
+  width: 188px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--menuShadow);
+}
+
+.docs-row-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.docs-row-menu__item:hover,
+.docs-row-menu__item:focus-visible {
+  outline: none;
+  background: var(--bad-bg);
+}
+
+.docs-row-menu__item--danger {
+  color: var(--bad);
+}
+
+.docs-delete-backdrop {
+  z-index: 190;
+}
+
+.rc-modal.docs-delete-confirm {
+  width: min(440px, 100%);
+}
+
+.docs-delete-confirm__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.docs-delete-confirm__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--bad-line);
+  border-radius: var(--radius-md);
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+.docs-delete-confirm__description {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.docs-delete-confirm__description strong {
+  color: var(--ink);
+}
+
+.docs-delete-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.docs-delete-confirm__button,
+.docs-delete-confirm__button:hover:not(:disabled) {
+  background: var(--bad);
 }
 
 @media (max-width: 1000px) {

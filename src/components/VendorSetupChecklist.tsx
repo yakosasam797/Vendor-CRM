@@ -17,9 +17,9 @@ const STEPS = [
   },
   {
     id: "contacts",
-    label: "Add contacts and documents",
+    label: "Add compliance documents",
     doneKey: "hasContactsDocs" as const,
-    tab: "finance",
+    tab: "docs",
   },
   {
     id: "rate-card",

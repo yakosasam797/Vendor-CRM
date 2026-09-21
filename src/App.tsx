@@ -11,7 +11,6 @@ import { AccountLauncher } from "./components/account/AccountLauncher";
 import { NotificationPanel } from "./components/notifications/NotificationPanel";
 import { RoleSwitcher } from "./components/RoleSwitcher";
 import { SettingsLauncherModal } from "./components/settings/SettingsLauncherModal";
-import { WorkspaceSetupStrip } from "./components/setup/WorkspaceSetupStrip";
 import { VendorsListPage } from "./components/VendorsListPage";
 import { VendorRateCardsPage } from "./components/VendorRateCardsPage";
 import { RateCardDetailPage } from "./components/rateCard/RateCardDetailPage";
@@ -70,7 +69,6 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [setupDismissed, setSetupDismissed] = useState(false);
   const [openServiceId, setOpenServiceId] = useState<string | null>(null);
   const [createCardOpen, setCreateCardOpen] = useState(false);
   const [activeDraft, setActiveDraft] = useState<RateCardDetail | null>(null);
@@ -346,10 +344,20 @@ export default function App() {
               isVendorsList
                 ? "Back to home"
                 : isVendorDetail
-                  ? "Back to vendors"
+                  ? openService
+                    ? "Back to services"
+                    : "Back to vendors"
                   : "Back to vendor"
             }
-            onClick={isVendorsList ? goHome : isVendorDetail ? openVendors : backFromCard}
+            onClick={
+              isVendorsList
+                ? goHome
+                : isVendorDetail
+                  ? openService
+                    ? () => setOpenServiceId(null)
+                    : openVendors
+                  : backFromCard
+            }
           >
             <IconChevronLeft />
           </IconButton>
@@ -448,35 +456,27 @@ export default function App() {
           onOpenPreferences={() => openAccountDestination("notification-preferences")}
         />
       ) : isVendorsList ? (
-        <>
-          <WorkspaceSetupStrip
-            orgRole={orgRole}
-            dismissed={setupDismissed}
-            onDismiss={() => setSetupDismissed(true)}
-            onOpen={openSettingsDestination}
-          />
-          <VendorsListPage
-            vendors={vendors}
-            orgRole={orgRole}
-            flash={flash}
-            onClearFlash={() => setFlash(null)}
-            onOpenVendor={(id) => {
-              setFlash(null);
-              openVendor(id);
-            }}
-            onVendorCreated={(created) => {
-              setVendors((prev) => [created, ...prev]);
-              openVendor(
-                created.id,
-                "Vendor created successfully. Complete the setup to make this vendor operational.",
-              );
-            }}
-            onVendorsChange={(next) => {
-              setVendors(next);
-              setFlash("Vendor details updated successfully.");
-            }}
-          />
-        </>
+        <VendorsListPage
+          vendors={vendors}
+          orgRole={orgRole}
+          flash={flash}
+          onClearFlash={() => setFlash(null)}
+          onOpenVendor={(id) => {
+            setFlash(null);
+            openVendor(id);
+          }}
+          onVendorCreated={(created) => {
+            setVendors((prev) => [created, ...prev]);
+            openVendor(
+              created.id,
+              "Vendor created successfully. Complete the setup to make this vendor operational.",
+            );
+          }}
+          onVendorsChange={(next) => {
+            setVendors(next);
+            setFlash("Vendor details updated successfully.");
+          }}
+        />
       ) : isVendorDetail && crmRoute.name === "vendor" ? (
         <VendorRateCardsPage
           vendorId={crmRoute.id}
@@ -546,6 +546,7 @@ export default function App() {
         open={settingsOpen}
         orgRole={orgRole}
         onClose={() => setSettingsOpen(false)}
+        anchorRef={settingsBtnRef}
         returnFocusRef={settingsBtnRef}
         onNavigate={openSettingsDestination}
       />
