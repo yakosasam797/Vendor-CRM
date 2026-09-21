@@ -33,6 +33,7 @@ import {
   IconDownload,
   IconFile,
   IconFilter,
+  IconPin,
   IconPlus,
   IconWarn,
 } from "../icons";
@@ -214,13 +215,18 @@ export function VendorFinancePanel() {
                       />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="payables-sheet__invoice pt-mono">{row.invoice}</span>
+                      <LeadCell
+                        icon={<IconCard size={15} />}
+                        title={row.invoice}
+                      />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <StackCell>
-                        <StackLine>{row.booking}</StackLine>
-                        <StackLine muted>{row.bookingDetail}</StackLine>
-                      </StackCell>
+                      <LeadCell
+                        align="start"
+                        icon={<IconPin size={15} />}
+                        title={row.booking}
+                        subtitle={row.bookingDetail}
+                      />
                     </DataSheetCell>
                     <DataSheetCell>
                       <span className="payables-sheet__date">

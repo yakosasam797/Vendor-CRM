@@ -109,6 +109,8 @@ export interface RateCardDetail {
   ready: string;
   readyTone: CardTone;
   taxConfirmed: boolean;
+  /** Global selling markup on this rate card, as a percentage */
+  markupPercent: number;
   mealBasis: string;
   mealLabel: string;
   hasWeekendExtra?: boolean;

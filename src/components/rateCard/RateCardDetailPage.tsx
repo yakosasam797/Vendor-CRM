@@ -17,25 +17,35 @@ import {
   formatMoney,
   getDetailCard,
 } from "../../rateCard/cards";
-import { runQuote, type QuoteInput } from "../../rateCard/engine";
+import { runQuote, DEFAULT_QUOTE, type QuoteInput } from "../../rateCard/engine";
 import {
   TEST_DATES,
   type CardTone,
   type DetailPageTab,
   type RateCardDetail,
+  type Season,
 } from "../../rateCard/types";
 import {
+  IconBed,
+  IconBookmark,
   IconCalendar,
+  IconCamera,
+  IconCard,
   IconChevronDown,
   IconClose,
+  IconHotel,
   IconNotes,
+  IconPencil,
+  IconPin,
   IconPlus,
+  IconUser,
 } from "../../icons";
 import { RecordHeader } from "../RecordHeader";
 import { StatusChipWithDot } from "../StatusChipWithDot";
 import { ActivityPanel } from "../ActivityPanel";
 import { activityFromEvents } from "../activityFromEvents";
 import { PoliciesPanel } from "./PoliciesPanel";
+import { SeasonEditorModal, type SeasonDraft } from "./SeasonEditorModal";
 import "./RateCardDetail.css";
 
 function toneToStatus(tone: CardTone): StatusTone {
@@ -60,13 +70,36 @@ function PriceChip({
   currency,
   taxConfirmed,
   sub,
+  editing,
+  onChange,
 }: {
   amount: number | null;
   currency: string;
   taxConfirmed: boolean;
   sub?: string;
+  editing?: boolean;
+  onChange?: (next: number | null) => void;
 }) {
   const tone = priceTone(amount, taxConfirmed);
+  if (editing && onChange) {
+    return (
+      <label className={`rc-price rc-price--edit rc-price--${tone === "ok" ? "ok" : tone}`}>
+        <input
+          className="rc-price__input"
+          type="text"
+          inputMode="numeric"
+          placeholder="Missing"
+          aria-label="Rate amount"
+          value={amount == null ? "" : String(amount)}
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^\d]/g, "");
+            onChange(raw === "" ? null : Number(raw));
+          }}
+        />
+        {sub ? <span className="rc-price__sub">{sub}</span> : null}
+      </label>
+    );
+  }
   return (
     <span className={`rc-price rc-price--${tone === "ok" ? "ok" : tone}`}>
       <span className="rc-price__main">
@@ -106,34 +139,60 @@ function sheetCols(template: string): CSSProperties {
   return { ["--rc-cols" as string]: template };
 }
 
+function CellIcon({
+  icon,
+  children,
+  className = "",
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={`rc-sheet__icon-cell${className ? ` ${className}` : ""}`}>
+      <span className="rc-sheet__icon-cell-glyph" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="rc-sheet__icon-cell-text">{children}</span>
+    </span>
+  );
+}
+
 export function RateCardDetailPage({
   cardId,
+  seedCard,
   startEditing = false,
   onBack,
+  onOpenNotes,
+  onDraftChange,
 }: {
   cardId: string;
+  /** Prefers this over the seed catalog — used for newly created drafts. */
+  seedCard?: RateCardDetail;
   startEditing?: boolean;
   onBack: () => void;
+  /** Opens the global sidebar notes panel for this rate card. */
+  onOpenNotes?: () => void;
+  /** Called whenever local draft changes (keeps App draft in sync). */
+  onDraftChange?: (card: RateCardDetail) => void;
 }) {
-  const seed = getDetailCard(cardId);
-  const [draft, setDraft] = useState<RateCardDetail | null>(null);
-  const card = draft?.id === cardId ? draft : seed ?? draft;
+  const catalog = getDetailCard(cardId);
+  const seed = seedCard ?? catalog;
+  const [draft, setDraft] = useState<RateCardDetail | null>(() =>
+    startEditing && seed ? structuredClone(seed) : null,
+  );
+  const card = draft?.id === (seed?.id ?? cardId) ? draft : seed ?? draft;
   const [page, setPage] = useState<DetailPageTab>("ratecard");
   const [seasonIdx, setSeasonIdx] = useState(0);
   const [seasonOpen, setSeasonOpen] = useState(false);
   const [editing, setEditing] = useState(startEditing);
-  const [notesOpen, setNotesOpen] = useState(false);
+  const [markupEditing, setMarkupEditing] = useState(false);
+  const [markupDraft, setMarkupDraft] = useState("15");
+  const [seasonModal, setSeasonModal] = useState<SeasonDraft | null>(null);
   const seasonRef = useRef<HTMLDivElement>(null);
+  const markupInputRef = useRef<HTMLInputElement>(null);
 
-  const [quote, setQuote] = useState<QuoteInput>({
-    checkIn: 7,
-    nights: 3,
-    roomIndex: 0,
-    mealIndex: 1,
-    adults: 2,
-    rooms: 1,
-    children: [],
-  });
+  const [quote, setQuote] = useState<QuoteInput>({ ...DEFAULT_QUOTE });
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -142,6 +201,25 @@ export function RateCardDetailPage({
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
+
+  useEffect(() => {
+    if (!editing && markupEditing) setMarkupEditing(false);
+  }, [editing, markupEditing]);
+
+  useEffect(() => {
+    if (markupEditing) markupInputRef.current?.focus();
+  }, [markupEditing]);
+
+  const commitDraft = (next: RateCardDetail) => {
+    setDraft(next);
+    onDraftChange?.(next);
+  };
+
+  const updateCard = (fn: (c: RateCardDetail) => RateCardDetail) => {
+    const base = draft?.id === (seed?.id ?? cardId) && draft ? draft : seed;
+    if (!base) return;
+    commitDraft(fn(structuredClone(base)));
+  };
 
   if (!card) {
     return (
@@ -162,16 +240,114 @@ export function RateCardDetailPage({
     { id: "activity", label: "Activity" },
   ];
 
-  const season = card.seasons[Math.min(seasonIdx, card.seasons.length - 1)];
+  const season = card.seasons[Math.min(seasonIdx, Math.max(0, card.seasons.length - 1))];
   const quoteResult = runQuote(card, quote);
 
-  const ensureDraft = () => {
-    if (!draft || draft.id !== card.id) setDraft({ ...card, rooms: [...card.rooms], seasons: [...card.seasons] });
+  const beginMarkupEdit = () => {
+    if (!editing) return;
+    setMarkupDraft(String(card.markupPercent));
+    setMarkupEditing(true);
+  };
+
+  const cancelMarkupEdit = () => {
+    setMarkupEditing(false);
+    setMarkupDraft(String(card.markupPercent));
+  };
+
+  const saveMarkup = () => {
+    const next = Number(markupDraft);
+    if (Number.isNaN(next)) {
+      cancelMarkupEdit();
+      return;
+    }
+    const clamped = Math.min(100, Math.max(0, Math.round(next * 10) / 10));
+    updateCard((base) => ({ ...base, markupPercent: clamped }));
+    setMarkupDraft(String(clamped));
+    setMarkupEditing(false);
   };
 
   const renameCard = (name: string) => {
-    ensureDraft();
-    setDraft((d) => (d ? { ...d, name } : { ...card, name }));
+    updateCard((base) => ({ ...base, name }));
+  };
+
+  const setPrice = (roomIdx: number, mealIdx: number, value: number | null) => {
+    updateCard((base) => {
+      const prices = structuredClone(base.prices);
+      while (prices.length <= roomIdx) {
+        prices.push(base.meals.map(() => base.seasons.map(() => null as number | null)));
+      }
+      while (prices[roomIdx].length <= mealIdx) {
+        prices[roomIdx].push(base.seasons.map(() => null as number | null));
+      }
+      while (prices[roomIdx][mealIdx].length <= seasonIdx) {
+        prices[roomIdx][mealIdx].push(null);
+      }
+      prices[roomIdx][mealIdx][seasonIdx] = value;
+      return { ...base, prices };
+    });
+  };
+
+  const openEditSeason = () => {
+    if (!editing || !season) return;
+    setSeasonModal({
+      mode: "edit",
+      index: seasonIdx,
+      name: season.name,
+      priority: season.priority === "Overrides base" ? "Override" : "Base",
+      ranges: [{ start: "", end: "" }],
+    });
+  };
+
+  const openAddSeason = () => {
+    if (!editing) return;
+    setSeasonModal({
+      mode: "add",
+      name: "",
+      priority: "Base",
+      ranges: [{ start: "", end: "" }],
+    });
+  };
+
+  const saveSeason = (nextSeason: Season, mode: "add" | "edit", index?: number) => {
+    updateCard((base) => {
+      if (mode === "edit" && index != null) {
+        const seasons = base.seasons.map((s, i) => (i === index ? nextSeason : s));
+        return { ...base, seasons };
+      }
+      const seasons = [...base.seasons, nextSeason];
+      const prices = base.prices.map((room) => room.map((meal) => [...meal, null]));
+      const weekendExtra = base.weekendExtra?.map((room) => [...room, null]);
+      return { ...base, seasons, prices, weekendExtra };
+    });
+    if (mode === "add") setSeasonIdx(card.seasons.length);
+    setSeasonModal(null);
+  };
+
+  const addRoom = () => {
+    if (!editing) return;
+    updateCard((base) => {
+      const n = base.rooms.length + 1;
+      const id = `room-${Date.now().toString(36)}`;
+      const rooms = [
+        ...base.rooms,
+        {
+          id,
+          name: `Room ${n}`,
+          note: "Add detail",
+          baseOccupancy: 2,
+          maxOccupancy: 3,
+          maxBeds: 1,
+        },
+      ];
+      const prices = [
+        ...base.prices,
+        base.meals.map(() => base.seasons.map(() => null as number | null)),
+      ];
+      const weekendExtra = base.weekendExtra
+        ? [...base.weekendExtra, base.seasons.map(() => null as number | null)]
+        : base.weekendExtra;
+      return { ...base, rooms, prices, weekendExtra };
+    });
   };
 
   return (
@@ -211,20 +387,31 @@ export function RateCardDetailPage({
             <span className="record-header__sep" aria-hidden="true">
               ·
             </span>
+            <span>{card.vendor}</span>
+            <span className="record-header__sep" aria-hidden="true">
+              ·
+            </span>
             <span>{card.currency}</span>
           </>
         }
         aside={
-          <>
+          <div className="rc-record-acts">
+            <IconButton
+              label="Rate card notes"
+              onClick={() => onOpenNotes?.()}
+            >
+              <IconNotes />
+            </IconButton>
             {editing ? (
               <Button variant="primary" size="sm" onClick={() => setEditing(false)}>
                 Done
               </Button>
-            ) : null}
-            <IconButton label="Open notes" onClick={() => setNotesOpen(true)}>
-              <IconNotes />
-            </IconButton>
-          </>
+            ) : (
+              <IconButton label="Edit rate card" onClick={() => setEditing(true)}>
+                <IconPencil />
+              </IconButton>
+            )}
+          </div>
         }
       />
 
@@ -250,7 +437,10 @@ export function RateCardDetailPage({
                 aria-haspopup="listbox"
               >
                 <span className="rc-season__value">
-                  {season.name} · {season.dates} · {season.priority}
+                  <IconCalendar size={13} />
+                  {season
+                    ? `${season.name} · ${season.dates} · ${season.priority}`
+                    : "No seasons yet"}
                 </span>
                 <IconChevronDown size={13} />
               </button>
@@ -279,43 +469,100 @@ export function RateCardDetailPage({
               ) : null}
             </div>
             <div className="rc-season__actions">
-              <Button variant="brand" size="sm" disabled={!editing}>
-                Edit current season
-              </Button>
               <Button
-                variant="primary"
+                variant="brand"
                 size="sm"
                 disabled={!editing}
-                onClick={() => {
-                  if (!editing) return;
-                  ensureDraft();
-                  setDraft((d) => {
-                    const base = d ?? card;
-                    return {
-                      ...base,
-                      seasons: [
-                        ...base.seasons,
-                        {
-                          name: `Season ${base.seasons.length + 1}`,
-                          colorToken: "accent",
-                          dates: "Not set",
-                          summary: "New range",
-                          nights: 0,
-                          priority: "Base",
-                        },
-                      ],
-                    };
-                  });
-                  setSeasonIdx(card.seasons.length);
-                }}
+                onClick={openEditSeason}
               >
+                Edit current season
+              </Button>
+              <Button variant="primary" size="sm" disabled={!editing} onClick={openAddSeason}>
                 <IconPlus />
                 Add season
               </Button>
             </div>
           </div>
 
-          <Section title={catLabel(card, "accommodation", "Stay / product pricing")}>
+          <section className="rc-markup" aria-labelledby="rc-markup-title">
+            <h2 id="rc-markup-title" className="rc-markup__title">
+              Markup
+            </h2>
+            <div className="rc-markup__aside">
+              {markupEditing ? (
+                <>
+                  <div className="rc-markup__field">
+                    <label className="rc-markup__label" htmlFor="rc-markup-pct">
+                      Markup
+                    </label>
+                    <div className="rc-markup__control">
+                      <input
+                        ref={markupInputRef}
+                        id="rc-markup-pct"
+                        className="rc-markup__input"
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        inputMode="decimal"
+                        value={markupDraft}
+                        onChange={(e) => setMarkupDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveMarkup();
+                          }
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            cancelMarkupEdit();
+                          }
+                        }}
+                      />
+                      <span className="rc-markup__suffix" aria-hidden="true">
+                        %
+                      </span>
+                    </div>
+                  </div>
+                  <div className="rc-markup__actions">
+                    <Button variant="brand" size="sm" onClick={cancelMarkupEdit}>
+                      Cancel
+                    </Button>
+                    <Button variant="primary" size="sm" onClick={saveMarkup}>
+                      Save
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rc-markup__value" aria-live="polite">
+                    <span className="rc-markup__value-num pt-mono">{card.markupPercent}</span>
+                    <span className="rc-markup__value-unit">%</span>
+                  </div>
+                  <Button
+                    variant="brand"
+                    size="sm"
+                    disabled={!editing}
+                    onClick={beginMarkupEdit}
+                  >
+                    <IconPencil />
+                    Edit
+                  </Button>
+                </>
+              )}
+            </div>
+          </section>
+
+          <Section
+            title={catLabel(card, "accommodation", "Stay / product pricing")}
+            action={
+              editing ? (
+                <Button variant="brand" size="sm" onClick={addRoom}>
+                  <IconPlus />
+                  Add room
+                </Button>
+              ) : undefined
+            }
+          >
             <DataSheet
               className="rc-sheet rc-sheet--pricing"
               style={sheetCols(
@@ -332,12 +579,12 @@ export function RateCardDetailPage({
               {card.rooms.map((room, ri) => (
                 <DataSheetRow key={room.id}>
                   <DataSheetCell>
-                    <div className="rc-sheet__lead">
-                      <div className="rc-sheet__lead-title">{room.name}</div>
-                      <div className="rc-sheet__lead-meta">
-                        {room.note} · incl. {room.baseOccupancy} / max {room.maxOccupancy}
-                      </div>
-                    </div>
+                    <LeadCell
+                      align="start"
+                      icon={<IconBed size={15} />}
+                      title={room.name}
+                      subtitle={`${room.note} · incl. ${room.baseOccupancy} / max ${room.maxOccupancy}`}
+                    />
                   </DataSheetCell>
                   {card.meals.map((_, mi) => {
                     const amount = card.prices[ri]?.[mi]?.[seasonIdx] ?? null;
@@ -348,6 +595,8 @@ export function RateCardDetailPage({
                           amount={amount}
                           currency={card.currency}
                           taxConfirmed={card.taxConfirmed}
+                          editing={editing}
+                          onChange={(next) => setPrice(ri, mi, next)}
                           sub={
                             weekend != null && card.hasWeekendExtra
                               ? `+${formatMoney(weekend, card.currency)} Fri–Sat`
@@ -384,16 +633,18 @@ export function RateCardDetailPage({
                   return (
                     <DataSheetRow key={i}>
                       <DataSheetCell>
-                        <LeadCell title={room?.name ?? g[0]} />
+                        <LeadCell icon={<IconHotel size={15} />} title={room?.name ?? g[0]} />
                       </DataSheetCell>
                       <DataSheetCell>
-                        <span className="rc-sheet__text">{g[1]}</span>
+                        <CellIcon icon={<IconUser size={13} />}>{g[1]}</CellIcon>
                       </DataSheetCell>
                       <DataSheetCell>
-                        <span className="rc-sheet__text">{g[2]}</span>
+                        <CellIcon icon={<IconCalendar size={13} />}>{g[2]}</CellIcon>
                       </DataSheetCell>
                       <DataSheetCell>
-                        <span className="rc-sheet__text">{BED_LABEL[g[3]] ?? g[3]}</span>
+                        <CellIcon icon={<IconBed size={13} />}>
+                          {BED_LABEL[g[3]] ?? g[3]}
+                        </CellIcon>
                       </DataSheetCell>
                       <DataSheetCell>
                         <PriceChip
@@ -439,13 +690,15 @@ export function RateCardDetailPage({
                 card.supplements.map((s) => (
                   <DataSheetRow key={s.name}>
                     <DataSheetCell>
-                      <div className="rc-sheet__lead">
-                        <div className="rc-sheet__lead-title">{s.name}</div>
-                        <div className="rc-sheet__lead-meta">{s.unit}</div>
-                      </div>
+                      <LeadCell
+                        align="start"
+                        icon={<IconCard size={15} />}
+                        title={s.name}
+                        subtitle={s.unit}
+                      />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="rc-sheet__text">{s.applies}</span>
+                      <CellIcon icon={<IconCalendar size={13} />}>{s.applies}</CellIcon>
                     </DataSheetCell>
                     <DataSheetCell>
                       <StatusChip tone={toneToStatus(s.tone)}>{s.basis}</StatusChip>
@@ -490,16 +743,18 @@ export function RateCardDetailPage({
                 card.activities.map((a) => (
                   <DataSheetRow key={a.name}>
                     <DataSheetCell>
-                      <div className="rc-sheet__lead">
-                        <div className="rc-sheet__lead-title">{a.name}</div>
-                        <div className="rc-sheet__lead-meta">{a.note}</div>
-                      </div>
+                      <LeadCell
+                        align="start"
+                        icon={<IconCamera size={15} />}
+                        title={a.name}
+                        subtitle={a.note}
+                      />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="rc-sheet__text">{a.group}</span>
+                      <CellIcon icon={<IconPin size={13} />}>{a.group}</CellIcon>
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="rc-sheet__text">{a.basis}</span>
+                      <CellIcon icon={<IconBookmark size={12} />}>{a.basis}</CellIcon>
                     </DataSheetCell>
                     <DataSheetCell>
                       <PriceChip
@@ -541,16 +796,18 @@ export function RateCardDetailPage({
                 card.services.map((s) => (
                   <DataSheetRow key={s.name}>
                     <DataSheetCell>
-                      <div className="rc-sheet__lead">
-                        <div className="rc-sheet__lead-title">{s.name}</div>
-                        <div className="rc-sheet__lead-meta">{s.note}</div>
-                      </div>
+                      <LeadCell
+                        align="start"
+                        icon={<IconPin size={15} />}
+                        title={s.name}
+                        subtitle={s.note}
+                      />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="rc-sheet__text">{s.applies}</span>
+                      <CellIcon icon={<IconCalendar size={13} />}>{s.applies}</CellIcon>
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="rc-sheet__text">{s.basis}</span>
+                      <CellIcon icon={<IconBookmark size={12} />}>{s.basis}</CellIcon>
                     </DataSheetCell>
                     <DataSheetCell>
                       <PriceChip
@@ -579,7 +836,7 @@ export function RateCardDetailPage({
                     Stay inputs
                   </h2>
                   <p className="rc-test__sub">
-                    Runs against this card’s seasons, occupancy, and supplements.
+                    Quote recalculates from this card’s seasons, weekend extras, occupancy, and guest bands.
                   </p>
                 </div>
               </div>
@@ -611,7 +868,7 @@ export function RateCardDetailPage({
                       className="rc-test__control"
                       type="number"
                       min={1}
-                      max={10}
+                      max={14}
                       value={quote.nights}
                       onChange={(e) =>
                         setQuote((q) => ({ ...q, nights: Number(e.target.value) || 1 }))
@@ -620,7 +877,7 @@ export function RateCardDetailPage({
                   </div>
                   <div className="rc-test__field">
                     <label className="rc-test__label" htmlFor="rc-room">
-                      Room / product
+                      Room type
                     </label>
                     <select
                       id="rc-room"
@@ -651,45 +908,140 @@ export function RateCardDetailPage({
                     >
                       {card.meals.map((m, i) => (
                         <option key={m.code} value={i}>
-                          {m.label}
+                          {m.code} — {m.label}
                         </option>
                       ))}
                     </select>
                   </div>
-                  <div className="rc-test__field">
-                    <label className="rc-test__label" htmlFor="rc-adults">
-                      Adults
-                    </label>
-                    <input
-                      id="rc-adults"
-                      className="rc-test__control"
-                      type="number"
-                      min={1}
-                      value={quote.adults}
-                      onChange={(e) =>
-                        setQuote((q) => ({ ...q, adults: Number(e.target.value) || 1 }))
-                      }
-                    />
+                </div>
+
+                <div className="rc-test__travellers">
+                  <div className="rc-test__travellers-head">
+                    <span className="rc-test__travellers-label">Travellers</span>
+                    <span className="rc-test__pax">{quoteResult.paxSummary}</span>
                   </div>
-                  <div className="rc-test__field">
-                    <label className="rc-test__label" htmlFor="rc-rooms">
-                      Rooms
-                    </label>
-                    <input
-                      id="rc-rooms"
-                      className="rc-test__control"
-                      type="number"
-                      min={1}
-                      value={quote.rooms}
-                      onChange={(e) =>
-                        setQuote((q) => ({ ...q, rooms: Number(e.target.value) || 1 }))
+
+                  <div className="rc-test__fields rc-test__fields--2">
+                    <div className="rc-test__field">
+                      <label className="rc-test__label" htmlFor="rc-adults">
+                        Adults
+                      </label>
+                      <select
+                        id="rc-adults"
+                        className="rc-test__control"
+                        value={quote.adults}
+                        onChange={(e) =>
+                          setQuote((q) => ({ ...q, adults: Number(e.target.value) || 1 }))
+                        }
+                      >
+                        {[1, 2, 3, 4, 5, 6].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="rc-test__field">
+                      <label className="rc-test__label" htmlFor="rc-rooms">
+                        Rooms
+                      </label>
+                      <select
+                        id="rc-rooms"
+                        className="rc-test__control"
+                        value={quote.rooms}
+                        onChange={(e) =>
+                          setQuote((q) => ({ ...q, rooms: Number(e.target.value) || 1 }))
+                        }
+                      >
+                        {[1, 2, 3, 4].map((n) => (
+                          <option key={n} value={n}>
+                            {n}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="rc-test__children">
+                    {quote.children.map((ch, i) => (
+                      <div key={i} className="rc-test__child-row">
+                        <span className="rc-test__child-label">Child {i + 1}</span>
+                        <select
+                          className="rc-test__control rc-test__control--sm"
+                          aria-label={`Child ${i + 1} age`}
+                          value={ch.age}
+                          onChange={(e) => {
+                            const age = Number(e.target.value);
+                            setQuote((q) => ({
+                              ...q,
+                              children: q.children.map((c, j) => (j === i ? { ...c, age } : c)),
+                            }));
+                          }}
+                        >
+                          {Array.from({ length: 17 }, (_, a) => (
+                            <option key={a} value={a}>
+                              {a} yrs
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          className="rc-test__control rc-test__control--sm"
+                          aria-label={`Child ${i + 1} extra bed`}
+                          value={ch.bed}
+                          onChange={(e) => {
+                            const bed = e.target.value as "yes" | "no";
+                            setQuote((q) => ({
+                              ...q,
+                              children: q.children.map((c, j) => (j === i ? { ...c, bed } : c)),
+                            }));
+                          }}
+                        >
+                          <option value="no">No extra bed</option>
+                          <option value="yes">With extra bed</option>
+                        </select>
+                        <button
+                          type="button"
+                          className="rc-test__child-remove"
+                          aria-label={`Remove child ${i + 1}`}
+                          onClick={() =>
+                            setQuote((q) => ({
+                              ...q,
+                              children: q.children.filter((_, j) => j !== i),
+                            }))
+                          }
+                        >
+                          <IconClose size={13} />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="rc-test__add-child"
+                      onClick={() =>
+                        setQuote((q) => ({
+                          ...q,
+                          children: [...q.children, { age: 8, bed: "no" }],
+                        }))
                       }
-                    />
+                    >
+                      <IconPlus />
+                      Add child
+                    </button>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  className="rc-test__reset"
+                  onClick={() => setQuote({ ...DEFAULT_QUOTE })}
+                >
+                  Reset to defaults
+                </button>
+
                 <p className="rc-test__note">
-                  Quote updates live. Unpriced nights and blackouts block the stay — rates never
-                  roll forward from another season.
+                  Nights are consecutive from check-in. Weekend flat extras apply on Sat/Sun. Child
+                  charges use age and bed bands from Extra guest charges — they never stack with an
+                  extra-adult charge on the same guest.
                 </p>
               </div>
             </section>
@@ -722,6 +1074,55 @@ export function RateCardDetailPage({
                   </div>
                 ) : null}
 
+                <div className="rc-test__nights" aria-label="Night-by-night resolution">
+                  <div className="rc-test__nights-head">
+                    <span>Night</span>
+                    <span>Price set</span>
+                    <span>Rule</span>
+                    <span>Room</span>
+                    <span>Guests</span>
+                  </div>
+                  {quoteResult.nights.map((n) => (
+                    <div key={n.date} className="rc-test__nights-row">
+                      <span className="rc-test__nights-date">{n.date}</span>
+                      <span className="rc-test__nights-season">
+                        <StatusChipWithDot
+                          tone={
+                            n.ruleTone === "danger"
+                              ? "blocked"
+                              : n.season.toLowerCase().includes("peak")
+                                ? "progress"
+                                : "done"
+                          }
+                        >
+                          {n.season}
+                        </StatusChipWithDot>
+                      </span>
+                      <span>
+                        <StatusChip
+                          tone={
+                            n.ruleTone === "danger"
+                              ? "blocked"
+                              : n.ruleTone === "weekend"
+                                ? "open"
+                                : n.ruleTone === "warn"
+                                  ? "progress"
+                                  : "open"
+                          }
+                        >
+                          {n.rule}
+                        </StatusChip>
+                      </span>
+                      <span className="pt-mono">
+                        {n.roomAmount == null ? "—" : formatMoney(n.roomAmount, card.currency)}
+                      </span>
+                      <span className="pt-mono">
+                        {n.guestAmount === 0 ? "—" : formatMoney(n.guestAmount, card.currency)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
                 <div className="rc-test__lines" aria-label="Quote buildup">
                   {quoteResult.lines.map((line, i) => (
                     <div
@@ -733,30 +1134,15 @@ export function RateCardDetailPage({
                         {line.note ? <div className="rc-test__line-note">{line.note}</div> : null}
                       </div>
                       <div className="rc-test__line-amount pt-mono">
-                        {line.amount == null ? "—" : formatMoney(line.amount, card.currency)}
+                        {line.label === "Tax" && line.amount === 0
+                          ? "—"
+                          : line.amount == null
+                            ? "—"
+                            : formatMoney(line.amount, card.currency)}
                       </div>
                     </div>
                   ))}
                 </div>
-
-                {quoteResult.trace.length > 0 ? (
-                  <div className="rc-test__trace">
-                    <h3 className="rc-test__trace-title">Engine trace</h3>
-                    <ol className="rc-test__trace-list">
-                      {quoteResult.trace.map((t, i) => (
-                        <li key={i} className="rc-test__trace-item">
-                          <span className="rc-test__trace-n" aria-hidden="true">
-                            {i + 1}
-                          </span>
-                          <div>
-                            <div className="rc-test__trace-step">{t.step}</div>
-                            <div className="rc-test__trace-detail">{t.detail}</div>
-                          </div>
-                        </li>
-                      ))}
-                    </ol>
-                  </div>
-                ) : null}
               </div>
             </section>
           </div>
@@ -772,39 +1158,13 @@ export function RateCardDetailPage({
         />
       ) : null}
 
-      {notesOpen ? (
-        <aside className="rc-notes" aria-label="Rate card notes">
-          <div className="rc-notes__head">
-            <div>
-              <h2 className="rc-card__title">Rate card notes</h2>
-              <p className="rc-card__sub">{card.notes.length} notes</p>
-            </div>
-            <IconButton label="Close notes" onClick={() => setNotesOpen(false)}>
-              <IconClose />
-            </IconButton>
-          </div>
-          <div className="rc-notes__list">
-            {card.notes.length === 0 ? (
-              <p className="rc-matrix__meta">No notes yet.</p>
-            ) : (
-              card.notes.map((n, i) => (
-                <article key={i} className="rc-note">
-                  <p className="rc-note__body">{n.body}</p>
-                  <p className="rc-note__meta">
-                    {n.author} · {n.when}
-                  </p>
-                </article>
-              ))
-            )}
-          </div>
-          <div style={{ padding: "14px 18px", borderTop: "1px solid var(--line)" }}>
-            <Button variant="primary" size="sm">
-              <IconPlus />
-              Write note
-            </Button>
-          </div>
-        </aside>
-      ) : null}
+      <SeasonEditorModal
+        open={Boolean(seasonModal)}
+        draft={seasonModal}
+        onChange={setSeasonModal}
+        onClose={() => setSeasonModal(null)}
+        onSave={saveSeason}
+      />
     </div>
   );
 }

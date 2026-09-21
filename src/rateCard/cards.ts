@@ -57,6 +57,7 @@ const blankHotel = (): RateCardDetail => ({
   ready: "Blank — add seasons and prices",
   readyTone: "warning",
   taxConfirmed: false,
+  markupPercent: 15,
   mealBasis: "Tax unconfirmed",
   mealLabel: "Meal plan",
   meals: [
@@ -127,6 +128,7 @@ const blankVisa = (): RateCardDetail => ({
   ready: "Blank — add products and fees",
   readyTone: "warning",
   taxConfirmed: false,
+  markupPercent: 15,
   mealBasis: "Tax unconfirmed",
   mealLabel: "Fee component",
   meals: [
@@ -207,6 +209,7 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
     ready: "Usable in proposals",
     readyTone: "success",
     taxConfirmed: true,
+    markupPercent: 15,
     mealBasis: "Tax included",
     mealLabel: "Meal plan",
     hasWeekendExtra: true,
@@ -434,6 +437,7 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
     ready: "7 clarifications open",
     readyTone: "warning",
     taxConfirmed: false,
+    markupPercent: 15,
     mealBasis: "Tax unconfirmed",
     mealLabel: "Meal plan",
     meals: [
@@ -597,6 +601,7 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
     ready: "Usable in proposals",
     readyTone: "success",
     taxConfirmed: true,
+    markupPercent: 15,
     mealBasis: "Exclusive of tax",
     mealLabel: "Fee component",
     meals: [
@@ -735,6 +740,7 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
     ready: "Superseded",
     readyTone: "neutral",
     taxConfirmed: true,
+    markupPercent: 15,
     mealBasis: "Tax included",
     mealLabel: "Meal plan",
     meals: [
@@ -806,6 +812,7 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
     ready: "Usable in proposals",
     readyTone: "success",
     taxConfirmed: true,
+    markupPercent: 15,
     mealBasis: "Tax included",
     mealLabel: "Vehicle class",
     meals: [
@@ -874,6 +881,18 @@ export function getDetailCard(id: string): RateCardDetail | undefined {
 
 export function listDetailCards(): RateCardDetail[] {
   return Object.values(DETAIL_CARDS);
+}
+
+/** Fresh draft from an enabled template, stamped with the current vendor. */
+export function createBlankCard(templateId: string, vendorName: string): RateCardDetail {
+  const base = structuredClone(templateId === "visa" ? blankVisa() : blankHotel());
+  const stamp = Date.now().toString(36);
+  return {
+    ...base,
+    id: `rc-draft-${templateId}-${stamp}`,
+    vendor: vendorName,
+    property: templateId === "visa" ? "Untitled visa product" : "Untitled property",
+  };
 }
 
 export function formatMoney(amount: number | null | undefined, currency = "INR"): string {

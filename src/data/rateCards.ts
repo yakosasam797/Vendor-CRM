@@ -10,6 +10,9 @@ export interface RateCard {
   category: string;
   currency: string;
   property: string;
+  /** Property / fleet / activity banner used as the list thumb */
+  propertyImageUrl: string;
+  propertyImageAlt: string;
   validity: string;
   validityNote: string;
   status: RateCardStatus;
@@ -19,6 +22,41 @@ export interface RateCard {
   action: RateCardAction;
 }
 
+const thumb = (id: string, w = 96, h = 96) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`;
+
+/** Shared property imagery — same asset wherever this property appears */
+export const PROPERTY_IMAGES: Record<
+  string,
+  { imageUrl: string; imageAlt: string }
+> = {
+  "Example Lake Resort": {
+    imageUrl: thumb("photo-1566073771259-6a8506099945"),
+    imageAlt: "Lake resort exterior",
+  },
+  "Example Hill Retreat": {
+    imageUrl: thumb("photo-1506905925346-21bda4d32df4"),
+    imageAlt: "Hill retreat in the mountains",
+  },
+  "Fleet — Kochi": {
+    imageUrl: thumb("photo-1449965408869-eaa3f722e40d"),
+    imageAlt: "Transfer fleet vehicle",
+  },
+  "Atlas Visa Services": {
+    imageUrl: thumb("photo-1436491865332-7a61a109cc05"),
+    imageAlt: "Passport and travel documents",
+  },
+};
+
+function propertyMedia(name: string) {
+  const hit = PROPERTY_IMAGES[name];
+  return {
+    property: name,
+    propertyImageUrl: hit?.imageUrl ?? thumb("photo-1566073771259-6a8506099945"),
+    propertyImageAlt: hit?.imageAlt ?? name,
+  };
+}
+
 export const RATE_CARDS: RateCard[] = [
   {
     id: "rc-acc-2627",
@@ -26,7 +64,7 @@ export const RATE_CARDS: RateCard[] = [
     title: "Accommodation tariff · 2026–27",
     category: "Accommodation",
     currency: "INR",
-    property: "Example Lake Resort",
+    ...propertyMedia("Example Lake Resort"),
     validity: "01 Apr 2026 – 31 Mar 2027",
     validityNote: "2 price sets",
     status: "published",
@@ -41,7 +79,7 @@ export const RATE_CARDS: RateCard[] = [
     title: "Accommodation tariff · 2025–26",
     category: "Accommodation",
     currency: "INR",
-    property: "Example Lake Resort",
+    ...propertyMedia("Example Lake Resort"),
     validity: "01 Apr 2025 – 31 Mar 2026",
     validityNote: "Superseded",
     status: "expired",
@@ -56,7 +94,7 @@ export const RATE_CARDS: RateCard[] = [
     title: "Hill Retreat tariff · 2026–27",
     category: "Accommodation",
     currency: "INR",
-    property: "Example Hill Retreat",
+    ...propertyMedia("Example Hill Retreat"),
     validity: "01 Apr 2026 – 31 Mar 2027",
     validityNote: "3 price sets",
     status: "draft",
@@ -71,7 +109,7 @@ export const RATE_CARDS: RateCard[] = [
     title: "Airport transfer rates · 2026",
     category: "Transport",
     currency: "INR",
-    property: "Fleet — Kochi",
+    ...propertyMedia("Fleet — Kochi"),
     validity: "01 Jan – 31 Dec 2026",
     validityNote: "Single price set",
     status: "published",
@@ -86,7 +124,7 @@ export const RATE_CARDS: RateCard[] = [
     title: "Visa services tariff · UAE",
     category: "Visa",
     currency: "INR",
-    property: "Atlas Visa Services",
+    ...propertyMedia("Atlas Visa Services"),
     validity: "01 Apr – 30 Sep 2026",
     validityNote: "Single price set",
     status: "published",

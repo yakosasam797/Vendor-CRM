@@ -1,12 +1,20 @@
-/* Vendor overview — Bookings + Contacts DataSheets */
+/* Vendor overview — Test-rate parallel panels + open sheets */
 
 .vendor-overview {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6, 28px);
+  gap: 24px;
   min-width: 0;
-  /* Extra breath beyond the tabbar’s 32px so “Bookings” never hugs the shifter */
-  margin-top: var(--space-3, 12px);
+  margin-top: 8px;
+  padding-bottom: 32px;
+}
+
+.vendor-bookings-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  margin-top: 8px;
+  padding-bottom: 32px;
 }
 
 .vendor-overview__section {
@@ -20,7 +28,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
@@ -49,7 +57,6 @@
   flex: none;
 }
 
-/* Outer wrapper must NOT scroll — only DataSheet’s .pt-sheet__scroll does */
 .vendor-overview__sheet {
   flex: 1 0 auto;
   display: flex;
@@ -58,22 +65,414 @@
   overflow: visible;
 }
 
-/* ---- Bookings sheet ---- */
+.vendor-overview__sheet .pt-bulk {
+  margin: 0 calc(var(--page-pad, 16px) * -1);
+}
+
+/* ---- Snapshot (tighten SummaryStrip top margin in this page) ---- */
+
+.vo-snapshot .summary-section {
+  margin-top: 0;
+}
+
+.vo-snapshot .summary-section__head {
+  margin-bottom: 14px;
+}
+
+/* ---- Attention ---- */
+
+.vo-attention {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 calc(var(--page-pad, 16px) * -1);
+  padding: 12px var(--page-pad, 16px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--pink-soft, #fbeef4);
+}
+
+.vo-attention__icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--pink-ink, var(--pink));
+}
+
+.vo-attention__body {
+  min-width: 0;
+  flex: 1;
+}
+
+.vo-attention__lead {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pink-ink, var(--pink));
+}
+
+.vo-attention__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.vo-attention__sep {
+  color: var(--ink-3);
+}
+
+.vo-attention__link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.vo-attention__link:hover {
+  color: var(--pink-ink, var(--pink));
+}
+
+.vo-attention__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---- Parallel panels (same language as Test rate) ---- */
+
+.vo-panels {
+  margin: 0 calc(var(--page-pad, 16px) * -1);
+}
+
+.vo-panels__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr);
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.vo-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+}
+
+.vo-panel:first-child {
+  border-left: none;
+}
+
+.vo-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  padding: 14px var(--page-pad, 20px);
+  background: var(--side, #fcfbfa);
+  border-bottom: 1px solid var(--line);
+}
+
+.vo-panel__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.vo-panel__body {
+  padding: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.vo-panel__body .pt-sheet {
+  margin: 0;
+}
+
+.vo-panel__body .vo-facts,
+.vo-panel__body .vo-contacts {
+  margin: 0;
+  border-top: none;
+}
+
+.vo-panel__body .vo-facts__row,
+.vo-panel__body .vo-contact {
+  padding-left: var(--page-pad, 20px);
+  padding-right: var(--page-pad, 20px);
+}
+
+.vo-panel__body .vo-facts--grid .vo-facts__row:nth-child(odd) {
+  padding-right: 16px;
+}
+
+.vo-panel__body .vo-facts--grid .vo-facts__row:nth-child(even) {
+  padding-left: 16px;
+}
+
+@media (max-width: 1000px) {
+  .vo-panels__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .vo-panel {
+    border-left: none;
+  }
+
+  .vo-panel + .vo-panel {
+    border-top: 1px solid var(--line);
+  }
+}
+
+/* ---- Coverage + upcoming sheets ---- */
+
+.vo-coverage-sheet,
+.vo-upcoming-sheet {
+  --vo-cov-cols: minmax(180px, 1.3fr) minmax(180px, 1.4fr) minmax(120px, 1fr) minmax(140px, 1.1fr);
+  --vo-up-check: calc(var(--page-pad, 16px) + 46px);
+  --vo-up-action: calc(88px + var(--page-pad, 16px));
+  --vo-up-cols: var(--vo-up-check) minmax(180px, 1.4fr) minmax(120px, 0.95fr) minmax(130px, 1fr)
+    minmax(100px, 0.8fr) 110px minmax(130px, 1fr) var(--vo-up-action);
+}
+
+.vo-coverage-sheet .pt-sheet__scroll,
+.vo-upcoming-sheet .pt-sheet__scroll,
+.vendor-bookings-sheet .pt-sheet__scroll {
+  overflow-x: auto;
+  overflow-y: hidden !important;
+}
+
+.vo-coverage-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--vo-cov-cols);
+  min-width: 720px;
+}
+
+.vo-upcoming-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--vo-up-cols);
+  min-width: 980px;
+}
+
+.vo-upcoming-sheet .pt-sheet__cell--check {
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.vo-upcoming-sheet .pt-sheet__cell.vo-upcoming-sheet__action,
+.vo-upcoming-sheet .pt-sheet__row > .pt-sheet__cell:last-child {
+  justify-content: flex-start;
+  padding-right: var(--page-pad, 16px);
+}
+
+.vo-cell {
+  display: block;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.vo-cell--muted {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+/* ---- Fact lists ---- */
+
+.vo-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.vo-facts--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+
+.vo-facts__row {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.42fr) minmax(0, 1fr);
+  gap: 10px 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line-2, var(--line));
+}
+
+.vo-facts--grid .vo-facts__row {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.vo-facts dt {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink-3);
+  align-self: start;
+  padding-top: 2px;
+}
+
+.vo-facts dd {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.vo-facts__note {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.vo-facts__link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent-ink, var(--accent));
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.vo-facts__link:hover {
+  color: var(--accent);
+}
+
+.vo-facts__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (max-width: 720px) {
+  .vo-facts--grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vo-panel__body .vo-facts--grid .vo-facts__row:nth-child(odd),
+  .vo-panel__body .vo-facts--grid .vo-facts__row:nth-child(even) {
+    padding-left: var(--page-pad, 20px);
+    padding-right: var(--page-pad, 20px);
+  }
+}
+
+/* ---- Key contacts ---- */
+
+.vo-contacts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.vo-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line-2, var(--line));
+}
+
+.vo-contact:last-child {
+  border-bottom: none;
+}
+
+.vo-contact__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.vo-contact__copy {
+  min-width: 0;
+}
+
+.vo-contact__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.vo-contact__role {
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.vo-contact__acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 42px;
+}
+
+.vo-contact__act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.vo-contact__act:hover {
+  background: var(--surface-3);
+  border-color: var(--line);
+}
+
+.vo-contact__act:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Bookings sheet (Bookings tab) ---- */
 
 .vendor-bookings-sheet {
   --vb-check: calc(var(--page-pad, 16px) + 46px);
   --vb-cols: var(--vb-check) minmax(200px, 1.5fr) minmax(130px, 0.95fr) minmax(150px, 1.1fr)
     120px minmax(130px, 1fr) minmax(140px, 1fr) 110px;
-}
-
-/*
-  Keep horizontal scroll inside the sheet only. overflow-x:auto alone promotes
-  overflow-y:auto and draws a vertical scrollbar when rows fit.
-*/
-.vendor-bookings-sheet .pt-sheet__scroll,
-.vendor-contacts-sheet .pt-sheet__scroll {
-  overflow-x: auto;
-  overflow-y: hidden !important;
 }
 
 .vendor-bookings-sheet .pt-sheet__row {
@@ -115,54 +514,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* ---- Contacts sheet ---- */
-
-.vendor-contacts-sheet {
-  --vc-check: calc(var(--page-pad, 16px) + 46px);
-  --vc-cols: var(--vc-check) minmax(180px, 1.2fr) minmax(140px, 1fr) minmax(150px, 1.05fr)
-    minmax(140px, 0.95fr) minmax(200px, 1.4fr) 120px;
-}
-
-.vendor-contacts-sheet .pt-sheet__row {
-  grid-auto-flow: unset;
-  grid-auto-columns: unset;
-  grid-template-columns: var(--vc-cols);
-  min-width: 1080px;
-}
-
-.vendor-contacts-sheet .pt-sheet__cell--check {
-  justify-content: flex-start;
-  overflow: visible;
-}
-
-.vendor-contacts-sheet__text,
-.vendor-contacts-sheet__link {
-  display: block;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: var(--type-body-family, var(--font-sans));
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.vendor-contacts-sheet__link {
-  text-decoration: none;
-}
-
-.vendor-contacts-sheet__link:hover {
-  color: var(--pink-ink);
-}
-
-.vendor-contacts-sheet__link:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 4px;
 }
 
 @media (max-width: 1000px) {

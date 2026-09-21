@@ -154,16 +154,9 @@ export function IconTeam({ size = 17 }: IconProps) {
 
 export function IconSettings({ size = 17 }: IconProps) {
   return (
-    <Svg size={size} strokeWidth="2">
-      <path d="M21 4h-7" />
-      <path d="M10 4H3" />
-      <path d="M21 12h-9" />
-      <path d="M8 12H3" />
-      <path d="M21 20h-5" />
-      <path d="M12 20H3" />
-      <path d="M14 2v4" />
-      <path d="M8 10v4" />
-      <path d="M16 18v4" />
+    <Svg size={size} strokeWidth="1.7">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6 1.65 1.65 0 0 0 10 3.09V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </Svg>
   );
 }
@@ -473,12 +466,94 @@ export function IconImage({ size = 16 }: IconProps) {
   );
 }
 
+export function IconPlay({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.7">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M10 8.5v7l6-3.5-6-3.5Z" fill="currentColor" stroke="none" />
+    </Svg>
+  );
+}
+
 export function IconMore({ size = 16 }: IconProps) {
   return (
     <Svg size={size} strokeWidth="2">
       <circle cx="12" cy="5" r="1" />
       <circle cx="12" cy="12" r="1" />
       <circle cx="12" cy="19" r="1" />
+    </Svg>
+  );
+}
+
+/** ND03 row action — View */
+export function IconEye({ size = 14 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.9">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
+  );
+}
+
+/** Activity / experiences */
+export function IconCamera({ size = 13 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z" />
+      <circle cx="12" cy="13" r="3" />
+    </Svg>
+  );
+}
+
+/** Airline / flights */
+export function IconPlane({ size = 13 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5Z" />
+    </Svg>
+  );
+}
+
+/** Visa / passport */
+export function IconIdCard({ size = 13 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <rect x="4" y="3" width="16" height="18" rx="2" />
+      <circle cx="12" cy="10" r="2.5" />
+      <path d="M8.5 17a3.5 3.5 0 0 1 7 0" />
+    </Svg>
+  );
+}
+
+/** Transfer / transport — ND03 van */
+export function IconVan({ size = 13 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <path d="M5 17H3V6a1 1 0 0 1 1-1h11v12h-2" />
+      <path d="M14 9h4l3 4v4h-2" />
+      <circle cx="7.5" cy="17.5" r="2" />
+      <circle cx="16.5" cy="17.5" r="2" />
+    </Svg>
+  );
+}
+
+/** DMC / ground handling */
+export function IconBriefcase({ size = 13 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M3 12h18" />
+    </Svg>
+  );
+}
+
+/** Hotelier / accommodation — ND03 hotel */
+export function IconHotel({ size = 13 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.8">
+      <path d="M2 20V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12" />
+      <path d="M2 20h20M6 6V4h6v2M9 12h.01M14 12h4M14 16h4" />
     </Svg>
   );
 }
@@ -509,6 +584,41 @@ export function IconCompass({ size = 15 }: IconProps) {
     <Svg size={size}>
       <circle cx="12" cy="12" r="9" />
       <path d="m16 8-2.5 6.5L7 17l2.5-6.5L16 8Z" />
+    </Svg>
+  );
+}
+
+export function IconChevronRight({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="m9 18 6-6-6-6" />
+    </Svg>
+  );
+}
+
+export function IconLogout({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <path d="m16 17 5-5-5-5" />
+      <path d="M21 12H9" />
+    </Svg>
+  );
+}
+
+export function IconShield({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+    </Svg>
+  );
+}
+
+export function IconDevices({ size = 16 }: IconProps) {
+  return (
+    <Svg size={size}>
+      <rect x="5" y="2" width="14" height="20" rx="2" />
+      <path d="M12 18h.01" />
     </Svg>
   );
 }

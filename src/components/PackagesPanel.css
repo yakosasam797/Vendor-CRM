@@ -5,21 +5,6 @@
   width: 100%;
 }
 
-.packages-panel__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px 14px;
-  margin-bottom: 14px;
-}
-
-.packages-panel__meta {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--ink-3);
-}
-
 .packages-panel__toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -54,9 +39,15 @@
  */
 .packages-sheet {
   --pkg-check: calc(var(--page-pad, 16px) + 36px);
+  /*
+   * Action track = control width + shell pad. The pad is a dedicated trailing
+   * gutter so the kebab sits inside the sheet, aligned with toolbar actions.
+   */
+  --pkg-action-control: 44px;
+  --pkg-action: calc(var(--pkg-action-control) + var(--page-pad, 16px));
   /* Package · Services · Priced · Sell · Status · Action — check stays first (left) */
   --pkg-cols: var(--pkg-check) minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 0.95fr)
-    minmax(0, 0.55fr) minmax(0, 0.7fr) 44px;
+    minmax(0, 0.55fr) minmax(0, 0.7fr) var(--pkg-action);
   width: 100%;
   max-width: 100%;
 }
@@ -83,6 +74,10 @@
   box-sizing: border-box;
   padding-left: 12px;
   padding-right: 12px;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .packages-sheet .pt-sheet__row > .pt-sheet__cell:first-child {
@@ -95,10 +90,76 @@
   overflow: visible;
 }
 
-.packages-sheet .pt-sheet__cell:last-child {
-  justify-content: flex-end;
+/*
+ * Action closes the sheet: fixed control lane + page-pad gutter (mirrors the
+ * check column on the left). Left rule stays the Status→Action divider.
+ */
+.packages-sheet .pt-sheet__cell.packages-sheet__action,
+.packages-sheet .pt-sheet__row > .pt-sheet__cell:last-child {
+  display: grid;
+  grid-template-columns: var(--pkg-action-control) var(--page-pad, 16px);
+  align-items: center;
+  justify-items: center;
   overflow: visible;
-  padding-right: var(--page-pad, 16px);
+  padding-left: 0;
+  padding-right: 0;
+  border-left-color: var(--line);
+}
+
+.packages-sheet .pt-sheet__head > .pt-sheet__cell.packages-sheet__action {
+  text-align: center;
+}
+
+/* Place the kebab (and only the kebab) in the control lane — never the cell itself. */
+.packages-sheet .pt-sheet__cell.packages-sheet__action > .packages-sheet__act {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.packages-sheet__act {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius-md, 10px);
+}
+
+/* Column-scoped hover — mute DS full-row wash, tint only the hovered cell. */
+@media (hover: hover) {
+  .packages-sheet
+    .pt-sheet__row:hover:not(.pt-sheet__head):not(.pt-sheet__row--loading)
+    > .pt-sheet__cell {
+    background: transparent;
+  }
+
+  .packages-sheet
+    .pt-sheet__row:not(.pt-sheet__head):not(.pt-sheet__row--loading)
+    > .pt-sheet__cell:hover {
+    background: var(--surface-2, var(--side));
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+
+  .packages-sheet
+    .pt-sheet__row:not(.pt-sheet__head):not(.pt-sheet__row--loading)
+    > .pt-sheet__cell:not(:first-child):hover {
+    border-left-color: var(--line-hover, var(--line));
+  }
+
+  .packages-sheet
+    .pt-sheet__row:not(.pt-sheet__head)
+    > .pt-sheet__cell.packages-sheet__action:hover
+    .packages-sheet__act {
+    background: var(--surface);
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .packages-sheet .pt-sheet__cell {
+    transition: none;
+  }
 }
 
 .packages-sheet__services {
@@ -111,6 +172,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.packages-sheet__thumb {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid var(--line);
+  background: var(--surface-2, var(--side));
+  display: block;
 }
 
 .packages-sheet__price {

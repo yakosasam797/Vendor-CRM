@@ -11,6 +11,9 @@ export interface VendorPackage {
   pricedFromKind: string;
   sellPrice: string;
   status: PackageStatus;
+  /** Banner / hero photo used as the package thumb in the list */
+  imageUrl: string;
+  imageAlt: string;
 }
 
 export const PACKAGE_STATUS_LABEL: Record<PackageStatus, string> = {
@@ -25,6 +28,10 @@ export const PACKAGE_STATUS_TONE: Record<PackageStatus, StatusTone> = {
   draft: "open",
 };
 
+/** Cropped Unsplash banners — distinct scenes so staff can scan by image */
+const thumb = (id: string, w = 96, h = 96) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`;
+
 export const VENDOR_PACKAGES: VendorPackage[] = [
   {
     id: "pkg-1",
@@ -35,6 +42,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹68,400",
     status: "live",
+    imageUrl: thumb("photo-1602216056096-3b40cc0c9944"),
+    imageAlt: "Houseboat on Kerala backwaters",
   },
   {
     id: "pkg-2",
@@ -45,6 +54,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹32,800",
     status: "reprice",
+    imageUrl: thumb("photo-1544735716-392fe2489ffa"),
+    imageAlt: "Misty hill forest trail",
   },
   {
     id: "pkg-3",
@@ -55,6 +66,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹54,200",
     status: "live",
+    imageUrl: thumb("photo-1582510003544-4d00b7f39d87"),
+    imageAlt: "Chinese fishing nets at Kochi harbour",
   },
   {
     id: "pkg-4",
@@ -65,6 +78,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹8,900",
     status: "live",
+    imageUrl: thumb("photo-1566073771259-6a8506099945"),
+    imageAlt: "Spice plantation walkway",
   },
   {
     id: "pkg-5",
@@ -75,6 +90,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹41,600",
     status: "reprice",
+    imageUrl: thumb("photo-1506905925346-21bda4d32df4"),
+    imageAlt: "Mountain hills at sunrise",
   },
   {
     id: "pkg-6",
@@ -85,6 +102,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Unpriced",
     sellPrice: "—",
     status: "draft",
+    imageUrl: thumb("photo-1439066615861-d1af74d74000"),
+    imageAlt: "Lake shore in monsoon light",
   },
   {
     id: "pkg-7",
@@ -95,6 +114,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹96,000",
     status: "live",
+    imageUrl: thumb("photo-1497366216548-37526070297c"),
+    imageAlt: "Meeting room for corporate offsite",
   },
   {
     id: "pkg-8",
@@ -105,6 +126,8 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     pricedFromKind: "Rate card",
     sellPrice: "₹1,12,500",
     status: "live",
+    imageUrl: thumb("photo-1571896349842-33c89424de2d"),
+    imageAlt: "Resort pool overlooking water",
   },
 ];
 

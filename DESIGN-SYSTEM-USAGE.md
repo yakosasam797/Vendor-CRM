@@ -159,3 +159,22 @@ Layouts follow [`yakosasam797/new-direction-03`](https://github.com/yakosasam797
 | Seed threads | â€” | `src/data/communications.ts` (vendor-adapted ND03 sample) |
 
 Colours use DS tokens only (no ND03 hex). Soft-rect controls; pills only for channel / unread / status. Activity must **not** use a bordered rounded card around the table â€” that fights the ND03 open-sheet language.
+---
+
+# Settings, Account & Notifications (hub-and-spoke)
+
+No nested Settings sidebar. Top-bar entry points stay independent:
+
+| Entry | Surface | Behavior |
+| --- | --- | --- |
+| Gear | `SettingsLauncherModal` | Navigation launcher only ? dedicated `/settings/*` pages |
+| Bell | `NotificationPanel` | Right-side center ? `/notifications` or `/account/notification-preferences` |
+| Avatar | `AccountLauncher` | Compact popover ? `/account/*`; Sign out demo |
+
+Reusable local compositions (promote to DS later — package has no Modal/Popover/Sheet):
+
+- `SettingsLauncherModal`, `LauncherGroup`, `LauncherItem`
+- `SettingsPageHeader`, `SettingsSectionCard`, `PermissionState` (page-level Read only), `UnsavedChangesBar`
+- `AccountLauncher`, `NotificationPanel`, `WorkspaceSetupStrip` / setup checklist items
+
+Permissions: `permissions.ts` `canSettings` / `settingsAccess` — Owner edit-all; Admin operational edit + billing/domains view; Member none. Call logs / phone util removed from the top bar.

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Button,
   Checkbox,
@@ -25,22 +25,27 @@ import { getVendor, vendorIdea, type Vendor } from "../data/vendors";
 import { can, type OrgRole } from "../permissions";
 import { IconCalendar, IconFilter, IconImport, IconPin, IconPlus, IconRefresh } from "../icons";
 import { CommunicationPanel } from "./CommunicationPanel";
+import { EditVendorLauncherModal, type VendorEditDestination } from "./EditVendorLauncher";
 import { RateCardCoverageCell, RateCardValidityCell } from "./rateCardCells";
 import { PackagesPanel } from "./PackagesPanel";
 import { ServicesPanel } from "./ServicesPanel";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { TasksPanel } from "./TasksPanel";
+import { VendorBookingsPanel } from "./VendorBookingsPanel";
 import { VendorFinancePanel } from "./VendorFinancePanel";
 import { VendorFormModal } from "./VendorFormModal";
 import { VendorOverview } from "./VendorOverview";
 import { VendorProfileHeader } from "./VendorProfileHeader";
+import { SheetLeadButton } from "./SheetLeadButton";
+import { servicesForVendor } from "../data/services";
 import "./VendorRateCardsPage.css";
 
-const TABS: TabItem[] = [
+const BASE_TABS: TabItem[] = [
   { id: "overview", label: "Overview" },
-  { id: "services", label: "Services", count: 3 },
+  { id: "services", label: "Services" },
   { id: "rate-cards", label: "Rate cards", count: 1 },
   { id: "packages", label: "Packages", count: 2 },
+  { id: "bookings", label: "Bookings", count: 12 },
   { id: "finance", label: "Finance & docs", count: 2 },
   { id: "tasks", label: "Tasks", count: 5 },
   { id: "comms", label: "Communications", count: 2 },
@@ -56,6 +61,8 @@ export function VendorRateCardsPage({
   onNewCard,
   onVendorsChange,
   onOpenVendor,
+  openServiceId = null,
+  onOpenServiceIdChange,
 }: {
   vendorId: string;
   vendors: Vendor[];
@@ -66,14 +73,47 @@ export function VendorRateCardsPage({
   onNewCard?: () => void;
   onVendorsChange: (next: Vendor[]) => void;
   onOpenVendor: (id: string) => void;
+  openServiceId?: string | null;
+  onOpenServiceIdChange?: (id: string | null) => void;
 }) {
   const vendor = getVendor(vendorId, vendors) ?? getVendor("exhosp", vendors)!;
   const [tab, setTab] = useState("overview");
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
-  const [editOpen, setEditOpen] = useState(false);
+  const [editLauncherOpen, setEditLauncherOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
   const canEdit = can(orgRole, "vendor.edit");
+
+  const serviceCount = servicesForVendor(vendor.id).length;
+  const tabs: TabItem[] = useMemo(
+    () =>
+      BASE_TABS.map((t) =>
+        t.id === "services" ? { ...t, count: serviceCount || undefined } : t,
+      ),
+    [serviceCount],
+  );
+
+  const setVendorTab = (next: string) => {
+    if (next !== "services") onOpenServiceIdChange?.(null);
+    setTab(next);
+  };
+
+  const onEditDestination = (id: VendorEditDestination) => {
+    setEditLauncherOpen(false);
+    if (id === "profile") {
+      // Profile edits live on Overview — name, categories (title idea), location, contact.
+      onOpenServiceIdChange?.(null);
+      setTab("overview");
+      setEditProfileOpen(true);
+      return;
+    }
+    setVendorTab(id);
+  };
+
+  useEffect(() => {
+    if (openServiceId) setTab("services");
+  }, [openServiceId]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -113,11 +153,11 @@ export function VendorRateCardsPage({
         ownerRole="Owner · Vendor desk"
         ownerInitials={vendor.ownerInitials}
         canEdit={canEdit}
-        onEdit={() => setEditOpen(true)}
+        onEdit={() => setEditLauncherOpen(true)}
       />
 
       <div className="vendor-page__tabs">
-        <TabBar items={TABS} value={tab} onValueChange={setTab} aria-label="Vendor sections" />
+        <TabBar items={tabs} value={tab} onValueChange={setVendorTab} aria-label="Vendor sections" />
       </div>
 
       {tab === "overview" ? (
@@ -127,14 +167,24 @@ export function VendorRateCardsPage({
           canEdit={canEdit}
           onJumpTab={(next) => {
             onClearFlash?.();
-            setTab(next);
+            setVendorTab(next);
           }}
-          onEditProfile={() => setEditOpen(true)}
+          onEditProfile={() => setEditLauncherOpen(true)}
         />
       ) : tab === "services" ? (
-        <ServicesPanel />
+        <ServicesPanel
+          vendorId={vendor.id}
+          openServiceId={openServiceId}
+          onOpenServiceIdChange={(id) => {
+            onOpenServiceIdChange?.(id);
+            if (id) setTab("services");
+          }}
+          onOpenRateCard={onOpenCard}
+        />
       ) : tab === "packages" ? (
         <PackagesPanel />
+      ) : tab === "bookings" ? (
+        <VendorBookingsPanel />
       ) : tab === "finance" ? (
         <VendorFinancePanel />
       ) : tab === "tasks" ? (
@@ -144,7 +194,7 @@ export function VendorRateCardsPage({
       ) : tab !== "rate-cards" ? (
         <EmptyState
           title="Nothing in this section yet"
-          description="This trial recreates Overview, Services, Packages, Finance & docs, Tasks, and Rate cards."
+          description="This trial recreates Overview, Services, Packages, Bookings, Finance & docs, Tasks, and Rate cards."
         />
       ) : (
         <>
@@ -219,14 +269,30 @@ export function VendorRateCardsPage({
                       />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <LeadCell
-                        icon={<IconPin />}
-                        title={card.title}
-                        subtitle={card.ref}
-                      />
+                      <SheetLeadButton
+                        label={`Open ${card.title}`}
+                        onClick={() => onOpenCard(card.id)}
+                      >
+                        <LeadCell
+                          icon={<IconPin />}
+                          title={card.title}
+                          subtitle={card.ref}
+                        />
+                      </SheetLeadButton>
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="rate-card-sheet__property">{card.property}</span>
+                      <div className="rate-card-sheet__property">
+                        <img
+                          className="rate-card-sheet__property-thumb"
+                          src={card.propertyImageUrl}
+                          alt={card.propertyImageAlt}
+                          width={36}
+                          height={36}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span className="rate-card-sheet__property-name">{card.property}</span>
+                      </div>
                     </DataSheetCell>
                     <DataSheetCell>
                       <RateCardValidityCell range={card.validity} note={card.validityNote} />
@@ -269,20 +335,28 @@ export function VendorRateCardsPage({
         </>
       )}
 
+      <EditVendorLauncherModal
+        open={editLauncherOpen}
+        vendorName={vendor.name}
+        onClose={() => setEditLauncherOpen(false)}
+        onSelect={onEditDestination}
+      />
+
       <VendorFormModal
         mode="edit"
-        open={editOpen}
+        open={editProfileOpen}
         vendor={vendor}
         vendors={vendors}
         orgRole={orgRole}
-        onClose={() => setEditOpen(false)}
+        onClose={() => setEditProfileOpen(false)}
         onCreated={() => undefined}
         onUpdated={(updated) => {
           onVendorsChange(vendors.map((v) => (v.id === updated.id ? updated : v)));
-          setEditOpen(false);
+          setEditProfileOpen(false);
+          setTab("overview");
         }}
         onViewExisting={(id) => {
-          setEditOpen(false);
+          setEditProfileOpen(false);
           onOpenVendor(id);
         }}
       />

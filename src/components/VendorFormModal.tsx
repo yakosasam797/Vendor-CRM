@@ -134,17 +134,17 @@ export function VendorFormModal({
         <div className="pt-modal__head">
           <p className="pt-modal__eyebrow">Vendors</p>
           <h2 id={titleId} className="pt-modal__title">
-            {mode === "create" ? "Add vendor" : "Edit vendor"}
+            {mode === "create" ? "Add vendor" : "Edit profile"}
           </h2>
           {mode === "create" ? (
             <p className="pt-modal__desc">
-              Create the supplier profile now. Services, documents and rate cards can be added
-              afterward.
+              Create the supplier profile now. Services, rate cards, packages and finance can be
+              added afterward on their tabs.
             </p>
           ) : (
             <p className="pt-modal__desc">
-              Update the parent vendor profile. Services, rate cards and documents stay on their
-              own tabs.
+              Name, categories, location, contact, owner and status. Services, rate cards, packages
+              and finance are edited on their own tabs.
             </p>
           )}
         </div>

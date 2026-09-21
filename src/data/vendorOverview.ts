@@ -6,6 +6,46 @@ export interface TradeMetric {
   value: string;
   note: string;
   tab?: string;
+  tone?: "warn" | "ok";
+}
+
+export interface AttentionItem {
+  id: string;
+  label: string;
+  tab: string;
+}
+
+export interface ServiceCoverage {
+  id: string;
+  service: string;
+  kind: string;
+  coverage: string;
+  hubs: string;
+  season: string;
+}
+
+export interface OperatingFact {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface CommercialFact {
+  id: string;
+  label: string;
+  value: string;
+  note?: string;
+  tab?: string;
+}
+
+export interface KeyContact {
+  id: string;
+  name: string;
+  initials: string;
+  role: string;
+  phone: string;
+  email: string;
+  whatsapp?: string;
 }
 
 export interface VendorContact {
@@ -38,34 +78,163 @@ export interface VendorBooking {
   ownerInitials: string;
 }
 
-/** Overview metrics — ND03 trip-summary strip (1-1-1-1). */
-export const TRADE_METRICS: TradeMetric[] = [
+/** Attention strip — only when something needs action. */
+export const ATTENTION_ITEMS: AttentionItem[] = [
+  { id: "rate-expiry", label: "Rate card expires in 12 days", tab: "rate-cards" },
+  { id: "blackout", label: "Peak blackout window starts 20 Dec", tab: "services" },
+  { id: "at-risk", label: "1 booking at risk this week", tab: "bookings" },
+];
+
+/**
+ * Operational snapshot — coverage / commercial / ops only.
+ * Finance lives on Finance & docs, so it is not repeated here.
+ */
+export const SNAPSHOT_METRICS: TradeMetric[] = [
   {
-    id: "services",
-    label: "Services offered",
-    value: "3",
-    note: "Accommodation, activity, transport",
+    id: "coverage",
+    label: "Coverage",
+    value: "6 regions",
+    note: "14 destinations · Kerala focus",
     tab: "services",
   },
   {
-    id: "rate-cards",
-    label: "Rate cards",
-    value: "1",
-    note: "Live tariff on this supplier",
+    id: "commercial",
+    label: "Commercial readiness",
+    value: "1 rate card",
+    note: "Valid until 31 Mar 2027",
     tab: "rate-cards",
   },
   {
-    id: "packages",
-    label: "Packages",
-    value: "2",
-    note: "Built on this supplier",
-    tab: "packages",
+    id: "services",
+    label: "Services",
+    value: "3 live",
+    note: "Stay · activity · transfers",
+    tab: "services",
   },
   {
-    id: "bookings",
-    label: "Bookings YTD",
-    value: "42",
-    note: "Across 6 packages",
+    id: "operations",
+    label: "Operations",
+    value: "4 upcoming",
+    note: "1 at risk",
+    tab: "bookings",
+    tone: "warn",
+  },
+];
+
+/** Services with coverage attached per service (not one global map). */
+export const SERVICE_COVERAGE: ServiceCoverage[] = [
+  {
+    id: "sc1",
+    service: "Lake & garden stay",
+    kind: "Accommodation",
+    coverage: "Alleppey · Kumarakom · Vembanad shore",
+    hubs: "Example Lake Resort",
+    season: "Year-round · Peak Dec–Jan",
+  },
+  {
+    id: "sc2",
+    service: "Hill trek & plantation walk",
+    kind: "Activity",
+    coverage: "Munnar · Thekkady trails",
+    hubs: "Munnar base camp",
+    season: "Oct–May · Monsoon closed",
+  },
+  {
+    id: "sc3",
+    service: "Airport & intercity transfers",
+    kind: "Transport",
+    coverage: "All Kerala · COK / TRV hubs",
+    hubs: "Kochi · Trivandrum",
+    season: "Daily · 05:00–23:00",
+  },
+];
+
+export const OPERATING_FACTS: OperatingFact[] = [
+  { id: "hours", label: "Operating hours", value: "Daily · 05:00–23:00 IST" },
+  { id: "notice", label: "Minimum notice", value: "48 hours · 7 days for groups 12+" },
+  { id: "capacity", label: "Capacity", value: "Up to 22 pax / booking · 8 rooms block" },
+  { id: "languages", label: "Languages", value: "English · Malayalam · Hindi" },
+  { id: "blackouts", label: "Blackouts", value: "20–26 Dec · 31 Dec–02 Jan" },
+  { id: "hubs", label: "Pickup hubs", value: "COK · TRV · Alleppey jetty" },
+];
+
+export const COMMERCIAL_FACTS: CommercialFact[] = [
+  {
+    id: "rate-card",
+    label: "Current rate card",
+    value: "Accommodation tariff 2026–27",
+    note: "01 Apr 2026 – 31 Mar 2027",
+    tab: "rate-cards",
+  },
+  {
+    id: "currency",
+    label: "Currency & tax",
+    value: "INR · Tax included",
+    note: "Confirmed on live card",
+  },
+  {
+    id: "payment",
+    label: "Payment terms",
+    value: "50% on confirmation",
+    note: "Balance 21 days before arrival",
+  },
+  {
+    id: "cancel",
+    label: "Cancellation",
+    value: "Free ≥30 days",
+    note: "25% / 50% / 100% closer in",
+  },
+  {
+    id: "markup",
+    label: "Contracted markup",
+    value: "12% NET",
+    note: "Preferred supplier",
+  },
+  {
+    id: "updated",
+    label: "Last price update",
+    value: "12 Aug 2026",
+    note: "2 cells still missing on Peak",
+    tab: "rate-cards",
+  },
+];
+
+/** Compact role contacts for Overview — full directory stays light. */
+export const KEY_CONTACTS: KeyContact[] = [
+  {
+    id: "kc1",
+    name: "Ravi Nair",
+    initials: "RN",
+    role: "Reservations",
+    phone: "+91 98470 11220",
+    email: "ravi.nair@examplehosp.in",
+    whatsapp: "+919847011220",
+  },
+  {
+    id: "kc2",
+    name: "Vikram Das",
+    initials: "VD",
+    role: "Operations",
+    phone: "+91 98470 12402",
+    email: "vikram.das@examplehosp.in",
+    whatsapp: "+919847012402",
+  },
+  {
+    id: "kc3",
+    name: "Deepa Thomas",
+    initials: "DT",
+    role: "Finance",
+    phone: "+91 98470 11884",
+    email: "deepa.thomas@examplehosp.in",
+  },
+  {
+    id: "kc4",
+    name: "Jose Mathew",
+    initials: "JM",
+    role: "Emergency",
+    phone: "+91 98470 12010",
+    email: "jose.mathew@examplehosp.in",
+    whatsapp: "+919847012010",
   },
 ];
 
@@ -99,7 +268,7 @@ export const BOOKING_FINANCE_TONE: Record<VendorBookingFinance, StatusTone> = {
   "part-paid": "progress",
 };
 
-/** Recent bookings that used this vendor — enough rows to paginate. */
+/** Recent bookings that used this vendor — full list lives on Bookings tab. */
 export const VENDOR_BOOKINGS: VendorBooking[] = [
   {
     id: "vb1",
@@ -270,6 +439,16 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
     ownerInitials: "RS",
   },
 ];
+
+/** At-risk first, then upcoming / on-trip — for Overview preview. */
+export function overviewBookingsPreview(limit = 5): VendorBooking[] {
+  const rank = (s: VendorBookingStatus) =>
+    s === "at-risk" ? 0 : s === "on-trip" ? 1 : s === "upcoming" ? 2 : 9;
+  return [...VENDOR_BOOKINGS]
+    .filter((b) => b.status === "at-risk" || b.status === "upcoming" || b.status === "on-trip")
+    .sort((a, b) => rank(a.status) - rank(b.status))
+    .slice(0, limit);
+}
 
 export const VENDOR_CONTACTS: VendorContact[] = [
   {

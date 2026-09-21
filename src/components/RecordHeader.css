@@ -82,6 +82,12 @@
   margin-left: auto;
 }
 
+.rc-record-acts {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 @media (max-width: 1000px) {
   .record-header {
     align-items: stretch;

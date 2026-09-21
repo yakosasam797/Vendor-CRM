@@ -20,9 +20,8 @@ import {
   PACKAGE_STATUS_LABEL,
   PACKAGE_STATUS_TONE,
   VENDOR_PACKAGES,
-  packageStats,
 } from "../data/packages";
-import { IconFilter, IconMore, IconPackages, IconPlus } from "../icons";
+import { IconCard, IconFilter, IconMore, IconPlus } from "../icons";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import "./PackagesPanel.css";
 
@@ -34,7 +33,6 @@ export function PackagesPanel() {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
-  const stats = packageStats();
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -64,12 +62,6 @@ export function PackagesPanel() {
 
   return (
     <div className="packages-panel">
-      <div className="packages-panel__head">
-        <p className="packages-panel__meta pt-mono">
-          {stats.live} live · {stats.reprice} need re-pricing
-        </p>
-      </div>
-
       <div className="packages-panel__toolbar">
         <SearchField
           fullWidth
@@ -118,7 +110,7 @@ export function PackagesPanel() {
                 <DataSheetCell>Priced from</DataSheetCell>
                 <DataSheetCell>Sell</DataSheetCell>
                 <DataSheetCell>Status</DataSheetCell>
-                <DataSheetCell>Action</DataSheetCell>
+                <DataSheetCell className="packages-sheet__action">Action</DataSheetCell>
               </DataSheetHeader>
               {filtered.map((pkg) => (
                 <DataSheetRow key={pkg.id}>
@@ -132,7 +124,17 @@ export function PackagesPanel() {
                   <DataSheetCell>
                     <LeadCell
                       align="start"
-                      icon={<IconPackages size={15} />}
+                      icon={
+                        <img
+                          className="packages-sheet__thumb"
+                          src={pkg.imageUrl}
+                          alt={pkg.imageAlt}
+                          width={36}
+                          height={36}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                      }
                       title={pkg.name}
                       subtitle={pkg.detail}
                     />
@@ -144,7 +146,7 @@ export function PackagesPanel() {
                   </DataSheetCell>
                   <DataSheetCell>
                     <StackCell>
-                      <StackLine>{pkg.pricedFrom}</StackLine>
+                      <StackLine icon={<IconCard size={13} />}>{pkg.pricedFrom}</StackLine>
                       <StackLine muted>{pkg.pricedFromKind}</StackLine>
                     </StackCell>
                   </DataSheetCell>
@@ -156,12 +158,14 @@ export function PackagesPanel() {
                       {PACKAGE_STATUS_LABEL[pkg.status]}
                     </StatusChipWithDot>
                   </DataSheetCell>
-                  <DataSheetCell>
-                    <Tooltip tip="More">
-                      <IconButton label={`More for ${pkg.name}`}>
-                        <IconMore />
-                      </IconButton>
-                    </Tooltip>
+                  <DataSheetCell className="packages-sheet__action">
+                    <div className="packages-sheet__act">
+                      <Tooltip tip="More">
+                        <IconButton label={`More for ${pkg.name}`}>
+                          <IconMore />
+                        </IconButton>
+                      </Tooltip>
+                    </div>
                   </DataSheetCell>
                 </DataSheetRow>
               ))}

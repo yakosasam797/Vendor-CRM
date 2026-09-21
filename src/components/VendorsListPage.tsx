@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Avatar,
   Button,
@@ -10,6 +10,7 @@ import {
   EmptyState,
   IconButton,
   LeadCell,
+  ListBulkBar,
   Pagination,
   SearchField,
   StatusChip,
@@ -24,9 +25,31 @@ import {
   type VendorRole,
 } from "../data/vendors";
 import { can, type OrgRole } from "../permissions";
-import { IconImport, IconMore, IconPin, IconPlus } from "../icons";
+import {
+  IconBriefcase,
+  IconCamera,
+  IconEye,
+  IconHotel,
+  IconIdCard,
+  IconImport,
+  IconMore,
+  IconPin,
+  IconPlane,
+  IconPlus,
+  IconVan,
+} from "../icons";
 import { VendorFormModal } from "./VendorFormModal";
+import { SheetLeadButton } from "./SheetLeadButton";
 import "./VendorsListPage.css";
+
+const SERVICE_TYPE_ICON: Record<VendorRole, ReactNode> = {
+  DMC: <IconBriefcase size={12} />,
+  Hotelier: <IconHotel size={12} />,
+  Transport: <IconVan size={12} />,
+  Activity: <IconCamera size={12} />,
+  Visa: <IconIdCard size={12} />,
+  Airline: <IconPlane size={12} />,
+};
 
 export function VendorsListPage({
   vendors,
@@ -166,7 +189,7 @@ export function VendorsListPage({
           items={tabs}
           value={roleFilter}
           onValueChange={setFilter}
-          aria-label="Vendor roles"
+          aria-label="Type of service"
         />
       </div>
 
@@ -224,7 +247,7 @@ export function VendorsListPage({
                   />
                 </DataSheetCell>
                 <DataSheetCell>Vendor</DataSheetCell>
-                <DataSheetCell>Roles</DataSheetCell>
+                <DataSheetCell>Type of service</DataSheetCell>
                 <DataSheetCell>Location</DataSheetCell>
                 <DataSheetCell>Status</DataSheetCell>
                 <DataSheetCell>Updated</DataSheetCell>
@@ -240,28 +263,36 @@ export function VendorsListPage({
                     />
                   </DataSheetCell>
                   <DataSheetCell>
-                    <button
-                      type="button"
-                      className="vendors-sheet__lead-btn"
+                    <SheetLeadButton
+                      label={`Open ${vendor.name}`}
                       onClick={() => onOpenVendor(vendor.id)}
                     >
                       <LeadCell
                         icon={
-                          <Avatar tone="pink" size={32}>
-                            {vendor.initials}
-                          </Avatar>
+                          vendor.logoUrl ? (
+                            <span className="vendors-sheet__logo" aria-hidden="true">
+                              <img src={vendor.logoUrl} alt="" />
+                            </span>
+                          ) : (
+                            <Avatar tone="pink" size={32}>
+                              {vendor.initials}
+                            </Avatar>
+                          )
                         }
                         title={vendor.name}
                         subtitle={vendor.code}
                       />
-                    </button>
+                    </SheetLeadButton>
                   </DataSheetCell>
                   <DataSheetCell>
-                    <div className="vendors-sheet__roles">
+                    <div className="vendors-sheet__services">
                       {vendor.roles.map((role) => (
-                        <StatusChip key={role} tone="open">
+                        <span key={role} className="vendors-sheet__service">
+                          <span className="vendors-sheet__service-icon" aria-hidden="true">
+                            {SERVICE_TYPE_ICON[role]}
+                          </span>
                           {role}
-                        </StatusChip>
+                        </span>
                       ))}
                     </div>
                   </DataSheetCell>
@@ -294,6 +325,7 @@ export function VendorsListPage({
                         size="sm"
                         onClick={() => onOpenVendor(vendor.id)}
                       >
+                        <IconEye />
                         View
                       </Button>
                       {canEdit ? (
@@ -331,6 +363,19 @@ export function VendorsListPage({
                 </DataSheetRow>
               ))}
             </DataSheet>
+            {selected.length > 0 ? (
+              <ListBulkBar
+                label={`${selected.length} vendor${selected.length === 1 ? "" : "s"} selected`}
+              >
+                <Button variant="brand" size="sm">
+                  <IconImport />
+                  Export
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setSelected([])}>
+                  Clear
+                </Button>
+              </ListBulkBar>
+            ) : null}
             <Pagination
               rangeLabel={`Showing 1–${filtered.length} of ${filtered.length} vendors`}
               page={page}

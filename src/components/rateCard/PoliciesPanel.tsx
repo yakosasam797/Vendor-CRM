@@ -14,8 +14,9 @@ import {
   type CheckboxState,
 } from "@paryatech/design-system";
 import type { PolicyDocument, PolicyRow } from "../../rateCard/types";
-import { IconAttach, IconClose, IconFile, IconPlus } from "../../icons";
+import { IconAttach, IconBookmark, IconClose, IconFile, IconPlus } from "../../icons";
 import { StatusChipWithDot } from "../StatusChipWithDot";
+import { SheetLeadButton } from "../SheetLeadButton";
 import "../VendorFormModal.css";
 import "./PoliciesPanel.css";
 
@@ -240,7 +241,17 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
                     />
                   </DataSheetCell>
                   <DataSheetCell>
-                    <LeadCell align="start" title={p.title} subtitle={p.summary} />
+                    <SheetLeadButton
+                      label={`Open ${p.title}`}
+                      onClick={() => setOpenId(p.id)}
+                    >
+                      <LeadCell
+                        align="start"
+                        icon={<IconBookmark size={15} />}
+                        title={p.title}
+                        subtitle={p.summary}
+                      />
+                    </SheetLeadButton>
                   </DataSheetCell>
                   <DataSheetCell>
                     {p.document ? (

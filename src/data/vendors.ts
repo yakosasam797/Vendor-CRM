@@ -47,6 +47,8 @@ export interface Vendor {
   code: string;
   name: string;
   initials: string;
+  /** Optional logo mark — list falls back to initials when absent */
+  logoUrl?: string;
   /** Canonical multi-select from Add/Edit vendor */
   categories: ServiceCategory[];
   /** Derived filter chips for the All Vendors tabs */
@@ -242,6 +244,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-TRAILMAKERS",
     name: "Trailmakers Experiences",
     initials: "TE",
+    logoUrl: "/vendor-logos/trailmakers.svg",
     roles: ["Activity", "Airline", "Transport"],
     location: "Kochi, India",
     labels: [],
@@ -254,6 +257,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-EXHOSP",
     name: "Example Hospitality",
     initials: "EH",
+    logoUrl: "/vendor-logos/example-hospitality.svg",
     roles: ["DMC", "Hotelier"],
     location: "Kochi, India",
     labels: [],
@@ -269,6 +273,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-WANDERLUST",
     name: "Wanderlust Trails",
     initials: "WT",
+    logoUrl: "/vendor-logos/wanderlust.svg",
     roles: ["DMC", "Hotelier", "Transport"],
     location: "Kochi, India",
     labels: [],
@@ -329,6 +334,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-BLUEWAVE",
     name: "BlueWave Transfers",
     initials: "BT",
+    logoUrl: "/vendor-logos/bluewave.svg",
     roles: ["Transport"],
     location: "Kochi, India",
     labels: [],
@@ -341,6 +347,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-KHERITAGE",
     name: "Kerala Heritage Hotels",
     initials: "KH",
+    logoUrl: "/vendor-logos/kerala-heritage.svg",
     roles: ["Hotelier", "DMC"],
     location: "Kochi, India",
     labels: [],
