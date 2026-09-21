@@ -1,0 +1,149 @@
+.vendor-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* When Communications is open, fill the shell so the split pane attaches to chrome */
+.vendor-page:has(> .comm) {
+  min-height: 100%;
+}
+
+.vendor-page:has(> .comm) .vendor-page__tabs {
+  margin-bottom: 0;
+}
+
+.page-crumbs {
+  margin: 0 0 var(--space-4);
+}
+
+.page-crumbs__list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--type-body-copy-family);
+  font-size: var(--type-body-copy-size);
+  font-weight: var(--type-body-copy-weight);
+  line-height: var(--type-body-copy-line);
+  color: var(--ink-3);
+}
+
+.page-crumbs__list li:not(:first-child)::before {
+  content: "›";
+  margin-right: var(--space-2);
+  color: var(--ink-4);
+}
+
+.page-crumbs__list li[aria-current="page"] {
+  color: var(--ink);
+  font-weight: var(--type-body-copy-strong-weight);
+}
+
+.page-crumbs__link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.page-crumbs__link:hover {
+  color: var(--ink);
+}
+
+.page-crumbs__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.vendor-page__tabs {
+  margin-top: var(--space-5);
+  /* ND03 .panels { margin-top: 32px } — keep clear air under the tab underline */
+  margin-bottom: 32px;
+}
+
+.vendor-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+  margin-bottom: var(--space-4);
+}
+
+.vendor-page__tools,
+.vendor-page__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.vendor-page__sheet {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rate-card-sheet {
+  --rc-check: calc(var(--page-pad, 16px) + 46px);
+  --rc-cols: var(--rc-check) minmax(240px, 2.2fr) minmax(150px, 1.05fr) minmax(190px, 1.2fr) 132px minmax(140px, 0.9fr) 128px;
+}
+
+.rate-card-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--rc-cols);
+  min-width: 880px;
+}
+
+.rate-card-sheet__kind {
+  display: block;
+  font-family: var(--type-body-secondary-family);
+  font-size: var(--type-body-secondary-size);
+  font-weight: var(--type-body-secondary-weight);
+  color: var(--ink-2);
+}
+
+.rate-card-sheet__property {
+  font-family: var(--type-body-family);
+  font-size: var(--type-body-size);
+  font-weight: var(--type-body-weight);
+  color: var(--ink);
+}
+
+@media (max-width: 1000px) {
+  .vendor-page__toolbar {
+    align-items: stretch;
+  }
+
+  .vendor-page__tools,
+  .vendor-page__actions {
+    flex-wrap: wrap;
+  }
+}
+
+/*
+  Communications fills the workspace pane — lock page scroll so the
+  list/thread scroll internally and stay attached to the shell chrome.
+*/
+.pt-content:has(> .vendor-page > .comm) {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.pt-content:has(> .vendor-page > .comm) > .vendor-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}

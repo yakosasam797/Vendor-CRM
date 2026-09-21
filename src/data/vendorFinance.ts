@@ -1,0 +1,345 @@
+import type { StatusTone } from "@paryatech/design-system";
+
+export interface FinanceMetric {
+  id: string;
+  label: string;
+  value: string;
+  note: string;
+  tone?: "warn" | "ok";
+}
+
+export type PayableStatus = "overdue" | "part-paid" | "due" | "paid";
+
+export interface PayableRow {
+  id: string;
+  invoice: string;
+  booking: string;
+  bookingDetail: string;
+  invoiced: string;
+  due: string;
+  amount: string;
+  balance: string;
+  balanceTone?: "warn" | "bad" | "muted";
+  dueTone?: "warn" | "bad";
+  status: PayableStatus;
+  action: "pay-now" | "pay-balance" | "schedule" | "receipt";
+}
+
+export type DocStatus = "expiring" | "awaiting" | "verified";
+
+export interface ComplianceDoc {
+  id: string;
+  name: string;
+  file: string;
+  reference: string;
+  validTo: string;
+  validTone?: "warn";
+  ownerName: string;
+  ownerInitials: string;
+  status: DocStatus;
+  statusLabel: string;
+  action: "request-renewal" | "chase" | "view";
+}
+
+export const FINANCE_META = "Net 30 · credit limit ₹2,00,000";
+
+/** Trip-summary strip — 4×2 matrix of vendor finance KPIs */
+export const FINANCE_METRICS: FinanceMetric[] = [
+  {
+    id: "billed",
+    label: "Billed to date",
+    value: "₹2,46,000",
+    note: "9 invoices raised by this supplier",
+  },
+  {
+    id: "settled",
+    label: "Settled",
+    value: "₹1,45,200",
+    note: "59% of everything billed",
+    tone: "ok",
+  },
+  {
+    id: "outstanding",
+    label: "Outstanding",
+    value: "₹1,00,800",
+    note: "3 invoices open · 6 settled",
+  },
+  {
+    id: "overdue",
+    label: "Overdue",
+    value: "₹30,000",
+    note: "1 invoice · 19 days past Net 30",
+    tone: "warn",
+  },
+  {
+    id: "credit-limit",
+    label: "Credit limit",
+    value: "₹2,00,000",
+    note: "Agreed at onboarding, Mar 2021",
+  },
+  {
+    id: "headroom",
+    label: "Credit headroom",
+    value: "₹99,200",
+    note: "50% of the limit is committed",
+    tone: "ok",
+  },
+  {
+    id: "advance",
+    label: "Advance held",
+    value: "₹40,000",
+    note: "Deposit against December room block",
+  },
+  {
+    id: "margin",
+    label: "Margin on their services",
+    value: "22.4%",
+    note: "Blended across 6 live packages",
+  },
+];
+
+export const PAYABLE_STATUS_LABEL: Record<PayableStatus, string> = {
+  overdue: "Overdue",
+  "part-paid": "Part-paid",
+  due: "Due",
+  paid: "Paid",
+};
+
+export const PAYABLE_STATUS_TONE: Record<PayableStatus, StatusTone> = {
+  overdue: "blocked",
+  "part-paid": "open",
+  due: "progress",
+  paid: "done",
+};
+
+export const PAYABLE_ACTION_LABEL: Record<PayableRow["action"], string> = {
+  "pay-now": "Pay now",
+  "pay-balance": "Pay balance",
+  schedule: "Schedule",
+  receipt: "Receipt",
+};
+
+export const PAYABLES: PayableRow[] = [
+  {
+    id: "p1",
+    invoice: "INV-2026-0412",
+    booking: "XYZ Family · Dubai",
+    bookingDetail: "Lake Resort · 2 rooms · 3N",
+    invoiced: "28 Jul 2026",
+    due: "27 Aug 2026",
+    amount: "₹30,000",
+    balance: "₹30,000 due",
+    balanceTone: "bad",
+    dueTone: "bad",
+    status: "overdue",
+    action: "pay-now",
+  },
+  {
+    id: "p2",
+    invoice: "INV-2026-0398",
+    booking: "Kapoor group · Alleppey",
+    bookingDetail: "Houseboat · 1 cabin · 2N",
+    invoiced: "12 Jul 2026",
+    due: "11 Aug 2026",
+    amount: "₹48,000",
+    balance: "₹36,000 due",
+    balanceTone: "warn",
+    dueTone: "warn",
+    status: "part-paid",
+    action: "pay-balance",
+  },
+  {
+    id: "p3",
+    invoice: "INV-2026-0381",
+    booking: "Mehta honeymoon",
+    bookingDetail: "Hill Retreat · 1 suite · 4N",
+    invoiced: "2 Aug 2026",
+    due: "1 Sep 2026",
+    amount: "₹72,800",
+    balance: "₹72,800 due",
+    balanceTone: "warn",
+    dueTone: "warn",
+    status: "due",
+    action: "schedule",
+  },
+  {
+    id: "p4",
+    invoice: "INV-2026-0355",
+    booking: "Singh family · Kochi",
+    bookingDetail: "Lake Resort · 3 rooms · 2N",
+    invoiced: "18 Jun 2026",
+    due: "18 Jul 2026",
+    amount: "₹41,200",
+    balance: "settled",
+    balanceTone: "muted",
+    status: "paid",
+    action: "receipt",
+  },
+  {
+    id: "p5",
+    invoice: "INV-2026-0330",
+    booking: "Corporate retreat · Munnar",
+    bookingDetail: "Hill Retreat · 8 rooms · 3N",
+    invoiced: "4 Jun 2026",
+    due: "4 Jul 2026",
+    amount: "₹1,12,000",
+    balance: "settled",
+    balanceTone: "muted",
+    status: "paid",
+    action: "receipt",
+  },
+  {
+    id: "p6",
+    invoice: "INV-2026-0294",
+    booking: "Nair anniversary",
+    bookingDetail: "Lake Resort · 1 suite · 2N",
+    invoiced: "22 May 2026",
+    due: "21 Jun 2026",
+    amount: "₹28,500",
+    balance: "settled",
+    balanceTone: "muted",
+    status: "paid",
+    action: "receipt",
+  },
+  {
+    id: "p7",
+    invoice: "INV-2026-0261",
+    booking: "Desai group · Thekkady",
+    bookingDetail: "Spice lodge · 4 rooms · 2N",
+    invoiced: "9 May 2026",
+    due: "8 Jun 2026",
+    amount: "₹54,000",
+    balance: "settled",
+    balanceTone: "muted",
+    status: "paid",
+    action: "receipt",
+  },
+  {
+    id: "p8",
+    invoice: "INV-2026-0218",
+    booking: "Iyer family · Varkala",
+    bookingDetail: "Cliff stay · 2 rooms · 3N",
+    invoiced: "28 Apr 2026",
+    due: "28 May 2026",
+    amount: "₹33,600",
+    balance: "settled",
+    balanceTone: "muted",
+    status: "paid",
+    action: "receipt",
+  },
+];
+
+export const DOC_STATUS_TONE: Record<DocStatus, StatusTone> = {
+  expiring: "progress",
+  awaiting: "open",
+  verified: "done",
+};
+
+export const DOC_ACTION_LABEL: Record<ComplianceDoc["action"], string> = {
+  "request-renewal": "Request renewal",
+  chase: "Chase",
+  view: "View",
+};
+
+export const COMPLIANCE_ALERT =
+  "Public liability insurance expires on 28 Sep 2026 (13 days). The 2026–27 rate agreement is still unsigned — both block new confirmations under your compliance policy.";
+
+export const COMPLIANCE_DOCS: ComplianceDoc[] = [
+  {
+    id: "d1",
+    name: "Public liability insurance",
+    file: "icici-lom-8841.pdf",
+    reference: "POL/8841/26",
+    validTo: "28 Sep 2026",
+    validTone: "warn",
+    ownerName: "Deepa Thomas",
+    ownerInitials: "DT",
+    status: "expiring",
+    statusLabel: "Expiring · 13 days",
+    action: "request-renewal",
+  },
+  {
+    id: "d2",
+    name: "Rate agreement 2026–27",
+    file: "eh-rate-agreement-26.pdf",
+    reference: "AGR/2026/EH",
+    validTo: "31 Mar 2027",
+    ownerName: "Rahul Sharma",
+    ownerInitials: "RS",
+    status: "awaiting",
+    statusLabel: "Awaiting signature",
+    action: "chase",
+  },
+  {
+    id: "d3",
+    name: "GST registration certificate",
+    file: "gst-32AABCE1234F1Z5.pdf",
+    reference: "GST/32AABCE",
+    validTo: "— no expiry",
+    ownerName: "Deepa Thomas",
+    ownerInitials: "DT",
+    status: "verified",
+    statusLabel: "Verified",
+    action: "view",
+  },
+  {
+    id: "d4",
+    name: "PAN card",
+    file: "pan-aabce1234f.pdf",
+    reference: "PAN/AABCE",
+    validTo: "— no expiry",
+    ownerName: "Ravi Nair",
+    ownerInitials: "RN",
+    status: "verified",
+    statusLabel: "Verified",
+    action: "view",
+  },
+  {
+    id: "d5",
+    name: "Cancellation policy",
+    file: "eh-cancel-policy-2026.pdf",
+    reference: "POL/CANCEL/26",
+    validTo: "31 Mar 2027",
+    ownerName: "Ravi Nair",
+    ownerInitials: "RN",
+    status: "verified",
+    statusLabel: "Verified",
+    action: "view",
+  },
+  {
+    id: "d6",
+    name: "Cancelled cheque",
+    file: "eh-cancelled-cheque.pdf",
+    reference: "BANK/ICICI/8841",
+    validTo: "— no expiry",
+    ownerName: "Deepa Thomas",
+    ownerInitials: "DT",
+    status: "verified",
+    statusLabel: "Verified",
+    action: "view",
+  },
+  {
+    id: "d7",
+    name: "Fire safety certificate",
+    file: "fire-safety-kochi-2025.pdf",
+    reference: "FSC/KKD/1182",
+    validTo: "14 Jan 2027",
+    ownerName: "Ravi Nair",
+    ownerInitials: "RN",
+    status: "verified",
+    statusLabel: "Verified",
+    action: "view",
+  },
+  {
+    id: "d8",
+    name: "Trade licence",
+    file: "trade-licence-eh-2026.pdf",
+    reference: "TL/KOC/4421",
+    validTo: "31 Dec 2026",
+    ownerName: "Deepa Thomas",
+    ownerInitials: "DT",
+    status: "verified",
+    statusLabel: "Verified",
+    action: "view",
+  },
+];

@@ -1,0 +1,162 @@
+/* Activity follows new-direction-03 open sheet language:
+   canvas rows + column rules, no outer rectangle card. */
+
+.act {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.act-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex: none;
+}
+
+.act-toolbar .pt-search {
+  flex: 1 1 260px;
+  max-width: none;
+}
+
+.act-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+  flex: none;
+}
+
+.act-filter:hover {
+  background: var(--surface-3);
+}
+
+.act-filter svg {
+  color: var(--ink-2);
+  flex: none;
+}
+
+.act-filter select {
+  height: 34px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+  padding-right: 4px;
+}
+
+.act-filter select:focus {
+  outline: none;
+}
+
+.act-filter:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.act-sheet-wrap .pt-sheet__scroll {
+  /* Same fix as tasks: overflow-x:auto implies overflow-y:auto and draws
+     a vertical scrollbar even when all rows fit. */
+  overflow-y: hidden !important;
+}
+
+/* Open DataSheet column template (ND03 --act-cols) */
+.act-sheet {
+  --act-check: calc(var(--page-pad, 16px) + 46px);
+  --act-cols: var(--act-check) minmax(128px, 0.85fr) minmax(168px, 1fr) minmax(240px, 2.2fr) minmax(120px, 0.75fr);
+}
+
+.act-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--act-cols);
+  min-width: 860px;
+}
+
+.act-member {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.act-member__text {
+  min-width: 0;
+}
+
+.act-member__name {
+  font-family: var(--type-body-emphasis-family);
+  font-size: var(--type-body-emphasis-size);
+  font-weight: var(--type-body-emphasis-weight);
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-member__role {
+  font-family: var(--type-body-secondary-family);
+  font-size: var(--type-body-secondary-size);
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.act-event {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.act-module-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.act-empty-cell {
+  grid-column: 1 / -1;
+  justify-content: center;
+  color: var(--ink-3);
+  font-size: 13px;
+  padding: 40px 24px !important;
+}
+
+.act-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 calc(var(--page-pad, 16px) * -1);
+  padding: 11px var(--page-pad, 16px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: var(--pink-soft);
+  color: var(--pink-ink, var(--pink));
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.act-bulk__acts {
+  display: flex;
+  gap: 7px;
+}

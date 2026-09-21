@@ -1,0 +1,207 @@
+/* Vendor Finance & docs — ND03 trip-summary + open sheets */
+
+.vendor-finance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6, 28px);
+  min-width: 0;
+}
+
+.vendor-finance__section {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vendor-finance__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.vendor-finance__titles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.vendor-finance__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.vendor-finance__meta {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+.vendor-finance__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.vendor-finance__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.vendor-finance__sheet {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.vendor-finance__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: var(--space-4);
+  padding: 12px 16px;
+  border: 1px solid var(--warn-line);
+  border-radius: var(--radius-md);
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+
+.vendor-finance__alert svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+.vendor-finance__alert p {
+  margin: 0;
+  font-family: var(--type-body-family, var(--font-sans));
+  font-size: 13.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+/* ---- Payables sheet ---- */
+
+.payables-sheet {
+  --pay-check: calc(var(--page-pad, 16px) + 46px);
+  --pay-cols: var(--pay-check) minmax(120px, 0.9fr) minmax(180px, 1.5fr) minmax(110px, 0.85fr)
+    minmax(110px, 0.85fr) minmax(110px, 0.9fr) 120px 128px;
+}
+
+.payables-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--pay-cols);
+  min-width: 980px;
+}
+
+.payables-sheet__invoice {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.payables-sheet__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--type-mono-date-family, var(--font-mono));
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.payables-sheet__date svg {
+  flex: none;
+  color: var(--ink-3);
+}
+
+.payables-sheet__date--warn {
+  color: var(--warn);
+}
+
+.payables-sheet__date--warn svg {
+  color: var(--warn);
+}
+
+.payables-sheet__date--bad {
+  color: var(--bad);
+}
+
+.payables-sheet__date--bad svg {
+  color: var(--bad);
+}
+
+.payables-sheet__bal--warn {
+  color: var(--warn);
+}
+
+.payables-sheet__bal--bad {
+  color: var(--bad);
+}
+
+/* ---- Compliance docs sheet ---- */
+
+.docs-sheet {
+  --doc-check: calc(var(--page-pad, 16px) + 46px);
+  --doc-cols: var(--doc-check) minmax(200px, 1.8fr) minmax(110px, 0.9fr) minmax(110px, 0.85fr)
+    minmax(140px, 1.1fr) minmax(130px, 1fr) 140px;
+}
+
+.docs-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--doc-cols);
+  min-width: 920px;
+}
+
+.docs-sheet__ref {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.docs-sheet__valid {
+  font-family: var(--type-body-family, var(--font-sans));
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.docs-sheet__valid--warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.docs-sheet__owner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--type-body-family, var(--font-sans));
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+@media (max-width: 1000px) {
+  .vendor-finance__toolbar {
+    align-items: stretch;
+  }
+
+  .vendor-finance__tools {
+    width: 100%;
+  }
+}

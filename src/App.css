@@ -1,0 +1,104 @@
+.app-shell-crumbs__list {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+}
+
+.app-shell-crumbs__list li {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell-crumbs__list li[aria-current="page"] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.app-shell-crumbs__link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell-crumbs__link:hover {
+  color: var(--ink);
+}
+
+.app-shell-crumbs__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.rc-crumb-sep {
+  color: var(--ink-3);
+  flex: none;
+}
+
+/* Booking topbar search — soft-rect, no scope chip */
+.app-top-search {
+  flex: 0 1 340px;
+  max-width: 380px;
+  min-width: 0;
+}
+
+.app-top-search .pt-search {
+  width: 100%;
+}
+
+/* Soft-rect util icons — match booking, not pills */
+.pt-icon-btn.app-top-util {
+  border-radius: var(--radius-md);
+}
+
+/* Booking `.acct` — pink-line soft-rect + avatar */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 8px 0 6px;
+  border: 1px solid var(--pink-line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--pink);
+  font-family: var(--type-label-account-family);
+  font-size: var(--type-label-account-size);
+  font-weight: var(--type-label-account-weight);
+  cursor: pointer;
+  flex: none;
+}
+
+.account-btn:hover {
+  background: var(--pink-soft);
+}
+
+.account-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.account-btn svg {
+  color: var(--pink);
+  flex: none;
+}
+
+@media (max-width: 1000px) {
+  .app-top-search {
+    flex: 1 1 200px;
+    max-width: none;
+  }
+}

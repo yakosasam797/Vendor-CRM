@@ -1,0 +1,127 @@
+.packages-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+.packages-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.packages-panel__meta {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+.packages-panel__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.packages-panel__search {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.packages-panel__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.packages-panel__sheet {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+}
+
+/*
+ * Kill DataSheet’s default .pt-sheet__scroll (overflow-x/y: auto).
+ * Packages must fill the workspace with no horizontal or vertical sheet scroll.
+ */
+.packages-sheet {
+  --pkg-check: calc(var(--page-pad, 16px) + 36px);
+  /* Package · Services · Priced · Sell · Status · Action — check stays first (left) */
+  --pkg-cols: var(--pkg-check) minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 0.95fr)
+    minmax(0, 0.55fr) minmax(0, 0.7fr) 44px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.packages-sheet .pt-sheet__scroll {
+  overflow: hidden !important;
+  width: 100%;
+  max-width: 100%;
+}
+
+.packages-sheet .pt-sheet__row {
+  grid-auto-flow: unset;
+  grid-auto-columns: unset;
+  grid-template-columns: var(--pkg-cols);
+  min-width: 0 !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.packages-sheet .pt-sheet__cell {
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.packages-sheet .pt-sheet__row > .pt-sheet__cell:first-child {
+  padding-left: var(--page-pad, 16px);
+}
+
+/* Checkboxes stay on the LEFT — first grid track only */
+.packages-sheet .pt-sheet__cell--check {
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.packages-sheet .pt-sheet__cell:last-child {
+  justify-content: flex-end;
+  overflow: visible;
+  padding-right: var(--page-pad, 16px);
+}
+
+.packages-sheet__services {
+  display: block;
+  max-width: 100%;
+  font-family: var(--type-body-family);
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.packages-sheet__price {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .packages-panel__toolbar {
+    align-items: stretch;
+  }
+}
