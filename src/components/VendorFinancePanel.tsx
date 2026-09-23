@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import {
   Button,
@@ -117,27 +117,6 @@ function normalizedAccountNumber(value: string) {
   return value.replace(/[\s-]/g, "");
 }
 
-function formatBankAuditTime(value: string) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
-
-function bankDetailsText(account: BankAccount) {
-  return [
-    `Bank: ${account.bankName}`,
-    `Account holder: ${account.accountHolder}`,
-    `Account number: ${account.accountNumber}`,
-    `IFSC code: ${account.routingCode}`,
-    account.accountType ? `Account type: ${account.accountType}` : null,
-    account.branch ? `Branch: ${account.branch}` : null,
-  ].filter(Boolean).join("\n");
-}
-
 const PAYABLE_FILTER_OPTIONS = [
   { value: "all", label: "All statuses" },
   { value: "open", label: "Open balance" },
@@ -176,6 +155,8 @@ function downloadCsv(filename: string, rows: Array<Array<string | number>>) {
 }
 
 export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string; canEdit: boolean }) {
+  const bankDialogRef = useRef<HTMLDivElement>(null);
+  const bankReturnFocusRef = useRef<HTMLElement | null>(null);
   const [payQuery, setPayQuery] = useState("");
   const [payFilter, setPayFilter] = useState<PayableFilter>("all");
   const [paySelected, setPaySelected] = useState<string[]>([]);
@@ -188,6 +169,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
   const [statementExported, setStatementExported] = useState(false);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>(() => initialBankAccounts(vendorName));
   const [bankEditor, setBankEditor] = useState<"add" | "edit" | null>(null);
+  const [bankPanelPosition, setBankPanelPosition] = useState<CSSProperties>();
   const [bankDraft, setBankDraft] = useState<BankAccount>({
     ...INITIAL_BANK_ACCOUNT,
     id: "",
@@ -210,6 +192,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
   };
 
   const openBankEditor = (mode: "add" | "edit", account?: BankAccount) => {
+    bankReturnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setBankError(null);
     setBankEditor(mode);
     setBankDraft(account
@@ -351,11 +334,69 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
 
   useEffect(() => {
     if (!bankEditor) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setBankEditor(null);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setBankEditor(null);
+        return;
+      }
+      if (event.key !== "Tab" || !bankDialogRef.current) return;
+      const focusable = [
+        ...bankDialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ];
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      const returnTarget = bankReturnFocusRef.current;
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+      window.requestAnimationFrame(() => {
+        if (returnTarget?.isConnected) returnTarget.focus();
+      });
+    };
+  }, [bankEditor]);
+
+  useLayoutEffect(() => {
+    if (!bankEditor) return;
+
+    const updatePosition = () => {
+      const anchor = bankReturnFocusRef.current;
+      if (!anchor) {
+        setBankPanelPosition(undefined);
+        return;
+      }
+      const rect = anchor.getBoundingClientRect();
+      const viewportInset = 12;
+      const gap = 8;
+      const top = rect.bottom + gap;
+      setBankPanelPosition({
+        top,
+        right: Math.max(viewportInset, window.innerWidth - rect.right),
+        maxHeight: Math.max(240, window.innerHeight - top - viewportInset),
+      });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
   }, [bankEditor]);
 
   const payHeader: CheckboxState =
@@ -526,21 +567,6 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
                   </Tooltip>
                 </span>
               </div>
-              <div className="bank-details-grid__field bank-details-grid__field--record">
-                <div className="bank-details-grid__record-copy">
-                  <span className="bank-details-grid__label">Saved details</span>
-                  <strong>Added manually · Not bank-verified</strong>
-                  <small>Last changed by {account.updatedBy} · {formatBankAuditTime(account.updatedAt)}</small>
-                </div>
-                <Button
-                  variant="brand"
-                  size="sm"
-                  onClick={() => void copyBankField(`${account.id}-all`, bankDetailsText(account))}
-                >
-                  <IconCopy />
-                  {copiedField === `${account.id}-all` ? "Copied all" : "Copy all details"}
-                </Button>
-              </div>
             </article>
           ))}
         </div>
@@ -703,7 +729,14 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
                 if (event.target === event.currentTarget) setBankEditor(null);
               }}
             >
-              <div className="rc-modal bank-account-modal" role="dialog" aria-modal="true" aria-labelledby="bank-account-modal-title">
+              <div
+                ref={bankDialogRef}
+                className="rc-modal bank-account-modal"
+                style={bankPanelPosition}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="bank-account-modal-title"
+              >
                 <div className="bank-account-modal__head">
                   <h2 id="bank-account-modal-title" className="rc-modal__title">{bankEditor === "add" ? "Add bank details" : "Edit bank details"}</h2>
                   <IconButton label="Close bank account form" onClick={() => setBankEditor(null)}><IconClose /></IconButton>

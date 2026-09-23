@@ -60,9 +60,11 @@ const EMPTY_PACKAGE: Pick<VendorPackage, "name" | "detail" | "sellPrice"> = {
 export function PackagesPanel({
   onDetailOpenChange,
   onNavigationContextChange,
+  onOpenService,
 }: {
   onDetailOpenChange?: (open: boolean) => void;
   onNavigationContextChange?: PageNavigationChange;
+  onOpenService?: (serviceId: string | undefined, vendorId: string | undefined) => void;
 }) {
   const [packages, setPackages] = useState<VendorPackage[]>(() => [...VENDOR_PACKAGES]);
   const [query, setQuery] = useState("");
@@ -186,6 +188,7 @@ export function PackagesPanel({
     return (
       <PackageDetailPage
         pkg={openPackage}
+        onOpenService={onOpenService}
         onUpdate={(next) =>
           setPackages((current) =>
             current.map((pkg) => (pkg.id === next.id ? next : pkg)),

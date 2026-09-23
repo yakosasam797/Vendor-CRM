@@ -22,8 +22,10 @@ import {
   DOC_ACTION_LABEL,
   DOC_STATUS_TONE,
   type ComplianceDoc,
+  type DocStatus,
 } from "../data/vendorFinance";
 import {
+  IconCheck,
   IconClose,
   IconFile,
   IconFilter,
@@ -55,6 +57,16 @@ interface UploadDraft {
   validity: "none" | "expires";
   validUntil: string;
 }
+
+type DocumentStatusFilter = "all" | DocStatus;
+
+const DOCUMENT_STATUS_FILTERS: Array<{ value: DocumentStatusFilter; label: string }> = [
+  { value: "all", label: "All documents" },
+  { value: "verified", label: "Verified" },
+  { value: "expiring", label: "Expiring" },
+  { value: "expired", label: "Expired" },
+  { value: "awaiting", label: "Awaiting signature" },
+];
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -130,10 +142,14 @@ function fileSizeLabel(bytes: number) {
 
 export function VendorDocsPanel({
   onRequestDocuments,
+  canEdit = false,
 }: {
   onRequestDocuments?: (documentName?: string, action?: "request-renewal" | "chase") => void;
+  canEdit?: boolean;
 }) {
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<DocumentStatusFilter>("all");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [documentRows, setDocumentRows] = useState<DisplayDocument[]>(() =>
     COMPLIANCE_DOCS.map((row) => ({ ...row })),
   );
@@ -144,6 +160,7 @@ export function VendorDocsPanel({
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [uploadDraft, setUploadDraft] = useState<UploadDraft | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
   const uploadedUrlsRef = useRef<string[]>([]);
 
   const displayRows = useMemo(
@@ -153,14 +170,17 @@ export function VendorDocsPanel({
 
   const docs = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return displayRows;
-    return displayRows.filter(
-      (row) =>
+    return displayRows.filter((row) => {
+      if (statusFilter !== "all" && row.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
         row.name.toLowerCase().includes(q) ||
         row.file.toLowerCase().includes(q) ||
-        row.reference.toLowerCase().includes(q),
-    );
-  }, [displayRows, query]);
+        row.reference.toLowerCase().includes(q) ||
+        row.ownerName.toLowerCase().includes(q)
+      );
+    });
+  }, [displayRows, query, statusFilter]);
 
   const documentToDelete = documentRows.find((row) => row.id === deleteId) ?? null;
   const previewDocument = displayRows.find((row) => row.id === previewId) ?? null;
@@ -190,6 +210,22 @@ export function VendorDocsPanel({
     const uploadedUrls = uploadedUrlsRef.current;
     return () => uploadedUrls.forEach((url) => URL.revokeObjectURL(url));
   }, []);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!filterRef.current?.contains(event.target as Node)) setFilterOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFilterOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [filterOpen]);
 
   useEffect(() => {
     if (!openMenu) return;
@@ -343,37 +379,98 @@ export function VendorDocsPanel({
             aria-label="Search document"
           />
           <div className="vendor-finance__tools">
-            <Tooltip tip="Filter">
-              <IconButton label="Filter documents">
-                <IconFilter />
-              </IconButton>
-            </Tooltip>
-            <Button variant="brand" size="sm" onClick={() => onRequestDocuments?.()}>
-              <IconSend />
-              Request
-            </Button>
-            <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()}>
-              <IconImport />
-              Upload file
-            </Button>
-            <input
-              ref={fileInputRef}
-              className="docs-upload-input"
-              type="file"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-              onChange={(event) => {
-                prepareDocumentUpload(event.target.files?.[0] ?? null);
-                event.target.value = "";
-              }}
-            />
+            <div className="docs-filter" ref={filterRef}>
+              <Tooltip tip="Filter">
+                <IconButton
+                  className={statusFilter === "all" ? undefined : "is-active"}
+                  label={`Filter documents${
+                    statusFilter === "all"
+                      ? ""
+                      : `: ${
+                          DOCUMENT_STATUS_FILTERS.find((option) => option.value === statusFilter)
+                            ?.label ?? statusFilter
+                        }`
+                  }`}
+                  aria-haspopup="menu"
+                  aria-expanded={filterOpen}
+                  onClick={() => {
+                    setFilterOpen((open) => !open);
+                    setOpenMenu(null);
+                  }}
+                >
+                  <IconFilter />
+                </IconButton>
+              </Tooltip>
+              {filterOpen ? (
+                <div className="docs-filter__menu" role="menu" aria-label="Filter documents by status">
+                  {DOCUMENT_STATUS_FILTERS.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={statusFilter === option.value}
+                      onClick={() => {
+                        setStatusFilter(option.value);
+                        setSelected([]);
+                        setPage(1);
+                        setFilterOpen(false);
+                      }}
+                    >
+                      <span>{option.label}</span>
+                      {statusFilter === option.value ? <IconCheck /> : null}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {canEdit ? (
+              <>
+                <Button variant="brand" size="sm" onClick={() => onRequestDocuments?.()}>
+                  <IconSend />
+                  Request
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => fileInputRef.current?.click()}>
+                  <IconImport />
+                  Upload file
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  className="docs-upload-input"
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  onChange={(event) => {
+                    prepareDocumentUpload(event.target.files?.[0] ?? null);
+                    event.target.value = "";
+                  }}
+                />
+              </>
+            ) : null}
           </div>
         </div>
+
+        {statusFilter !== "all" ? (
+          <div className="docs-filter-result" role="status">
+            Showing {
+              DOCUMENT_STATUS_FILTERS.find((option) => option.value === statusFilter)?.label.toLowerCase()
+            } documents
+            <button
+              type="button"
+              onClick={() => {
+                setStatusFilter("all");
+                setSelected([]);
+                setPage(1);
+              }}
+            >
+              Clear filter
+            </button>
+          </div>
+        ) : null}
 
         <div className="vendor-finance__sheet dashboard-table-end">
           {docs.length === 0 ? (
             <EmptyState
-              title="No documents match this search"
-              description="Try another document name or reference."
+              title="No documents match this view"
+              description="Clear the filter or try another document name, owner, or reference."
             />
           ) : (
             <>
@@ -454,16 +551,18 @@ export function VendorDocsPanel({
                     </DataSheetCell>
                     <DataSheetCell>
                       <div className="docs-sheet__actions">
-                        <IconButton
-                          className="docs-sheet__more"
-                          label={`More actions for ${row.name}`}
-                          aria-haspopup="menu"
-                          aria-expanded={openMenu?.id === row.id}
-                          onPointerDown={(event) => event.stopPropagation()}
-                          onClick={(event) => showRowMenu(row.id, event.currentTarget)}
-                        >
-                          <IconMore />
-                        </IconButton>
+                        {canEdit ? (
+                          <IconButton
+                            className="docs-sheet__more"
+                            label={`More actions for ${row.name}`}
+                            aria-haspopup="menu"
+                            aria-expanded={openMenu?.id === row.id}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={(event) => showRowMenu(row.id, event.currentTarget)}
+                          >
+                            <IconMore />
+                          </IconButton>
+                        ) : null}
                       </div>
                     </DataSheetCell>
                   </DataSheetRow>
@@ -752,6 +851,7 @@ export function VendorDocsPanel({
                       <h2 id="docs-preview-title" className="rc-modal__title">
                         {previewDocument.name}
                       </h2>
+                      <p>{previewDocument.file}</p>
                     </div>
                   </div>
                   <IconButton label="Close preview" onClick={() => setPreviewId(null)} autoFocus>

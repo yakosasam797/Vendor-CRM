@@ -6,7 +6,8 @@ export type VendorPermission =
   | "vendor.edit"
   | "vendor.deactivate"
   | "vendor.archive"
-  | "vendor.manage_access";
+  | "vendor.manage_access"
+  | "vendor.task.add";
 
 export type SettingsPermission =
   | "settings.organization"
@@ -29,12 +30,14 @@ const ROLE_PERMISSIONS: Record<OrgRole, ReadonlySet<VendorPermission>> = {
     "vendor.deactivate",
     "vendor.archive",
     "vendor.manage_access",
+    "vendor.task.add",
   ]),
   Admin: new Set([
     "vendor.view",
     "vendor.add",
     "vendor.edit",
     "vendor.deactivate",
+    "vendor.task.add",
   ]),
   Member: new Set(["vendor.view"]),
 };

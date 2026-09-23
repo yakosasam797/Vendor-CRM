@@ -15,7 +15,23 @@ import {
   type CheckboxState,
 } from "@paryatech/design-system";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
-import { IconCalendar, IconCheck, IconChevronDown, IconClock, IconImport, IconModule } from "../icons";
+import {
+  IconBookings,
+  IconBriefcase,
+  IconCalendar,
+  IconCard,
+  IconCheck,
+  IconChevronDown,
+  IconClock,
+  IconFile,
+  IconFinance,
+  IconImport,
+  IconMail,
+  IconModule,
+  IconPackages,
+  IconTasks,
+  IconVendors,
+} from "../icons";
 import "./ActivityPanel.css";
 
 export type ActivityRow = {
@@ -29,6 +45,23 @@ export type ActivityRow = {
   event: string;
   module: string;
 };
+
+function ActivityModuleIcon({ module, size = 15 }: { module: string; size?: number }) {
+  const key = module.trim().toLowerCase();
+
+  if (key.includes("communication")) return <IconMail size={size} />;
+  if (key.includes("service")) return <IconBriefcase size={size} />;
+  if (key.includes("vendor")) return <IconVendors size={size} />;
+  if (key.includes("booking")) return <IconBookings size={size} />;
+  if (key.includes("finance")) return <IconFinance size={size} />;
+  if (key.includes("doc") || key.includes("source")) return <IconFile size={size} />;
+  if (key.includes("package")) return <IconPackages size={size} />;
+  if (key.includes("task")) return <IconTasks size={size} />;
+  if (key.includes("rate") || key === "card") return <IconCard size={size} />;
+  if (key.includes("rule") || key.includes("season")) return <IconCalendar size={size} />;
+
+  return <IconModule size={size} />;
+}
 
 export function ActivityPanel({
   rows,
@@ -112,7 +145,7 @@ export function ActivityPanel({
             aria-expanded={filterOpen}
             onClick={() => setFilterOpen((open) => !open)}
           >
-            <IconModule size={15} />
+            <ActivityModuleIcon module={module} />
             <span>{module}</span>
             <IconChevronDown size={14} />
           </button>
@@ -132,7 +165,10 @@ export function ActivityPanel({
                     setFilterOpen(false);
                   }}
                 >
-                  <span>{item}</span>
+                  <span className="act-filter__option-label">
+                    <ActivityModuleIcon module={item} />
+                    <span>{item}</span>
+                  </span>
                   {module === item ? <IconCheck size={14} /> : null}
                 </button>
               ))}
@@ -207,7 +243,7 @@ export function ActivityPanel({
                 <DataSheetCell>
                   <LeadCell
                     align="start"
-                    icon={<IconModule size={15} />}
+                    icon={<ActivityModuleIcon module={r.module} />}
                     title={<span className="act-module-label">{r.module}</span>}
                   />
                 </DataSheetCell>

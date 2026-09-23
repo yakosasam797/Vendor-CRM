@@ -16,11 +16,27 @@ import { assertCan, type OrgRole } from "./permissions";
 export interface VendorFormValues {
   name: string;
   categories: ServiceCategory[];
+  labels: string;
   country: string;
   city: string;
+  state: string;
+  address: string;
+  postalCode: string;
   contactName: string;
   phone: string;
   email: string;
+  whatsapp: string;
+  legalName: string;
+  gstin: string;
+  pan: string;
+  dmcScope: string;
+  specializations: string;
+  reservationsEmail: string;
+  emergencyPhone: string;
+  confirmationSla: string;
+  confirmationChannel: string;
+  paymentTerms: string;
+  internalNotes: string;
   owner: string;
   status: VendorStatus;
 }
@@ -152,6 +168,12 @@ export function validateVendorForm(values: VendorFormValues): string[] {
   if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
     errors.push("Enter a valid email address.");
   }
+  if (
+    values.reservationsEmail.trim() &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.reservationsEmail.trim())
+  ) {
+    errors.push("Enter a valid reservations email address.");
+  }
   return errors;
 }
 
@@ -180,7 +202,22 @@ export function createVendor(
     contactName: values.contactName.trim(),
     phone: values.phone.trim(),
     email: values.email.trim(),
-    labels: [],
+    labels: values.labels.split(",").map((label) => label.trim()).filter(Boolean),
+    whatsapp: values.whatsapp.trim(),
+    state: values.state.trim(),
+    address: values.address.trim(),
+    postalCode: values.postalCode.trim(),
+    legalName: values.legalName.trim(),
+    gstin: values.gstin.trim().toUpperCase(),
+    pan: values.pan.trim().toUpperCase(),
+    dmcScope: values.dmcScope.trim(),
+    specializations: values.specializations.trim(),
+    reservationsEmail: values.reservationsEmail.trim(),
+    emergencyPhone: values.emergencyPhone.trim(),
+    confirmationSla: values.confirmationSla.trim(),
+    confirmationChannel: values.confirmationChannel.trim(),
+    paymentTerms: values.paymentTerms.trim(),
+    internalNotes: values.internalNotes.trim(),
     updated: nowStamp(),
     owner: values.owner,
     ownerInitials: ownerInitials(values.owner),
@@ -246,6 +283,13 @@ export function updateVendor(
   if (removing.length || values.categories.some((c) => !current.categories.includes(c))) {
     changes.push("categories");
   }
+  if (
+    current.contactName !== values.contactName.trim() ||
+    current.phone !== values.phone.trim() ||
+    current.email !== values.email.trim()
+  ) {
+    changes.push("contact details");
+  }
 
   return {
     ...current,
@@ -260,6 +304,22 @@ export function updateVendor(
     contactName: values.contactName.trim(),
     phone: values.phone.trim(),
     email: values.email.trim(),
+    labels: values.labels.split(",").map((label) => label.trim()).filter(Boolean),
+    whatsapp: values.whatsapp.trim(),
+    state: values.state.trim(),
+    address: values.address.trim(),
+    postalCode: values.postalCode.trim(),
+    legalName: values.legalName.trim(),
+    gstin: values.gstin.trim().toUpperCase(),
+    pan: values.pan.trim().toUpperCase(),
+    dmcScope: values.dmcScope.trim(),
+    specializations: values.specializations.trim(),
+    reservationsEmail: values.reservationsEmail.trim(),
+    emergencyPhone: values.emergencyPhone.trim(),
+    confirmationSla: values.confirmationSla.trim(),
+    confirmationChannel: values.confirmationChannel.trim(),
+    paymentTerms: values.paymentTerms.trim(),
+    internalNotes: values.internalNotes.trim(),
     owner: values.owner,
     ownerInitials: ownerInitials(values.owner),
     status: values.status,
@@ -286,11 +346,27 @@ export function vendorToFormValues(vendor: Vendor): VendorFormValues {
   return {
     name: vendor.name,
     categories: [...vendor.categories],
+    labels: vendor.labels.join(", "),
     country: vendor.country,
     city: vendor.city,
+    state: vendor.state ?? "",
+    address: vendor.address ?? "",
+    postalCode: vendor.postalCode ?? "",
     contactName: vendor.contactName,
     phone: vendor.phone,
     email: vendor.email,
+    whatsapp: vendor.whatsapp ?? "",
+    legalName: vendor.legalName ?? "",
+    gstin: vendor.gstin ?? "",
+    pan: vendor.pan ?? "",
+    dmcScope: vendor.dmcScope ?? "",
+    specializations: vendor.specializations ?? "",
+    reservationsEmail: vendor.reservationsEmail ?? "",
+    emergencyPhone: vendor.emergencyPhone ?? "",
+    confirmationSla: vendor.confirmationSla ?? "",
+    confirmationChannel: vendor.confirmationChannel ?? "",
+    paymentTerms: vendor.paymentTerms ?? "",
+    internalNotes: vendor.internalNotes ?? "",
     owner: vendor.owner,
     status: vendor.status,
   };
@@ -300,11 +376,27 @@ export function emptyVendorFormValues(): VendorFormValues {
   return {
     name: "",
     categories: [],
+    labels: "",
     country: "India",
     city: "",
+    state: "",
+    address: "",
+    postalCode: "",
     contactName: "",
     phone: "",
     email: "",
+    whatsapp: "",
+    legalName: "",
+    gstin: "",
+    pan: "",
+    dmcScope: "",
+    specializations: "",
+    reservationsEmail: "",
+    emergencyPhone: "",
+    confirmationSla: "",
+    confirmationChannel: "",
+    paymentTerms: "",
+    internalNotes: "",
     owner: "Anjali Menon",
     status: "Draft",
   };

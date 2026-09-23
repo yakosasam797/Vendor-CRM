@@ -43,6 +43,16 @@ export interface VendorSetup {
   activated: boolean;
 }
 
+export interface VendorContact {
+  id: string;
+  name: string;
+  initials: string;
+  role: string;
+  email: string;
+  phone: string;
+  primary?: boolean;
+}
+
 export interface Vendor {
   id: string;
   code: string;
@@ -60,6 +70,7 @@ export interface Vendor {
   contactName: string;
   phone: string;
   email: string;
+  contacts?: VendorContact[];
   labels: string[];
   whatsapp?: string;
   state?: string;
@@ -265,6 +276,37 @@ export const SEED_VENDORS: Vendor[] = [
     imageUrl: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Activity", "Airline", "Transport"],
     location: "Kochi, India",
+    contactName: "Nikhil Thomas",
+    phone: "+91 98470 21458",
+    email: "nikhil@trailmakers.in",
+    reservationsEmail: "reservations@trailmakers.in",
+    contacts: [
+      {
+        id: "trailmakers-partnerships",
+        name: "Nikhil Thomas",
+        initials: "NT",
+        role: "Partnerships",
+        email: "nikhil@trailmakers.in",
+        phone: "+91 98470 21458",
+        primary: true,
+      },
+      {
+        id: "trailmakers-reservations",
+        name: "Maya Joseph",
+        initials: "MJ",
+        role: "Reservations",
+        email: "reservations@trailmakers.in",
+        phone: "+91 98471 55204",
+      },
+      {
+        id: "trailmakers-accounts",
+        name: "Deepa Mathew",
+        initials: "DM",
+        role: "Accounts",
+        email: "accounts@trailmakers.in",
+        phone: "+91 98472 81307",
+      },
+    ],
     labels: [],
     updated: "3 months ago",
     owner: "Priya Nair",

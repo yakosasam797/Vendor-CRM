@@ -79,7 +79,7 @@
 
 .bank-details-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   min-width: 0;
   border-bottom: 1px solid var(--line);
 }
@@ -96,45 +96,12 @@
   border-left: 1px solid var(--line);
 }
 
-.bank-details-grid__field:nth-child(4n + 1) {
+.bank-details-grid__field:nth-child(3n + 1) {
   border-left: 0;
 }
 
-.bank-details-grid__field:nth-child(n + 5) {
+.bank-details-grid__field:nth-child(n + 4) {
   border-top: 1px solid var(--line-2, var(--line));
-}
-
-.bank-details-grid__field--record {
-  grid-column: span 2;
-}
-
-.bank-details-grid__field--record {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-}
-
-.bank-details-grid__record-copy {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
-.bank-details-grid__record-copy strong {
-  color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 650;
-}
-
-.bank-details-grid__record-copy small {
-  color: var(--ink-3);
-  font-size: 10.5px;
-  line-height: 1.4;
-}
-
-.bank-details-grid__field--record .pt-button {
-  flex: none;
 }
 
 .bank-details-grid__label {
@@ -233,15 +200,8 @@
   }
 
   .bank-details-grid__field,
-  .bank-details-grid__field:nth-child(even),
-  .bank-details-grid__field--record {
-    grid-column: auto;
+  .bank-details-grid__field:nth-child(even) {
     border-left: 0;
-  }
-
-  .bank-details-grid__field--record {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .bank-details-grid__field:nth-child(n + 2) {
@@ -249,14 +209,39 @@
   }
 }
 
-.bank-account-backdrop {
-  z-index: 210;
+.rc-modal-backdrop.bank-account-backdrop {
+  display: block;
+  z-index: 620;
+  padding: 0;
+  background: transparent;
 }
 
 .rc-modal.bank-account-modal {
-  width: min(700px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
+  position: fixed;
+  top: 64px;
+  right: 12px;
+  display: flex;
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 76px);
+  padding: 0;
+  flex-direction: column;
+  border-radius: 16px;
+  box-shadow: 0 20px 54px rgba(20, 26, 33, 0.22);
   overflow: hidden;
+  transform-origin: top right;
+  animation: bank-account-panel-in 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes bank-account-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .bank-account-modal__head,
@@ -271,6 +256,7 @@
 
 .bank-account-modal__head {
   border-bottom: 1px solid var(--line);
+  background: var(--side, #fcfbfa);
 }
 
 .bank-account-modal__head .rc-modal__title {
@@ -365,8 +351,22 @@
 }
 
 @media (max-width: 560px) {
+  .rc-modal.bank-account-modal {
+    top: 64px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-height: calc(100vh - 72px);
+  }
+
   .bank-account-form__grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-modal.bank-account-modal {
+    animation: none;
   }
 }
 
@@ -1047,6 +1047,92 @@
 }
 
 /* ---- Compliance docs sheet ---- */
+
+.docs-filter {
+  position: relative;
+}
+
+.docs-filter .is-active {
+  border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent-ink, var(--accent));
+}
+
+.docs-filter__menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  min-width: 208px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface);
+  box-shadow: var(--menuShadow);
+}
+
+.docs-filter__menu button {
+  display: flex;
+  width: 100%;
+  min-height: 36px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.docs-filter__menu button:hover,
+.docs-filter__menu button:focus-visible {
+  outline: none;
+  background: var(--surface-2, var(--side));
+}
+
+.docs-filter__menu button svg {
+  flex: none;
+  color: var(--accent);
+}
+
+.docs-filter-result {
+  display: flex;
+  width: fit-content;
+  min-height: 32px;
+  align-items: center;
+  gap: 8px;
+  margin: -6px 0 12px;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm, 8px);
+  background: var(--side);
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.docs-filter-result button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink, var(--accent));
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.docs-filter-result button:hover,
+.docs-filter-result button:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 .docs-sheet {
   --doc-check: calc(var(--page-pad, 16px) + 46px);

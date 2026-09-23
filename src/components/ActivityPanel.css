@@ -130,6 +130,21 @@
   flex: none;
 }
 
+.act-filter__option-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.act-filter__option-label > svg {
+  color: var(--ink-2);
+}
+
+.act-filter__menu button.is-selected .act-filter__option-label > svg {
+  color: currentColor;
+}
+
 .act-sheet-wrap .pt-sheet__scroll {
   /* Same fix as tasks: overflow-x:auto implies overflow-y:auto and draws
      a vertical scrollbar even when all rows fit. */

@@ -130,6 +130,8 @@ function ServiceDirectoryDetail({
 }) {
   const [tab, setTab] = useState("overview");
   const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
+  const [vendorMenuId, setVendorMenuId] = useState<string | null>(null);
+  const vendorMenuRef = useRef<HTMLDivElement>(null);
   const vendorIds = useMemo(() => new Set(vendors.map((vendor) => vendor.id)), [vendors]);
   const connections = useMemo(
     () => VENDOR_SERVICE_CONNECTIONS.filter((connection) => connection.serviceId === service.id && vendorIds.has(connection.vendorId)),
@@ -214,6 +216,22 @@ function ServiceDirectoryDetail({
     { id: "vendors", label: "Vendors", count: connections.length },
     { id: "test-rate", label: "Test rate" },
   ];
+
+  useEffect(() => {
+    if (!vendorMenuId) return;
+    const closeMenu = (event: MouseEvent) => {
+      if (!vendorMenuRef.current?.contains(event.target as Node)) setVendorMenuId(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setVendorMenuId(null);
+    };
+    document.addEventListener("mousedown", closeMenu);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeMenu);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [vendorMenuId]);
 
   return (
     <div className="service-directory-detail">
@@ -320,10 +338,7 @@ function ServiceDirectoryDetail({
 
           <section className="service-suppliers" aria-labelledby="service-suppliers-title">
             <div className="service-section-head">
-              <div>
-                <h2 id="service-suppliers-title">Linked vendors</h2>
-                <p>Supplier relationships and current pricing available for this service.</p>
-              </div>
+              <h2 id="service-suppliers-title">Linked vendors</h2>
               {connections.length > 0 ? <span className="service-suppliers__count">{activeConnectionCount} active of {connections.length}</span> : null}
             </div>
             {connections.length === 0 ? (
@@ -338,18 +353,66 @@ function ServiceDirectoryDetail({
               <DataSheetCell>Location</DataSheetCell>
               <DataSheetCell>Current rate card</DataSheetCell>
               <DataSheetCell>Status</DataSheetCell>
+              <DataSheetCell className="service-suppliers-sheet__action">Action</DataSheetCell>
             </DataSheetHeader>
             {connections.map((connection) => {
               const vendor = vendors.find((item) => item.id === connection.vendorId);
               if (!vendor) return null;
               return (
-                <DataSheetRow key={connection.id}>
+                <DataSheetRow
+                  key={connection.id}
+                  className="data-row--interactive"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open ${vendor.name}`}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement;
+                    if (target.closest("button, a, input, select, textarea")) return;
+                    onOpenVendor(vendor.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onOpenVendor(vendor.id);
+                    }
+                  }}
+                >
                   <DataSheetCell check><Checkbox state={selectedVendorIds.includes(vendor.id) ? "on" : "off"} onCheckedChange={(state) => setSelectedVendorIds((current) => state === "on" ? current.includes(vendor.id) ? current : [...current, vendor.id] : current.filter((id) => id !== vendor.id))} label={`Select ${vendor.name}`} /></DataSheetCell>
                   <DataSheetCell><DirectoryEntity vendor={vendor} title={vendor.name} subtitle={vendor.code} onClick={() => onOpenVendor(vendor.id)} /></DataSheetCell>
                   <DataSheetCell><span className="directory-relationship"><strong>{connection.supplierType}</strong><span>{connection.productsCovered}</span></span></DataSheetCell>
                   <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span></DataSheetCell>
-                  <DataSheetCell><button type="button" className="directory-link" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)}>{connection.rateCardName}</button></DataSheetCell>
+                  <DataSheetCell><button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)}>{connection.rateCardName}</button></DataSheetCell>
                   <DataSheetCell><StatusChipWithDot tone={connectionTone(connection.status)}>{connection.status}</StatusChipWithDot></DataSheetCell>
+                  <DataSheetCell className="service-suppliers-sheet__action">
+                    <div
+                      className="vendors-sheet__more"
+                      ref={vendorMenuId === vendor.id ? vendorMenuRef : undefined}
+                    >
+                      <IconButton
+                        label={`More actions for ${vendor.name}`}
+                        aria-expanded={vendorMenuId === vendor.id}
+                        aria-haspopup="menu"
+                        onClick={() => setVendorMenuId((current) => current === vendor.id ? null : vendor.id)}
+                      >
+                        <IconMore />
+                      </IconButton>
+                      {vendorMenuId === vendor.id ? (
+                        <div className="vendors-sheet__menu" role="menu">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setVendorMenuId(null);
+                              onOpenVendor(vendor.id);
+                            }}
+                          >
+                            Open vendor
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                  </DataSheetCell>
                 </DataSheetRow>
               );
             })}

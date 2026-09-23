@@ -5,7 +5,7 @@ import { RecordHeader } from "./RecordHeader";
 /**
  * Vendor detail header — same layout language as booking `.record`
  * (new-direction-03): title + one status capsule, location + ID meta,
- * and the Edit CTA.
+ * without repeating section-level actions.
  */
 export function VendorProfileHeader({
   code,
@@ -42,14 +42,12 @@ export function VendorProfileHeader({
       }
       recordId={code}
       idTip="Vendor code"
-      aside={
-        canEdit ? (
-          <Button variant="primary" size="sm" aria-label="Edit vendor" onClick={onEdit}>
-            <IconPencil />
-            Edit vendor
-          </Button>
-        ) : null
-      }
+      aside={canEdit ? (
+        <Button variant="primary" size="sm" onClick={onEdit}>
+          <IconPencil />
+          Edit vendor
+        </Button>
+      ) : undefined}
     />
   );
 }

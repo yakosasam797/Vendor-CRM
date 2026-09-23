@@ -362,7 +362,13 @@ function TaskSheet({
  * Vendor Tasks tab — same Open / Completed sheet language as
  * booking fulfilment (Tasks) in new-direction-03.
  */
-export function TasksPanel({ onOpenTaskCountChange }: { onOpenTaskCountChange?: (count: number) => void }) {
+export function TasksPanel({
+  canAddTask,
+  onOpenTaskCountChange,
+}: {
+  canAddTask: boolean;
+  onOpenTaskCountChange?: (count: number) => void;
+}) {
   const [openQuery, setOpenQuery] = useState("");
   const [doneQuery, setDoneQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -462,10 +468,12 @@ export function TasksPanel({ onOpenTaskCountChange }: { onOpenTaskCountChange?: 
               setOpenSelected([]);
             }}
           />
-          <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-            <IconPlus />
-            Add task
-          </Button>
+          {canAddTask ? (
+            <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
+              <IconPlus />
+              Add task
+            </Button>
+          ) : null}
         </div>
         <TaskSheet
           tasks={openFiltered}
@@ -507,7 +515,7 @@ export function TasksPanel({ onOpenTaskCountChange }: { onOpenTaskCountChange?: 
         />
       </section>
 
-      {createOpen ? (
+      {createOpen && canAddTask ? (
         <AddTaskModal onClose={() => setCreateOpen(false)} onCreate={createTask} />
       ) : null}
 

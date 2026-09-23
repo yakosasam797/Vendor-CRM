@@ -35,6 +35,12 @@ const STATUS_TONE = {
 
 function contactsForVendor(vendor: Vendor): KeyContact[] {
   if (vendor.id === "exhosp") return KEY_CONTACTS;
+  if (vendor.contacts?.length) {
+    return vendor.contacts.map((contact) => ({
+      ...contact,
+      whatsapp: contact.phone || undefined,
+    }));
+  }
   if (!vendor.contactName && !vendor.phone && !vendor.email) return [];
 
   return [
@@ -130,9 +136,6 @@ export function VendorOverview({
               <h2 id="vo-draft-profile-title" className="vo-panel__title">Profile details</h2>
               <p className="vo-draft-profile__note">Saved from Add vendor</p>
             </div>
-            {canEdit ? (
-              <Button variant="brand" size="sm" onClick={onEditProfile}>Edit profile</Button>
-            ) : null}
           </div>
           <div className="vo-panel__body">
             <dl className="vo-profile">
@@ -192,11 +195,6 @@ export function VendorOverview({
               <h2 id="vo-profile-title" className="vo-panel__title">
                 Profile
               </h2>
-              {canEdit ? (
-                <Button variant="brand" size="sm" onClick={onEditProfile}>
-                  Edit profile
-                </Button>
-              ) : null}
             </div>
             <div className="vo-panel__body">
               <dl className="vo-profile">
@@ -258,7 +256,7 @@ export function VendorOverview({
               {contacts.length === 0 ? (
                 <EmptyState
                   title="No vendor contacts"
-                  description="Add a primary contact from Edit profile."
+                  description="Add a primary contact from Edit vendor."
                 />
               ) : (
                 <ul className="vo-contacts">

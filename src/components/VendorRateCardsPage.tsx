@@ -372,6 +372,7 @@ export function VendorRateCardsPage({
   const [openTaskCount, setOpenTaskCount] = useState(5);
   const rateCardFilterRef = useRef<HTMLDivElement>(null);
   const canEdit = can(orgRole, "vendor.edit");
+  const canAddTask = can(orgRole, "vendor.task.add");
   const isDraft = vendor.status === "Draft";
   const draftLinkedServices = draftServicesByVendor[vendor.id] ?? [];
 
@@ -535,18 +536,27 @@ export function VendorRateCardsPage({
         <PackagesPanel
           onDetailOpenChange={setPackageDetailOpen}
           onNavigationContextChange={onNavigationContextChange}
+          onOpenService={(serviceId, serviceVendorId) => {
+            setTab("services");
+            if (serviceVendorId && serviceVendorId !== vendor.id) onOpenVendor(serviceVendorId);
+            onOpenServiceIdChange?.(serviceId ?? null);
+          }}
         />
       ) : tab === "bookings" ? (
         <VendorBookingsPanel />
       ) : tab === "finance" ? (
         <VendorFinancePanel vendorName={vendor.name} canEdit={canEdit} />
       ) : tab === "docs" ? (
-        <VendorDocsPanel onRequestDocuments={openDocumentRequest} />
+        <VendorDocsPanel canEdit={canEdit} onRequestDocuments={openDocumentRequest} />
       ) : tab === "tasks" ? (
-        <TasksPanel onOpenTaskCountChange={setOpenTaskCount} />
+        <TasksPanel canAddTask={canAddTask} onOpenTaskCountChange={setOpenTaskCount} />
       ) : tab === "comms" ? (
         <CommunicationPanel
-          linkLabel="linked to this vendor"
+          contactName={vendor.name}
+          contactEmail={vendor.reservationsEmail || vendor.email}
+          initials={vendor.initials}
+          contacts={vendor.contacts}
+          canCompose={canEdit}
           requestDraft={documentRequestDraft}
         />
       ) : tab !== "rate-cards" ? (
@@ -748,6 +758,7 @@ export function VendorRateCardsPage({
           setEditProfileOpen(false);
           onOpenVendor(id);
         }}
+        onNavigateTab={(next) => setVendorTab(next)}
       />
 
       {addServicesOpen ? (

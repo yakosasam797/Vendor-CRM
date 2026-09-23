@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Button, IconButton } from "@paryatech/design-system";
 import {
   PACKAGE_STATUS_LABEL,
@@ -8,8 +8,11 @@ import {
 } from "../data/packages";
 import type { ServiceCategory } from "../data/vendors";
 import {
-  IconBed,
-  IconCalendar,
+  SERVICE_STATUS_LABEL,
+  SERVICE_STATUS_TONE,
+  VENDOR_SERVICES,
+} from "../data/services";
+import {
   IconCamera,
   IconCard,
   IconCheck,
@@ -18,11 +21,14 @@ import {
   IconHotel,
   IconIdCard,
   IconImage,
+  IconMore,
+  IconOpenOut,
   IconPackages,
   IconPencil,
   IconPin,
   IconPlane,
   IconPlus,
+  IconSearch,
   IconTrash,
   IconVan,
 } from "../icons";
@@ -32,7 +38,7 @@ import "./PackageDetailPage.css";
 
 type PackageTab = "itinerary" | "policies" | "summary";
 type EventKind = "flight" | "transfer" | "stay" | "activity" | "meal" | "visa" | "checkout" | "note";
-type PackageModal = "edit-package" | "media" | "add-service" | "edit-event" | "remove-event" | null;
+type PackageModal = "edit-package" | "media" | "block-picker" | "edit-event" | "remove-event" | "service-preview" | null;
 
 type PackageMedia = {
   id: string;
@@ -52,6 +58,8 @@ type PackageEvent = {
   imageUrl?: string;
   imageAlt?: string;
   service?: string;
+  serviceId?: string;
+  serviceVendorId?: string;
   vendor?: string;
   rateCard?: string;
   amount?: string;
@@ -64,6 +72,13 @@ type PackageDay = {
   events: PackageEvent[];
 };
 
+type BlockTemplate = {
+  kind: EventKind;
+  label: string;
+  description: string;
+  group: "Recently used" | "Travel" | "Experience" | "Trip essentials" | "Content";
+};
+
 const photo = (id: string, w = 1000, h = 640) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=84`;
 
@@ -73,56 +88,67 @@ const SUPPORTING_MEDIA: Omit<PackageMedia, "primary">[] = [
   { id: "experience", src: photo("photo-1544735716-392fe2489ffa", 720, 440), alt: "Green hills in Kerala", label: "Experiences" },
 ];
 
+const BLOCK_LIBRARY: BlockTemplate[] = [
+  { kind: "stay", label: "Accommodation", description: "Hotel, room, meal plan, and check-in details", group: "Recently used" },
+  { kind: "transfer", label: "Transfer", description: "Airport, hotel, or intercity private transfer", group: "Recently used" },
+  { kind: "flight", label: "Flight", description: "Flight sector, timing, baggage, and fare", group: "Recently used" },
+  { kind: "activity", label: "Activity", description: "Sightseeing, attraction, guide, or experience", group: "Experience" },
+  { kind: "meal", label: "Meal", description: "Breakfast, restaurant, or included dining", group: "Experience" },
+  { kind: "visa", label: "Visa", description: "Visa service, documents, and processing notes", group: "Trip essentials" },
+  { kind: "checkout", label: "Checkout", description: "Hotel checkout or departure instruction", group: "Trip essentials" },
+  { kind: "note", label: "Note or free time", description: "Flexible time, guidance, or itinerary content", group: "Content" },
+];
+
 const INITIAL_ITINERARY: PackageDay[] = [
   {
     day: 1,
-    date: "12 Oct, Mon",
+    date: "Monday, 12 October",
     place: "Arrive in Kochi",
     events: [
-      { id: "d1-flight", kind: "flight", kicker: "Flight · 01h 20m", title: "Bengaluru to Kochi", meta: "IndiGo 6E-6445 · 07:30 BLR → 08:50 COK", description: "15 kg check-in · 7 kg cabin baggage" },
-      { id: "d1-transfer", kind: "transfer", kicker: "Private transfer · 55 min", title: "Kochi airport to Fort Kochi", meta: "AC sedan · 3 seats · 2 luggage bags", service: "Kochi Airport Transfer", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹1,850" },
-      { id: "d1-stay", kind: "stay", kicker: "Hotel · 2 nights", title: "Example Lake Resort", meta: "Garden View · 1 room · 2 adults · CP breakfast", description: "Check-in 14:00 · Check-out after breakfast on Day 3", imageUrl: SUPPORTING_MEDIA[0].src, imageAlt: SUPPORTING_MEDIA[0].alt, service: "Example Lake Resort", vendor: "Example Hospitality", rateCard: "Accommodation tariff 2026–27", amount: "₹14,400" },
+      { id: "d1-flight", kind: "flight", kicker: "Flight · 01h 20m", title: "Bangalore to Kochi", meta: "IndiGo 6E-6445 · 07:30 BLR → 08:50 COK", description: "15 kg check-in · 7 kg cabin baggage" },
+      { id: "d1-transfer", kind: "transfer", kicker: "Private transfer · 55 min", title: "Kochi airport to Fort Kochi", meta: "AC sedan · 3 seats · 2 luggage bags", service: "Kochi Airport Transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹1,850" },
+      { id: "d1-stay", kind: "stay", kicker: "Hotel · 2 nights", title: "Example Lake Resort", meta: "Garden View · 1 room · 2 adults · CP breakfast", description: "Check-in 14:00 · Check-out after breakfast on Day 3", imageUrl: SUPPORTING_MEDIA[0].src, imageAlt: SUPPORTING_MEDIA[0].alt, service: "Example Lake Resort", serviceId: "svc-lake", serviceVendorId: "exhosp", vendor: "Example Hospitality", rateCard: "Accommodation tariff 2026–27", amount: "₹14,400" },
     ],
   },
   {
     day: 2,
-    date: "13 Oct, Tue",
+    date: "Tuesday, 13 October",
     place: "Kochi heritage day",
     events: [
       { id: "d2-meal", kind: "meal", kicker: "Meal", title: "Breakfast at the resort", meta: "Included in CP meal plan" },
-      { id: "d2-activity", kind: "activity", kicker: "Sightseeing · 5 hrs", title: "Fort Kochi and Mattancherry trail", meta: "Chinese fishing nets · Dutch Palace · Jew Town · spice market", description: "Private local guide and entry tickets included. Pickup from the resort at 09:30.", imageUrl: SUPPORTING_MEDIA[1].src, imageAlt: SUPPORTING_MEDIA[1].alt, service: "Kochi heritage walk", vendor: "Kerala Heritage Co.", rateCard: "Kochi experiences 2026", amount: "₹4,800" },
+      { id: "d2-activity", kind: "activity", kicker: "Sightseeing · 5 hrs", title: "Fort Kochi and Mattancherry trail", meta: "Chinese fishing nets · Dutch Palace · Jew Town · spice market", description: "Private local guide and entry tickets included. Pickup from the resort at 09:30.", imageUrl: SUPPORTING_MEDIA[1].src, imageAlt: SUPPORTING_MEDIA[1].alt, service: "Kochi heritage walk", serviceVendorId: "kerala-heritage", vendor: "Kerala Heritage Co.", rateCard: "Kochi experiences 2026", amount: "₹4,800" },
       { id: "d2-note", kind: "note", kicker: "Open time", title: "Evening at leisure", meta: "No service planned after 16:30" },
     ],
   },
   {
     day: 3,
-    date: "14 Oct, Wed",
+    date: "Wednesday, 14 October",
     place: "Kochi to Alleppey",
     events: [
       { id: "d3-meal", kind: "meal", kicker: "Meal", title: "Breakfast and hotel checkout", meta: "Checkout by 09:00" },
-      { id: "d3-transfer", kind: "transfer", kicker: "Private transfer · 2 hrs", title: "Fort Kochi to Alleppey jetty", meta: "AC sedan · pickup 09:30", service: "Kochi–Alleppey transfer", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹3,400" },
-      { id: "d3-activity", kind: "activity", kicker: "Cruise · overnight", title: "Private backwater houseboat", meta: "Alleppey canals · village route · sunset anchorage", description: "Lunch, evening tea and dinner are served on board. Air conditioning runs from 21:00 to 06:00.", imageUrl: photo("photo-1602216056096-3b40cc0c9944", 1300, 820), imageAlt: "Houseboat crossing the Kerala backwaters", service: "Alleppey houseboat", vendor: "Coastal Stay Properties", rateCard: "Houseboat FIT tariff", amount: "₹18,500" },
+      { id: "d3-transfer", kind: "transfer", kicker: "Private transfer · 2 hrs", title: "Fort Kochi to Alleppey jetty", meta: "AC sedan · pickup 09:30", service: "Kochi–Alleppey transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹3,400" },
+      { id: "d3-activity", kind: "activity", kicker: "Cruise · overnight", title: "Private backwater houseboat", meta: "Alleppey canals · village route · sunset anchorage", description: "Lunch, evening tea and dinner are served on board. Air conditioning runs from 21:00 to 06:00.", imageUrl: photo("photo-1602216056096-3b40cc0c9944", 1300, 820), imageAlt: "Houseboat crossing the Kerala backwaters", service: "Alleppey houseboat", serviceVendorId: "coastal", vendor: "Coastal Stay Properties", rateCard: "Houseboat FIT tariff", amount: "₹18,500" },
     ],
   },
   {
     day: 4,
-    date: "15 Oct, Thu",
+    date: "Thursday, 15 October",
     place: "Kumarakom backwaters",
     events: [
       { id: "d4-meal", kind: "meal", kicker: "Meal", title: "Breakfast on the houseboat", meta: "Disembark at 09:00" },
-      { id: "d4-transfer", kind: "transfer", kicker: "Private transfer · 45 min", title: "Alleppey jetty to Kumarakom", meta: "AC sedan · assisted hotel check-in", service: "Backwater corridor transfer", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹1,600" },
-      { id: "d4-stay", kind: "stay", kicker: "Hotel · 1 night", title: "Kumarakom Lake Retreat", meta: "Lake View · 1 room · MAP breakfast and dinner", description: "Check-in 13:00 · dinner and next-day breakfast included", imageUrl: photo("photo-1571896349842-33c89424de2d", 900, 600), imageAlt: "Pool at a lakeside resort", service: "Kumarakom Lake Retreat", vendor: "Wanderlust Trails", rateCard: "Backwater stay rates 2026–27", amount: "₹9,800" },
-      { id: "d4-activity", kind: "activity", kicker: "Activity · 2 hrs", title: "Sunset canoe and village visit", meta: "Private guide · life jackets · tea stop", service: "Backwater Kayak", vendor: "Trailmaker Experiences", rateCard: "Activity tariff 2026", amount: "₹3,200" },
+      { id: "d4-transfer", kind: "transfer", kicker: "Private transfer · 45 min", title: "Alleppey jetty to Kumarakom", meta: "AC sedan · assisted hotel check-in", service: "Backwater corridor transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹1,600" },
+      { id: "d4-stay", kind: "stay", kicker: "Hotel · 1 night", title: "Kumarakom Lake Retreat", meta: "Lake View · 1 room · MAP breakfast and dinner", description: "Check-in 13:00 · dinner and next-day breakfast included", imageUrl: photo("photo-1571896349842-33c89424de2d", 900, 600), imageAlt: "Pool at a lakeside resort", service: "Kumarakom Lake Retreat", serviceVendorId: "wanderlust", vendor: "Wanderlust Trails", rateCard: "Backwater stay rates 2026–27", amount: "₹9,800" },
+      { id: "d4-activity", kind: "activity", kicker: "Activity · 2 hrs", title: "Sunset canoe and village visit", meta: "Private guide · life jackets · tea stop", service: "Backwater Kayak", serviceId: "svc-kayak", serviceVendorId: "trailmakers", vendor: "Trailmaker Experiences", rateCard: "Activity tariff 2026", amount: "₹3,200" },
     ],
   },
   {
     day: 5,
-    date: "16 Oct, Fri",
+    date: "Friday, 16 October",
     place: "Departure from Kochi",
     events: [
       { id: "d5-meal", kind: "meal", kicker: "Meal", title: "Breakfast at the resort", meta: "Included in MAP meal plan" },
       { id: "d5-checkout", kind: "checkout", kicker: "Hotel checkout", title: "Kumarakom Lake Retreat", meta: "Checkout by 10:00" },
-      { id: "d5-transfer", kind: "transfer", kicker: "Private transfer · 2h 15m", title: "Kumarakom to Kochi airport", meta: "AC sedan · pickup 10:00", service: "Kochi Airport Transfer", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹3,600" },
+      { id: "d5-transfer", kind: "transfer", kicker: "Private transfer · 2h 15m", title: "Kumarakom to Kochi airport", meta: "AC sedan · pickup 10:00", service: "Kochi Airport Transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹3,600" },
       { id: "d5-flight", kind: "flight", kicker: "Flight · 01h 20m", title: "Kochi to Bengaluru", meta: "IndiGo 6E-6474 · 15:10 COK → 16:30 BLR", description: "15 kg check-in · 7 kg cabin baggage" },
     ],
   },
@@ -151,7 +177,7 @@ function EventIcon({ kind }: { kind: EventKind }) {
     checkout: <IconHotel size={15} />,
     note: <IconPlus size={15} />,
   };
-  return <span className={`package-event__icon package-event__icon--${kind}`}>{icons[kind]}</span>;
+  return <span className={`package-event__icon package-event__icon--${kind}`} aria-hidden="true">{icons[kind]}</span>;
 }
 
 function includedSummary(events: PackageEvent[]) {
@@ -177,50 +203,81 @@ function PackageEventRow({
   position,
   onEdit,
   onRemove,
+  onOpenService,
 }: {
   event: PackageEvent;
   position: number;
   onEdit: () => void;
   onRemove: () => void;
+  onOpenService: () => void;
 }) {
   const isLinked = Boolean(event.service && event.vendor);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
+  const summary = event.description || event.meta || event.kicker;
+
+  useEffect(() => {
+    if (!actionsOpen) return;
+    const close = (pointerEvent: PointerEvent) => {
+      if (!actionsRef.current?.contains(pointerEvent.target as Node)) setActionsOpen(false);
+    };
+    window.addEventListener("pointerdown", close);
+    return () => window.removeEventListener("pointerdown", close);
+  }, [actionsOpen]);
+
   return (
     <article className={`package-event package-event--${event.kind}`}>
       <div className="package-event__sequence" aria-label={`Block ${position}`}>
         <span>{String(position).padStart(2, "0")}</span>
-        <EventIcon kind={event.kind} />
+      </div>
+
+      <div className="package-event__media">
+        {event.imageUrl && !imageFailed ? (
+          <img
+            src={event.imageUrl}
+            alt={event.imageAlt ?? ""}
+            width={76}
+            height={54}
+            loading="lazy"
+            onError={() => setImageFailed(true)}
+          />
+        ) : <EventIcon kind={event.kind} />}
       </div>
 
       <div className="package-event__body">
         <div className="package-event__topline">
-          <div>
-            <span className="package-event__kicker">{event.kicker}</span>
+          <div className="package-event__title-group">
             <h3>{event.title}</h3>
-            {event.meta ? <p className="package-event__meta">{event.meta}</p> : null}
-          </div>
-          {event.imageUrl ? (
-            <img className="package-event__thumb" src={event.imageUrl} alt={event.imageAlt ?? ""} width={72} height={54} />
-          ) : null}
-        </div>
-        {event.description ? <p className="package-event__description">{event.description}</p> : null}
-        <div className="package-event__footer">
-          <div className="package-event__links">
-            <span>{event.service || "Standalone block"}</span>
-            {event.vendor ? <span>{event.vendor}</span> : null}
-            {event.rateCard ? <span>{event.rateCard}</span> : null}
+            <p className="package-event__description">{summary}</p>
           </div>
           <div className="package-event__commercial">
-            <StatusChipWithDot tone={isLinked ? "done" : event.kind === "note" ? "open" : "progress"}>
-              {isLinked ? "Linked" : event.kind === "note" ? "Content only" : "Needs linking"}
-            </StatusChipWithDot>
+            {event.kind === "note" ? (
+              <StatusChipWithDot tone="open">Content only</StatusChipWithDot>
+            ) : null}
             {event.amount ? <strong>{event.amount}</strong> : null}
           </div>
         </div>
       </div>
 
-      <div className="package-event__actions">
-        <IconButton label={`Edit ${event.title}`} onClick={onEdit}><IconPencil /></IconButton>
-        <IconButton label={`Remove ${event.title}`} onClick={onRemove}><IconTrash /></IconButton>
+      <div className="package-event__actions" ref={actionsRef}>
+        {isLinked ? (
+          <button type="button" className="package-event__service-link" onClick={onOpenService}>
+            View
+          </button>
+        ) : null}
+        <IconButton
+          label={`More actions for ${event.title}`}
+          aria-expanded={actionsOpen}
+          aria-haspopup="menu"
+          onClick={() => setActionsOpen((open) => !open)}
+        ><IconMore /></IconButton>
+        {actionsOpen ? (
+          <div className="package-event__actions-menu" role="menu" aria-label={`Actions for ${event.title}`}>
+            <button type="button" role="menuitem" onClick={() => { setActionsOpen(false); onEdit(); }}><IconPencil />Edit block</button>
+            <button type="button" role="menuitem" className="is-danger" onClick={() => { setActionsOpen(false); onRemove(); }}><IconTrash />Delete block</button>
+          </div>
+        ) : null}
       </div>
     </article>
   );
@@ -229,16 +286,17 @@ function PackageEventRow({
 export function PackageDetailPage({
   pkg,
   onUpdate,
+  onOpenService,
 }: {
   pkg: VendorPackage;
   onUpdate?: (next: VendorPackage) => void;
+  onOpenService?: (serviceId: string | undefined, vendorId: string | undefined) => void;
 }) {
   const [record, setRecord] = useState(pkg);
   const [tab, setTab] = useState<PackageTab>("itinerary");
   const [days, setDays] = useState<PackageDay[]>(() => pkg.services === "Services not added yet"
     ? [{ day: 1, date: "Date not set", place: "Plan this day", events: [] }]
     : INITIAL_ITINERARY);
-  const [selectedDay, setSelectedDay] = useState(1);
   const [collapsedDays, setCollapsedDays] = useState<number[]>([]);
   const [media, setMedia] = useState<PackageMedia[]>(() => pkg.imageUrl
     ? [
@@ -251,6 +309,7 @@ export function PackageDetailPage({
   const [target, setTarget] = useState<{ day: number; eventId: string } | null>(null);
   const [eventDraft, setEventDraft] = useState<PackageEvent>(NEW_SERVICE);
   const [addDay, setAddDay] = useState<number | null>(null);
+  const [blockQuery, setBlockQuery] = useState("");
   const [packageDraft, setPackageDraft] = useState({ name: pkg.name, detail: pkg.detail, sellPrice: pkg.sellPrice, status: pkg.status });
   const uploadRef = useRef<HTMLInputElement>(null);
   const eventCounterRef = useRef(0);
@@ -261,19 +320,34 @@ export function PackageDetailPage({
   );
   const metrics = useMemo(() => {
     const events = days.flatMap((day) => day.events);
-    const count = (kind: EventKind) => events.filter((event) => event.kind === kind).length;
-    return {
-      events,
-      flights: count("flight"),
-      transfers: count("transfer"),
-      stays: count("stay"),
-      activities: count("activity"),
-      meals: count("meal"),
-      linked: events.filter((event) => event.service && event.vendor).length,
-    };
+    return { events };
   }, [days]);
   const nightCount = Number(record.detail.match(/(\d+)\s*N/i)?.[1] ?? Math.max(days.length - 1, 0));
   const destination = record.detail.split("\u00b7").at(-1)?.trim() || record.detail;
+  const visibleBlocks = useMemo(() => {
+    const query = blockQuery.trim().toLowerCase();
+    return query
+      ? BLOCK_LIBRARY.filter((block) => `${block.label} ${block.description} ${block.group}`.toLowerCase().includes(query))
+      : BLOCK_LIBRARY;
+  }, [blockQuery]);
+  const previewService = useMemo(() => {
+    const serviceName = eventDraft.service?.trim().toLowerCase();
+    return VENDOR_SERVICES.find((service) => service.id === eventDraft.serviceId)
+      ?? VENDOR_SERVICES.find(
+        (service) => Boolean(serviceName) && service.name.toLowerCase() === serviceName,
+      )
+      ?? null;
+  }, [eventDraft.service, eventDraft.serviceId]);
+  const previewMedia = previewService?.media.length
+    ? previewService.media
+    : eventDraft.imageUrl
+      ? [{
+          id: `${eventDraft.id}-preview`,
+          title: eventDraft.title,
+          imageUrl: eventDraft.imageUrl,
+          imageAlt: eventDraft.imageAlt ?? eventDraft.title,
+        }]
+      : [];
 
   const updateRecord = (next: VendorPackage) => {
     setRecord(next);
@@ -305,11 +379,6 @@ export function PackageDetailPage({
     });
   };
 
-  const jumpToDay = (day: number) => {
-    setSelectedDay(day);
-    document.getElementById(`package-day-${day}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   const toggleDay = (day: number) => {
     setCollapsedDays((current) => current.includes(day)
       ? current.filter((item) => item !== day)
@@ -335,27 +404,28 @@ export function PackageDetailPage({
 
   const beginAddService = (day: number) => {
     setAddDay(day);
-    eventCounterRef.current += 1;
-    setEventDraft({ ...NEW_SERVICE, id: `event-${eventCounterRef.current}` });
-    setModal("add-service");
+    setBlockQuery("");
+    setModal("block-picker");
   };
 
-  const addService = () => {
-    if (!addDay || !eventDraft.title.trim()) return;
-    const nextEvent = {
-      ...eventDraft,
-      title: eventDraft.title.trim(),
-      kicker: eventDraft.kicker.trim() || eventDraft.kind[0].toUpperCase() + eventDraft.kind.slice(1),
+  const addBlockFromTemplate = (template: BlockTemplate) => {
+    if (!addDay) return;
+    eventCounterRef.current += 1;
+    const nextEvent: PackageEvent = {
+      id: `event-${eventCounterRef.current}`,
+      kind: template.kind,
+      kicker: template.label,
+      title: template.kind === "note" ? "New itinerary note" : `Choose ${template.label.toLowerCase()}`,
+      meta: template.description,
     };
     syncItinerary(days.map((day) => day.day === addDay ? { ...day, events: [...day.events, nextEvent] } : day));
     setModal(null);
-    showNotice(`${nextEvent.title} added to Day ${addDay}. Review pricing in Summary next.`);
+    showNotice(`${template.label} block added to Day ${addDay}. Use Edit to add its final details.`);
   };
 
   const addItineraryDay = () => {
     const day = days.length + 1;
     setDays((current) => [...current, { day, date: "Date not set", place: "Plan this day", events: [] }]);
-    setSelectedDay(day);
     showNotice(`Day ${day} added. Add its accommodation, transport, activities, or notes next.`);
   };
 
@@ -378,6 +448,17 @@ export function PackageDetailPage({
     setTarget({ day, eventId: event.id });
     setEventDraft(event);
     setModal("remove-event");
+  };
+
+  const beginPreviewService = (day: number, event: PackageEvent) => {
+    setTarget({ day, eventId: event.id });
+    setEventDraft(event);
+    setModal("service-preview");
+  };
+
+  const openLinkedService = () => {
+    setModal(null);
+    onOpenService?.(eventDraft.serviceId, eventDraft.serviceVendorId);
   };
 
   const removeEvent = () => {
@@ -451,6 +532,7 @@ export function PackageDetailPage({
               alt={record.imageAlt}
               width={56}
               height={56}
+              fetchPriority="high"
             />
           ) : (
             <span className="package-detail__image package-detail__image--empty" aria-hidden="true">
@@ -463,8 +545,6 @@ export function PackageDetailPage({
           </div>
         </div>
         <div className="package-detail__header-actions">
-          <div><span>Sell price</span><strong>{record.sellPrice}</strong><small>Cost ₹51,750 · Margin 24%</small></div>
-          <Button variant="brand" size="sm" onClick={() => setModal("media")}><IconImage />Media</Button>
           <Button variant="primary" size="sm" onClick={beginEditPackage}><IconPencil />Edit package</Button>
         </div>
       </header>
@@ -477,15 +557,6 @@ export function PackageDetailPage({
           <IconButton label="Dismiss update" onClick={() => setNotice(null)}><IconClose size={14} /></IconButton>
         </div>
       ) : null}
-
-      <div className="package-detail__facts" aria-label="Package contents">
-        <div><IconCalendar size={15} /><span><strong>{days.length} day plan</strong><small>{days[0]?.date} {days.length > 1 ? `– ${days.at(-1)?.date}` : ""}</small></span></div>
-        <div><IconPlane size={15} /><span><strong>{metrics.flights} flight{metrics.flights === 1 ? "" : "s"}</strong><small>{metrics.flights ? "Included by day" : "Not added"}</small></span></div>
-        <div><IconBed size={15} /><span><strong>{nightCount} night{nightCount === 1 ? "" : "s"}</strong><small>{metrics.stays} accommodation service{metrics.stays === 1 ? "" : "s"}</small></span></div>
-        <div><IconVan size={15} /><span><strong>{metrics.transfers} transfer{metrics.transfers === 1 ? "" : "s"}</strong><small>{metrics.transfers ? "Shown by day" : "Not added"}</small></span></div>
-        <div><IconCamera size={15} /><span><strong>{metrics.activities} activit{metrics.activities === 1 ? "y" : "ies"}</strong><small>{metrics.activities ? "Shown by day" : "Not added"}</small></span></div>
-        <div><IconCheck size={15} /><span><strong>{metrics.meals} meal{metrics.meals === 1 ? "" : "s"}</strong><small>{metrics.meals ? "Shown by day" : "Not added"}</small></span></div>
-      </div>
 
       <nav className="package-detail__tabs" aria-label="Package sections">
         {([
@@ -501,25 +572,12 @@ export function PackageDetailPage({
         <>
           <div className="package-builder-bar">
             <div className="package-builder-bar__summary">
-              <span className="package-builder-bar__icon"><IconPackages size={17} /></span>
-              <span><strong>Itinerary structure</strong><small>{metrics.events.length} blocks across {days.length} days · {metrics.linked} linked to services</small></span>
+              <span><strong>Itinerary</strong></span>
             </div>
-            <div className="package-builder-bar__actions">
-              <Button variant="brand" size="sm" onClick={() => beginAddService(selectedDay)}><IconPlus />Add block</Button>
-              <Button variant="primary" size="sm" onClick={addItineraryDay}><IconPlus />Add day</Button>
-            </div>
+            <Button variant="brand" size="sm" onClick={addItineraryDay}><IconPlus />Add another day</Button>
           </div>
 
           <div className="package-itinerary">
-            <aside className="package-day-nav" aria-label="Itinerary days">
-              <div><IconPackages size={15} /><strong>Day plan</strong></div>
-              {days.map((day) => (
-                <button type="button" key={day.day} className={selectedDay === day.day ? "is-active" : undefined} onClick={() => jumpToDay(day.day)}>
-                  <span>Day {day.day}</span><small>{day.date}</small>
-                </button>
-              ))}
-            </aside>
-
             <main className="package-days">
               {days.map((day) => {
                 const isCollapsed = collapsedDays.includes(day.day);
@@ -529,8 +587,7 @@ export function PackageDetailPage({
                       <span className="package-day__number">Day {day.day}</span>
                       <div><h2>{day.place}</h2><p>{day.date}</p></div>
                       <div className="package-day__summary">
-                        <strong>{day.events.length} block{day.events.length === 1 ? "" : "s"}</strong>
-                        <span>{includedSummary(day.events) || "Ready to structure"}</span>
+                        <span>{day.events.length} block{day.events.length === 1 ? "" : "s"}{includedSummary(day.events) ? ` · ${includedSummary(day.events)}` : " · Ready to structure"}</span>
                       </div>
                       <IconButton label={`${isCollapsed ? "Expand" : "Collapse"} Day ${day.day}`} onClick={() => toggleDay(day.day)}>
                         <span className={isCollapsed ? "package-day__chevron is-collapsed" : "package-day__chevron"}><IconChevronDown /></span>
@@ -546,6 +603,7 @@ export function PackageDetailPage({
                               key={event.id}
                               onEdit={() => beginEditEvent(day.day, event)}
                               onRemove={() => beginRemoveEvent(day.day, event)}
+                              onOpenService={() => beginPreviewService(day.day, event)}
                             />
                           ))}</div>
                         ) : (
@@ -643,10 +701,44 @@ export function PackageDetailPage({
         </div>
       ) : null}
 
-      {modal === "add-service" || modal === "edit-event" ? (
+      {modal === "block-picker" ? (
+        <div className="pt-modal-overlay" role="presentation" onClick={() => setModal(null)}>
+          <div className="pt-modal package-block-picker" role="dialog" aria-modal="true" aria-labelledby="block-picker-title" onClick={(event) => event.stopPropagation()}>
+            <header className="pt-modal__head package-action-modal__head">
+              <div><h2 className="pt-modal__title" id="block-picker-title">Add block to Day {addDay}</h2><p>Choose the content or service structure you need.</p></div>
+              <IconButton label="Close block picker" onClick={() => setModal(null)}><IconClose /></IconButton>
+            </header>
+            <div className="package-block-picker__search">
+              <IconSearch size={16} />
+              <input aria-label="Search block types" value={blockQuery} onChange={(event) => setBlockQuery(event.target.value)} placeholder="Search block types…" />
+            </div>
+            <div className="package-block-picker__body">
+              {(["Recently used", "Travel", "Experience", "Trip essentials", "Content"] as BlockTemplate["group"][]).map((group) => {
+                const blocks = visibleBlocks.filter((block) => block.group === group);
+                return blocks.length ? (
+                  <section className="package-block-picker__group" key={group}>
+                    <h3>{group}</h3>
+                    <div className="package-block-picker__grid">
+                      {blocks.map((block) => (
+                        <button type="button" className={`package-block-option package-block-option--${block.kind}`} key={block.kind} onClick={() => addBlockFromTemplate(block)}>
+                          <EventIcon kind={block.kind} />
+                          <span><strong>{block.label}</strong><small>{block.description}</small></span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                ) : null;
+              })}
+              {!visibleBlocks.length ? <div className="package-block-picker__empty"><strong>No block types found</strong><span>Try accommodation, transfer, flight, activity, meal, visa, or note.</span></div> : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {modal === "edit-event" ? (
         <div className="pt-modal-overlay" role="presentation" onClick={() => setModal(null)}>
           <div className="pt-modal pt-modal--wide package-action-modal" role="dialog" aria-modal="true" aria-labelledby="package-event-title" onClick={(event) => event.stopPropagation()}>
-            <header className="pt-modal__head package-action-modal__head"><h2 className="pt-modal__title" id="package-event-title">{modal === "add-service" ? `Add service to Day ${addDay}` : `Change Day ${target?.day} itinerary item`}</h2><IconButton label="Close itinerary editor" onClick={() => setModal(null)}><IconClose /></IconButton></header>
+            <header className="pt-modal__head package-action-modal__head"><h2 className="pt-modal__title" id="package-event-title">Change Day {target?.day} itinerary item</h2><IconButton label="Close itinerary editor" onClick={() => setModal(null)}><IconClose /></IconButton></header>
             <div className="pt-modal__body">
               <div className="pt-mf-row">
                 <label className="pt-mf"><span className="pt-mf__l">Type</span><select className="pt-mf__i" value={eventDraft.kind} onChange={(event) => setEventDraft({ ...eventDraft, kind: event.target.value as EventKind, kicker: event.target.selectedOptions[0].text })}><option value="stay">Hotel</option><option value="transfer">Transfer</option><option value="activity">Activity</option><option value="flight">Flight</option><option value="visa">Visa</option><option value="meal">Meal</option><option value="note">Open time</option></select></label>
@@ -663,7 +755,63 @@ export function PackageDetailPage({
                 <label className="pt-mf"><span className="pt-mf__l">Cost</span><input className="pt-mf__i" value={eventDraft.amount ?? ""} onChange={(event) => setEventDraft({ ...eventDraft, amount: event.target.value })} placeholder="₹0" /></label>
               </div>
             </div>
-            <footer className="pt-modal__foot"><Button variant="brand" size="sm" onClick={() => setModal(null)}>Cancel</Button><Button variant="primary" size="sm" disabled={!eventDraft.title.trim()} onClick={modal === "add-service" ? addService : saveEvent}><IconCheck />{modal === "add-service" ? "Add to day" : "Save changes"}</Button></footer>
+            <footer className="pt-modal__foot"><Button variant="brand" size="sm" onClick={() => setModal(null)}>Cancel</Button><Button variant="primary" size="sm" disabled={!eventDraft.title.trim()} onClick={saveEvent}><IconCheck />Save changes</Button></footer>
+          </div>
+        </div>
+      ) : null}
+
+      {modal === "service-preview" ? (
+        <div className="pt-modal-overlay" role="presentation" onClick={() => setModal(null)}>
+          <div className="pt-modal package-service-preview" role="dialog" aria-modal="true" aria-labelledby="service-preview-title" onClick={(event) => event.stopPropagation()}>
+            <header className="pt-modal__head package-service-preview__head">
+              <div>
+                <h2 className="pt-modal__title" id="service-preview-title">{previewService?.name ?? eventDraft.service ?? eventDraft.title}</h2>
+                <p><IconPin size={13} />{previewService?.location ?? eventDraft.meta ?? "Linked package service"}</p>
+              </div>
+              <IconButton label="Close service preview" onClick={() => setModal(null)}><IconClose /></IconButton>
+            </header>
+            <div className="package-service-preview__body">
+              {previewMedia.length ? (
+                <div className={`package-service-preview__media package-service-preview__media--${Math.min(previewMedia.length, 4)}`}>
+                  {previewMedia.slice(0, 4).map((item, index) => (
+                    <figure key={item.id} className={index === 0 ? "is-primary" : undefined}>
+                      <img src={item.imageUrl} alt={item.imageAlt} />
+                      <figcaption>{item.title}</figcaption>
+                    </figure>
+                  ))}
+                </div>
+              ) : (
+                <div className="package-service-preview__media-empty">
+                  <EventIcon kind={eventDraft.kind} />
+                  <span>No service media uploaded</span>
+                </div>
+              )}
+
+              <div className="package-service-preview__details">
+                <p className="package-service-preview__about">
+                  {previewService?.about ?? eventDraft.description ?? eventDraft.meta ?? "This service is linked to the package itinerary."}
+                </p>
+                <dl>
+                  <div><dt>Service type</dt><dd>{previewService?.type ?? eventDraft.kicker}</dd></div>
+                  <div><dt>Vendor</dt><dd>{eventDraft.vendor ?? "Linked vendor"}</dd></div>
+                  <div><dt>Rate card</dt><dd>{eventDraft.rateCard ?? previewService?.pricingLabel ?? "Not linked"}</dd></div>
+                  <div><dt>Package cost</dt><dd>{eventDraft.amount ?? "Included"}</dd></div>
+                </dl>
+                {previewService ? (
+                  <div className="package-service-preview__included">
+                    <strong>Included</strong>
+                    <span>{previewService.inclusions.slice(0, 3).join(" · ")}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            <footer className="pt-modal__foot">
+              {previewService ? <StatusChipWithDot tone={SERVICE_STATUS_TONE[previewService.status]}>{SERVICE_STATUS_LABEL[previewService.status]}</StatusChipWithDot> : <span />}
+              <div className="package-service-preview__footer-actions">
+                <Button variant="brand" size="sm" onClick={() => setModal(null)}>Close</Button>
+                <Button variant="primary" size="sm" onClick={openLinkedService}>View service <IconOpenOut size={14} /></Button>
+              </div>
+            </footer>
           </div>
         </div>
       ) : null}

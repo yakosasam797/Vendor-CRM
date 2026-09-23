@@ -428,6 +428,11 @@ export default function App() {
     window.requestAnimationFrame(() => searchBtnRef.current?.focus());
   };
 
+  const changeOrgRole = (role: OrgRole) => {
+    setOrgRole(role);
+    if (!canOpenWorkspaceSettings(role)) setSettingsOpen(false);
+  };
+
   const universalSearchItems: UniversalSearchItem[] = [
     {
       id: "page-home",
@@ -619,7 +624,7 @@ export default function App() {
       }
       crumbs={crumbs}
       actions={
-        <>
+        <div className="app-top-actions">
           <button
             ref={searchBtnRef}
             type="button"
@@ -633,21 +638,22 @@ export default function App() {
             <span>Search anything</span>
             <kbd aria-hidden="true">Ctrl K</kbd>
           </button>
-          <RoleSwitcher value={orgRole} onChange={setOrgRole} />
-          <span ref={settingsBtnRef}>
-            <IconButton
-              className="app-top-util"
-              label="Workspace settings"
-              onClick={() => {
-                if (!canOpenWorkspaceSettings(orgRole)) return;
-                setAccountOpen(false);
-                setNotifOpen(false);
-                setSettingsOpen(true);
-              }}
-            >
-              <IconSettings />
-            </IconButton>
-          </span>
+          <RoleSwitcher value={orgRole} onChange={changeOrgRole} />
+          {canOpenWorkspaceSettings(orgRole) ? (
+            <span ref={settingsBtnRef}>
+              <IconButton
+                className="app-top-util"
+                label="Workspace settings"
+                onClick={() => {
+                  setAccountOpen(false);
+                  setNotifOpen(false);
+                  setSettingsOpen(true);
+                }}
+              >
+                <IconSettings />
+              </IconButton>
+            </span>
+          ) : null}
           <IconButton
             className="app-top-util"
             label="Help and support"
@@ -702,7 +708,7 @@ export default function App() {
               }}
             />
           </div>
-        </>
+        </div>
       }
     >
       {isHub && hubRoute.area === "settings" ? (

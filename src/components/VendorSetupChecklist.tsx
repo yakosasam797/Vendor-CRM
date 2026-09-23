@@ -85,7 +85,7 @@ export function VendorSetupChecklist({
                   <span className="vendor-setup__label">{step.label}</span>
                   {!done && step.id === "profile" && canEdit ? (
                     <Button variant="brand" size="sm" type="button" onClick={onEditProfile}>
-                      Edit profile
+                      Edit vendor
                     </Button>
                   ) : null}
                   {!done && step.tab ? (

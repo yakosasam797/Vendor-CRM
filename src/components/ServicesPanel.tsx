@@ -94,6 +94,8 @@ function MediaThumb({
 }) {
   const btnRef = useRef<HTMLButtonElement>(null);
   const images = imageCount(service.media);
+  const primaryImage = service.media.find((item) => mediaKind(item) === "image");
+  const additionalImages = Math.max(images - 1, 0);
   const countLabel = `${images} image${images === 1 ? "" : "s"}`;
 
   return (
@@ -107,7 +109,20 @@ function MediaThumb({
         if (rect) onOpen(rect);
       }}
     >
-      <span className="svc-media-cell__count">{countLabel}</span>
+      <span className="svc-media-cell__preview" aria-hidden="true">
+        <img
+          className="svc-media-cell__image"
+          src={primaryImage?.imageUrl ?? service.imageUrl}
+          alt=""
+          width={36}
+          height={36}
+          loading="lazy"
+          decoding="async"
+        />
+        {additionalImages > 0 ? (
+          <span className="svc-media-cell__count">+{additionalImages}</span>
+        ) : null}
+      </span>
     </button>
   );
 }

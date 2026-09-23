@@ -4,11 +4,20 @@ import {
   INTERNAL_OWNERS,
   SERVICE_CATEGORIES,
   VENDOR_COUNTRIES,
-  makeInitials,
   makeVendorCode,
   type ServiceCategory,
   type Vendor,
 } from "../data/vendors";
+import {
+  IconBuilding,
+  IconGlobe,
+  IconIdCard,
+  IconMail,
+  IconPhone,
+  IconPin,
+  IconUser,
+  IconVendors,
+} from "../icons";
 import { ForbiddenError, type OrgRole } from "../permissions";
 import {
   createVendor,
@@ -20,24 +29,9 @@ import {
 import "./NewVendorPage.css";
 
 type NewVendorDetails = VendorFormValues & {
-  labels: string;
   dmcScope: "Domestic" | "International" | "Both";
-  specializations: string;
   phoneCode: string;
   whatsappCode: string;
-  whatsapp: string;
-  state: string;
-  address: string;
-  postalCode: string;
-  legalName: string;
-  gstin: string;
-  pan: string;
-  reservationsEmail: string;
-  emergencyPhone: string;
-  confirmationSla: string;
-  confirmationChannel: string;
-  paymentTerms: string;
-  internalNotes: string;
 };
 
 const ROLE_LABELS: Record<ServiceCategory, string> = {
@@ -52,14 +46,14 @@ const ROLE_LABELS: Record<ServiceCategory, string> = {
 };
 
 const DIAL_CODES = ["+91", "+971", "+44", "+65", "+66", "+94"];
-
-const SETUP_SECTIONS = [
-  ["01", "Identity", "new-vendor-identity"],
-  ["02", "Primary contact", "new-vendor-contact"],
-  ["03", "Location", "new-vendor-location"],
-  ["04", "Booking operations", "new-vendor-booking"],
-  ["05", "Business details", "new-vendor-business"],
-] as const;
+const CITY_SUGGESTIONS = [
+  { city: "Kochi", state: "Kerala", country: "India" },
+  { city: "Alleppey", state: "Kerala", country: "India" },
+  { city: "Munnar", state: "Kerala", country: "India" },
+  { city: "Goa", state: "Goa", country: "India" },
+  { city: "Mumbai", state: "Maharashtra", country: "India" },
+  { city: "Dubai", state: "Dubai", country: "United Arab Emirates" },
+];
 
 function initialValues(): NewVendorDetails {
   return {
@@ -76,50 +70,20 @@ function initialValues(): NewVendorDetails {
     legalName: "",
     gstin: "",
     pan: "",
-    reservationsEmail: "",
-    emergencyPhone: "",
-    confirmationSla: "Within 4 hours",
-    confirmationChannel: "Email",
-    paymentTerms: "",
     internalNotes: "",
   };
-}
-
-function SectionIntro({
-  id,
-  step,
-  title,
-  description,
-  requirement,
-}: {
-  id: string;
-  step: string;
-  title: string;
-  description: string;
-  requirement: string;
-}) {
-  return (
-    <div className="new-vendor-section__intro">
-      <span className="new-vendor-section__step" aria-hidden="true">{step}</span>
-      <div>
-        <h2 id={id}>{title}</h2>
-        <p>{description}</p>
-      </div>
-      <span className="new-vendor-section__requirement">{requirement}</span>
-    </div>
-  );
 }
 
 function Field({
   label,
   hint,
-  className = "",
   children,
+  className = "",
 }: {
   label: string;
   hint?: string;
-  className?: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <label className={`new-vendor-field ${className}`}>
@@ -127,6 +91,33 @@ function Field({
       {children}
       {hint ? <span className="new-vendor-field__hint">{hint}</span> : null}
     </label>
+  );
+}
+
+function FormSection({
+  id,
+  title,
+  description,
+  icon,
+  children,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="new-vendor-section" aria-labelledby={id}>
+      <div className="new-vendor-section__label">
+        <span aria-hidden="true">{icon}</span>
+        <div>
+          <h2 id={id}>{title}</h2>
+          <p>{description}</p>
+        </div>
+      </div>
+      <div className="new-vendor-section__content">{children}</div>
+    </section>
   );
 }
 
@@ -147,43 +138,33 @@ export function NewVendorPage({
   const [sameAsPhone, setSameAsPhone] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<string>(SETUP_SECTIONS[0][2]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
-  const phone = values.phone.trim()
-    ? `${values.phoneCode} ${values.phone.trim()}`
-    : "";
+  const phone = values.phone.trim() ? `${values.phoneCode} ${values.phone.trim()}` : "";
   const previewCode = makeVendorCode(values.name || "New vendor", vendors);
-  const previewInitials = makeInitials(values.name || "New vendor");
-  const completedRequired = [
-    values.name.trim(),
-    values.categories.length > 0,
-    values.city.trim(),
-    values.country.trim(),
-    values.owner.trim(),
-    values.phone.trim() || values.email.trim(),
-  ].filter(Boolean).length;
   const canSubmit = Boolean(
     values.name.trim() &&
-    values.categories.length &&
-    values.city.trim() &&
-    values.country.trim() &&
-    values.owner.trim() &&
-    (values.phone.trim() || values.email.trim()),
+      values.categories.length &&
+      values.city.trim() &&
+      values.country.trim() &&
+      values.owner.trim() &&
+      (values.phone.trim() || values.email.trim()),
   );
   const duplicates = useMemo(
-    () =>
-      findDuplicateVendors(vendors, {
-        name: values.name,
-        phone,
-        email: values.email,
-      }),
+    () => findDuplicateVendors(vendors, { name: values.name, phone, email: values.email }),
     [phone, values.email, values.name, vendors],
   );
+  const citySuggestions = CITY_SUGGESTIONS.filter(({ city, state, country }) => {
+    const query = values.city.trim().toLowerCase();
+    return (
+      !query ||
+      city.toLowerCase().includes(query) ||
+      state.toLowerCase().includes(query) ||
+      country.toLowerCase().includes(query)
+    );
+  }).slice(0, 4);
 
-  const setField = <K extends keyof NewVendorDetails>(
-    key: K,
-    value: NewVendorDetails[K],
-  ) => {
+  const setField = <K extends keyof NewVendorDetails>(key: K, value: NewVendorDetails[K]) => {
     setValues((current) => {
       const next = { ...current, [key]: value };
       if (sameAsPhone && key === "phone") next.whatsapp = String(value);
@@ -205,6 +186,7 @@ export function NewVendorPage({
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     const coreValues: VendorFormValues = {
+      ...values,
       name: values.name,
       categories: values.categories,
       country: values.country,
@@ -212,13 +194,13 @@ export function NewVendorPage({
       contactName: values.contactName,
       phone,
       email: values.email,
+      whatsapp: values.whatsapp.trim()
+        ? `${values.whatsappCode} ${values.whatsapp.trim()}`
+        : "",
       owner: values.owner,
-      status: values.status,
+      status: "Draft",
     };
     const nextErrors = validateVendorForm(coreValues);
-    if (values.reservationsEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.reservationsEmail.trim())) {
-      nextErrors.push("Enter a valid reservations email address.");
-    }
     setErrors(nextErrors);
     if (nextErrors.length) {
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -241,11 +223,6 @@ export function NewVendorPage({
         pan: values.pan.trim().toUpperCase(),
         dmcScope: values.categories.includes("DMC/Ground handling") ? values.dmcScope : "",
         specializations: values.specializations.trim(),
-        reservationsEmail: values.reservationsEmail.trim(),
-        emergencyPhone: values.emergencyPhone.trim(),
-        confirmationSla: values.confirmationSla,
-        confirmationChannel: values.confirmationChannel,
-        paymentTerms: values.paymentTerms.trim(),
         internalNotes: values.internalNotes.trim(),
       };
       onCreated(enriched);
@@ -260,198 +237,221 @@ export function NewVendorPage({
 
   return (
     <div className="new-vendor-page">
-      <header className="new-vendor-hero">
-        <div className="new-vendor-hero__copy">
+      <form className="new-vendor-form" onSubmit={submit} noValidate>
+        <header className="new-vendor-form__head">
           <h1>Add vendor</h1>
-          <p className="new-vendor-hero__description">Set up the core supplier profile. Services, rate cards, and packages can be added after creation.</p>
-        </div>
-        <div className="new-vendor-preview" aria-label="Vendor identity preview">
-          <span className="new-vendor-preview__avatar" aria-hidden="true">{previewInitials}</span>
-          <div className="new-vendor-preview__identity">
-            <span>Profile preview</span>
-            <strong>{values.name.trim() || "Unnamed vendor"}</strong>
-            <small className="pt-mono">{previewCode}</small>
-          </div>
-          <div className="new-vendor-preview__progress">
-            <strong>{completedRequired}/6</strong>
-            <span>required details</span>
-            <progress max={6} value={completedRequired} aria-label={`${completedRequired} of 6 required details complete`} />
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <div className="new-vendor-workspace">
-        <nav className="new-vendor-steps" aria-label="Vendor setup sections">
-          <p>Vendor setup</p>
-          {SETUP_SECTIONS.map(([step, label, target]) => (
-            <a
-              key={target}
-              href={`#${target}`}
-              className={activeSection === target ? "is-active" : undefined}
-              aria-current={activeSection === target ? "step" : undefined}
-              onClick={() => setActiveSection(target)}
-            >
-              <span className="pt-mono">{step}</span>
-              {label}
-            </a>
-          ))}
-        </nav>
+        {errors.length || submitError ? (
+          <div className="new-vendor-errors" role="alert" aria-live="polite">
+            <strong>Complete the required details</strong>
+            {submitError ? <p>{submitError}</p> : null}
+            {errors.map((error) => <p key={error}>{error}</p>)}
+          </div>
+        ) : null}
 
-        <div className="new-vendor-content">
-          {errors.length || submitError ? (
-            <div className="new-vendor-errors" role="alert">
-              <strong>Complete the highlighted setup</strong>
-              {submitError ? <p>{submitError}</p> : null}
-              {errors.map((error) => <p key={error}>{error}</p>)}
+        <FormSection id="new-vendor-identity" title="Identity" description="Name the business and define the services it provides." icon={<IconVendors size={18} />}>
+          <div className="new-vendor-grid new-vendor-grid--2">
+            <Field label="Vendor or business name *">
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconBuilding size={17} /></span>
+                <input name="vendorName" required value={values.name} onChange={(event) => setField("name", event.target.value)} placeholder="e.g. Coral Bay Hospitality…" autoComplete="organization" />
+              </span>
+            </Field>
+            <Field label="Vendor code">
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconIdCard size={17} /></span>
+                <input name="vendorCode" value={previewCode} readOnly className="is-readonly" aria-readonly="true" />
+              </span>
+            </Field>
+          </div>
+
+          <fieldset className="new-vendor-role-field">
+            <legend>Service categories *</legend>
+            <div className="new-vendor-role-list">
+              {SERVICE_CATEGORIES.map((category) => {
+                const selected = values.categories.includes(category);
+                return (
+                  <button key={category} type="button" className={selected ? "is-selected" : ""} aria-pressed={selected} onClick={() => toggleCategory(category)}>
+                    {ROLE_LABELS[category]}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <Field label="Labels" hint="Separate labels with commas.">
+            <input name="labels" value={values.labels} onChange={(event) => setField("labels", event.target.value)} placeholder="Preferred, premium, Kerala…" autoComplete="off" />
+          </Field>
+
+          {values.categories.includes("DMC/Ground handling") ? (
+            <div className="new-vendor-subsection">
+              <Field label="DMC scope">
+                <select name="dmcScope" value={values.dmcScope} onChange={(event) => setField("dmcScope", event.target.value as NewVendorDetails["dmcScope"])}>
+                  <option>Domestic</option>
+                  <option>International</option>
+                  <option>Both</option>
+                </select>
+              </Field>
+              <Field label="Specializations">
+                <textarea name="specializations" rows={3} value={values.specializations} onChange={(event) => setField("specializations", event.target.value)} placeholder="Regions, trip styles, or supplier strengths…" />
+              </Field>
             </div>
           ) : null}
+        </FormSection>
 
-          <form className="new-vendor-form" onSubmit={submit} noValidate>
-        <section className="new-vendor-section" aria-labelledby="new-vendor-identity">
-          <SectionIntro id="new-vendor-identity" step="01" title="Identity" description="The core details used across CRM, costing, and booking records." requirement="Name, category, and owner required" />
-          <div className="new-vendor-section__fields">
-            <div className="new-vendor-grid new-vendor-grid--2">
-              <Field label="Vendor or business name *">
-                <input required value={values.name} onChange={(event) => setField("name", event.target.value)} placeholder="e.g. Coral Bay Hospitality" autoComplete="organization" />
-              </Field>
-              <Field label="Internal owner *">
-                <select required value={values.owner} onChange={(event) => setField("owner", event.target.value)}>
-                  {INTERNAL_OWNERS.map((owner) => <option key={owner.name}>{owner.name}</option>)}
-                </select>
-              </Field>
-            </div>
-
-            <Field label="Vendor code" hint="Generated automatically and stays fixed after creation." className="new-vendor-field--short">
-              <input value={previewCode} readOnly className="is-readonly" />
-            </Field>
-
-            <fieldset className="new-vendor-role-field">
-              <legend>Service categories *</legend>
-              <p className="new-vendor-role-field__hint">Choose what this vendor can support. Add individual services after creating the vendor.</p>
-              <div className="new-vendor-role-list">
-                {SERVICE_CATEGORIES.map((category) => {
-                  const selected = values.categories.includes(category);
-                  return (
-                    <button key={category} type="button" className={selected ? "is-selected" : ""} aria-pressed={selected} onClick={() => toggleCategory(category)}>
-                      {ROLE_LABELS[category]}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            <Field label="Labels" hint="Comma-separated labels help teams filter and shortlist vendors.">
-              <input value={values.labels} onChange={(event) => setField("labels", event.target.value)} placeholder="Preferred, premium, Kerala" />
-            </Field>
-
-            {values.categories.includes("DMC/Ground handling") ? (
-              <div className="new-vendor-conditional">
-                <div className="new-vendor-grid new-vendor-grid--2">
-                  <Field label="DMC scope">
-                    <select value={values.dmcScope} onChange={(event) => setField("dmcScope", event.target.value as NewVendorDetails["dmcScope"])}>
-                      <option>Domestic</option>
-                      <option>International</option>
-                      <option>Both</option>
-                    </select>
-                  </Field>
-                  <Field label="Specializations">
-                    <input value={values.specializations} onChange={(event) => setField("specializations", event.target.value)} placeholder="Regions, trip styles, or supplier strengths" />
-                  </Field>
-                </div>
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="new-vendor-section" aria-labelledby="new-vendor-contact">
-          <SectionIntro id="new-vendor-contact" step="02" title="Primary contact" description="The first person your team contacts for availability, rates, and changes." requirement="Phone or email required" />
-          <div className="new-vendor-section__fields">
+        <FormSection id="new-vendor-contact" title="Primary contact" description="Add the person your team should contact first." icon={<IconUser size={18} />}>
+          <div className="new-vendor-grid new-vendor-grid--3 new-vendor-grid--contact">
             <Field label="Contact name">
-              <input value={values.contactName} onChange={(event) => setField("contactName", event.target.value)} placeholder="Full name" autoComplete="name" />
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconUser size={17} /></span>
+                <input name="contactName" value={values.contactName} onChange={(event) => setField("contactName", event.target.value)} placeholder="Full name…" autoComplete="name" />
+              </span>
             </Field>
-            <div className="new-vendor-grid new-vendor-grid--2">
-              <Field label="Phone">
-                <span className="new-vendor-phone">
-                  <select aria-label="Phone country code" value={values.phoneCode} onChange={(event) => setField("phoneCode", event.target.value)}>
-                    {DIAL_CODES.map((code) => <option key={code}>{code}</option>)}
-                  </select>
-                  <input aria-label="Phone number" value={values.phone} onChange={(event) => setField("phone", event.target.value)} placeholder="81234 56789" inputMode="tel" />
-                </span>
-              </Field>
-              <Field label="Email">
-                <input value={values.email} onChange={(event) => setField("email", event.target.value)} placeholder="contact@vendor.com" inputMode="email" autoComplete="email" />
-              </Field>
-            </div>
-            <div className="new-vendor-grid new-vendor-grid--2">
-              <Field label="WhatsApp number">
-                <span className="new-vendor-phone">
-                  <select aria-label="WhatsApp country code" value={values.whatsappCode} disabled={sameAsPhone} onChange={(event) => setField("whatsappCode", event.target.value)}>
-                    {DIAL_CODES.map((code) => <option key={code}>{code}</option>)}
-                  </select>
-                  <input aria-label="WhatsApp number" value={values.whatsapp} disabled={sameAsPhone} onChange={(event) => setField("whatsapp", event.target.value)} placeholder="81234 56789" inputMode="tel" />
-                </span>
-              </Field>
-              <label className="new-vendor-check">
-                <input type="checkbox" checked={sameAsPhone} onChange={(event) => {
+            <Field label="Phone">
+              <span className="new-vendor-phone new-vendor-control">
+                <span className="new-vendor-control__icon"><IconPhone size={17} /></span>
+                <select name="phoneCode" aria-label="Phone country code" value={values.phoneCode} onChange={(event) => setField("phoneCode", event.target.value)}>
+                  {DIAL_CODES.map((code) => <option key={code}>{code}</option>)}
+                </select>
+                <input name="phone" type="tel" aria-label="Phone number" value={values.phone} onChange={(event) => setField("phone", event.target.value)} placeholder="81234 56789…" inputMode="tel" autoComplete="tel-national" />
+              </span>
+            </Field>
+            <Field label="Email">
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconMail size={17} /></span>
+                <input name="email" type="email" value={values.email} onChange={(event) => setField("email", event.target.value)} placeholder="contact@vendor.com…" inputMode="email" autoComplete="email" spellCheck={false} />
+              </span>
+            </Field>
+          </div>
+
+          <div className="new-vendor-grid new-vendor-grid--2">
+            <Field label="WhatsApp number">
+              <span className="new-vendor-phone new-vendor-control">
+                <span className="new-vendor-control__icon"><IconPhone size={17} /></span>
+                <select name="whatsappCode" aria-label="WhatsApp country code" value={values.whatsappCode} disabled={sameAsPhone} onChange={(event) => setField("whatsappCode", event.target.value)}>
+                  {DIAL_CODES.map((code) => <option key={code}>{code}</option>)}
+                </select>
+                <input name="whatsapp" type="tel" aria-label="WhatsApp number" value={values.whatsapp} disabled={sameAsPhone} onChange={(event) => setField("whatsapp", event.target.value)} placeholder="81234 56789…" inputMode="tel" autoComplete="tel-national" />
+              </span>
+            </Field>
+            <label className="new-vendor-check">
+              <input
+                type="checkbox"
+                checked={sameAsPhone}
+                onChange={(event) => {
                   const checked = event.target.checked;
                   setSameAsPhone(checked);
-                  if (checked) setValues((current) => ({ ...current, whatsapp: current.phone, whatsappCode: current.phoneCode }));
-                }} />
-                <span>Use the same number for WhatsApp</span>
-              </label>
-            </div>
+                  if (checked) {
+                    setValues((current) => ({
+                      ...current,
+                      whatsapp: current.phone,
+                      whatsappCode: current.phoneCode,
+                    }));
+                  }
+                }}
+              />
+              <span>Same as phone</span>
+            </label>
           </div>
-        </section>
+        </FormSection>
 
-        <section className="new-vendor-section" aria-labelledby="new-vendor-location">
-          <SectionIntro id="new-vendor-location" step="03" title="Location" description="Headquarters and the address used for contracts and tax documents." requirement="City and country required" />
-          <div className="new-vendor-section__fields">
-            <div className="new-vendor-grid new-vendor-grid--3">
-              <Field label="City *"><input required value={values.city} onChange={(event) => setField("city", event.target.value)} placeholder="Kochi" /></Field>
-              <Field label="State or region"><input value={values.state} onChange={(event) => setField("state", event.target.value)} placeholder="Kerala" /></Field>
-              <Field label="Country *">
-                <select required value={values.country} onChange={(event) => setField("country", event.target.value)}>
+        <FormSection id="new-vendor-location" title="Location" description="Record the vendor’s operating and mailing location." icon={<IconPin size={18} />}>
+          <div className="new-vendor-grid new-vendor-grid--3">
+            <Field label="City *">
+              <span className="new-vendor-control new-vendor-control--suggestions">
+                <span className="new-vendor-control__icon"><IconPin size={17} /></span>
+                <input
+                  name="city"
+                  required
+                  value={values.city}
+                  onChange={(event) => {
+                    setField("city", event.target.value);
+                    setShowCitySuggestions(true);
+                  }}
+                  onFocus={() => setShowCitySuggestions(true)}
+                  onBlur={() => window.setTimeout(() => setShowCitySuggestions(false), 120)}
+                  placeholder="Search city…"
+                  autoComplete="address-level2"
+                  aria-autocomplete="list"
+                  aria-expanded={showCitySuggestions && citySuggestions.length > 0}
+                  aria-controls="vendor-city-suggestions"
+                />
+                {showCitySuggestions && citySuggestions.length > 0 ? (
+                  <div className="new-vendor-suggestions" id="vendor-city-suggestions" role="listbox" aria-label="City suggestions">
+                    {citySuggestions.map((suggestion) => (
+                      <button
+                        key={`${suggestion.city}-${suggestion.country}`}
+                        type="button"
+                        role="option"
+                        aria-selected={values.city === suggestion.city}
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setField("city", suggestion.city);
+                          setField("state", suggestion.state);
+                          setField("country", suggestion.country);
+                          setShowCitySuggestions(false);
+                        }}
+                      >
+                        <span><IconPin size={15} /></span>
+                        <strong>{suggestion.city}</strong>
+                        <small>{suggestion.state}, {suggestion.country}</small>
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </span>
+            </Field>
+            <Field label="State or region">
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconPin size={17} /></span>
+                <input name="state" value={values.state} onChange={(event) => setField("state", event.target.value)} placeholder="Kerala…" autoComplete="address-level1" />
+              </span>
+            </Field>
+            <Field label="Country *">
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconGlobe size={17} /></span>
+                <select name="country" required value={values.country} onChange={(event) => setField("country", event.target.value)} autoComplete="country-name">
                   {VENDOR_COUNTRIES.map((country) => <option key={country}>{country}</option>)}
                 </select>
-              </Field>
-            </div>
-            <Field label="Street address"><textarea rows={2} value={values.address} onChange={(event) => setField("address", event.target.value)} placeholder="Building, street, district" /></Field>
-            <Field label="Postal code" className="new-vendor-field--short"><input value={values.postalCode} onChange={(event) => setField("postalCode", event.target.value)} placeholder="682001" /></Field>
+              </span>
+            </Field>
           </div>
-        </section>
 
-        <section className="new-vendor-section" aria-labelledby="new-vendor-booking">
-          <SectionIntro id="new-vendor-booking" step="04" title="Booking operations" description="Defaults used when requesting availability and following up on live bookings." requirement="Optional setup" />
-          <div className="new-vendor-section__fields">
-            <div className="new-vendor-grid new-vendor-grid--2">
-              <Field label="Reservations email"><input value={values.reservationsEmail} onChange={(event) => setField("reservationsEmail", event.target.value)} placeholder="reservations@vendor.com" inputMode="email" /></Field>
-              <Field label="Emergency or after-hours phone"><input value={values.emergencyPhone} onChange={(event) => setField("emergencyPhone", event.target.value)} placeholder="+91 98765 43210" inputMode="tel" /></Field>
-              <Field label="Expected confirmation time">
-                <select value={values.confirmationSla} onChange={(event) => setField("confirmationSla", event.target.value)}>
-                  <option>Within 1 hour</option><option>Within 4 hours</option><option>Same business day</option><option>Within 24 hours</option><option>On request</option>
-                </select>
-              </Field>
-              <Field label="Preferred confirmation channel">
-                <select value={values.confirmationChannel} onChange={(event) => setField("confirmationChannel", event.target.value)}>
-                  <option>Email</option><option>WhatsApp</option><option>Phone</option><option>Vendor portal</option>
-                </select>
-              </Field>
-            </div>
-            <Field label="Default payment terms" hint="A working default only. Rate cards and contracts can override it."><input value={values.paymentTerms} onChange={(event) => setField("paymentTerms", event.target.value)} placeholder="e.g. 25% deposit, balance 15 days before arrival" /></Field>
-          </div>
-        </section>
+          <Field label="Street address">
+            <textarea name="address" rows={3} value={values.address} onChange={(event) => setField("address", event.target.value)} placeholder="Building, street, and district…" autoComplete="street-address" />
+          </Field>
 
-        <section className="new-vendor-section" aria-labelledby="new-vendor-business">
-          <SectionIntro id="new-vendor-business" step="05" title="Business details" description="Legal, tax, and internal context for this commercial relationship." requirement="Optional setup" />
-          <div className="new-vendor-section__fields">
-            <div className="new-vendor-grid new-vendor-grid--2">
-              <Field label="Legal business name"><input value={values.legalName} onChange={(event) => setField("legalName", event.target.value)} placeholder="Name shown on contracts and invoices" /></Field>
-              <Field label="GSTIN"><input value={values.gstin} onChange={(event) => setField("gstin", event.target.value)} placeholder="GST registration number" /></Field>
-              <Field label="PAN"><input value={values.pan} onChange={(event) => setField("pan", event.target.value)} placeholder="Permanent account number" /></Field>
-            </div>
-            <Field label="Internal notes"><textarea rows={3} value={values.internalNotes} onChange={(event) => setField("internalNotes", event.target.value)} placeholder="Commercial context, escalation paths, contracting notes, or known constraints" /></Field>
+          <Field label="Postal code" className="new-vendor-field--short">
+            <input name="postalCode" value={values.postalCode} onChange={(event) => setField("postalCode", event.target.value)} placeholder="682001…" autoComplete="postal-code" inputMode="numeric" />
+          </Field>
+        </FormSection>
+
+        <FormSection id="new-vendor-business" title="Business details" description="Add ownership, compliance, and internal context." icon={<IconBuilding size={18} />}>
+          <div className="new-vendor-grid new-vendor-grid--2">
+            <Field label="Legal business name">
+              <input name="legalName" value={values.legalName} onChange={(event) => setField("legalName", event.target.value)} placeholder="Name shown on contracts and invoices…" autoComplete="organization" />
+            </Field>
+            <Field label="Internal owner *">
+              <span className="new-vendor-control">
+                <span className="new-vendor-control__icon"><IconUser size={17} /></span>
+                <select name="owner" required value={values.owner} onChange={(event) => setField("owner", event.target.value)}>
+                  {INTERNAL_OWNERS.map((owner) => <option key={owner.name}>{owner.name}</option>)}
+                </select>
+              </span>
+            </Field>
+            <Field label="GSTIN">
+              <input name="gstin" value={values.gstin} onChange={(event) => setField("gstin", event.target.value)} placeholder="GST registration number…" autoComplete="off" spellCheck={false} />
+            </Field>
+            <Field label="PAN">
+              <input name="pan" value={values.pan} onChange={(event) => setField("pan", event.target.value)} placeholder="Permanent account number…" autoComplete="off" spellCheck={false} />
+            </Field>
           </div>
-        </section>
+
+          <Field label="Internal notes">
+            <textarea name="internalNotes" rows={3} value={values.internalNotes} onChange={(event) => setField("internalNotes", event.target.value)} placeholder="Commercial context, contracting notes, or known constraints…" />
+          </Field>
+        </FormSection>
 
         {duplicates.length > 0 ? (
           <aside className="new-vendor-duplicate" aria-live="polite">
@@ -461,15 +461,12 @@ export function NewVendorPage({
         ) : null}
 
         <footer className="new-vendor-actions">
-          <p><strong>{completedRequired} of 6 required details complete.</strong> Vendor name, one service, location, owner, and one contact method are required.</p>
           <div>
             <Button variant="ghost" size="sm" type="button" onClick={onCancel}>Cancel</Button>
-            <Button variant="primary" size="sm" type="submit" disabled={!canSubmit}>Create vendor</Button>
+            <Button variant="primary" size="sm" type="submit" disabled={!canSubmit}>Create draft vendor</Button>
           </div>
         </footer>
-          </form>
-        </div>
-      </div>
+      </form>
     </div>
   );
 }
