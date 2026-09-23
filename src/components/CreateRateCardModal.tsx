@@ -55,10 +55,6 @@ export function CreateRateCardModal({
             <h2 id={titleId} className="pt-modal__title">
               New rate card — {vendorName}
             </h2>
-            <p className="create-rc-modal__lede">
-              One vendor can sell several services. Each gets its own structured template, not a
-              reshaped accommodation grid.
-            </p>
           </div>
           <button type="button" className="pt-modal__icon-close" onClick={onClose} aria-label="Close">
             <IconClose size={15} />

@@ -15,8 +15,8 @@ import {
 } from "@paryatech/design-system";
 import type { PolicyDocument, PolicyRow } from "../../rateCard/types";
 import { IconAttach, IconBookmark, IconClose, IconFile, IconPlus } from "../../icons";
+import { DashboardDataSheetFill } from "../DashboardDataSheet";
 import { StatusChipWithDot } from "../StatusChipWithDot";
-import { SheetLeadButton } from "../SheetLeadButton";
 import "../VendorFormModal.css";
 import "./PoliciesPanel.css";
 
@@ -176,7 +176,7 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
   };
 
   return (
-    <div className="pol">
+    <div className="pol dashboard-table-panel">
       <div className="pol-toolbar">
         <SearchField
           fullWidth
@@ -201,7 +201,7 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
         </div>
       </div>
 
-      <div className="pol-sheet-wrap">
+      <div className="pol-sheet-wrap dashboard-table-end">
         {filtered.length === 0 ? (
           <EmptyState
             title="No policies match"
@@ -224,11 +224,28 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
                 <DataSheetCell>Policy</DataSheetCell>
                 <DataSheetCell>Document</DataSheetCell>
                 <DataSheetCell>Status</DataSheetCell>
-                <DataSheetCell>Action</DataSheetCell>
               </DataSheetHeader>
 
               {filtered.map((p) => (
-                <DataSheetRow key={p.id}>
+                <DataSheetRow
+                  key={p.id}
+                  className="data-row--interactive"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open ${p.title}`}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement;
+                    if (target.closest("button, a, input, select, textarea")) return;
+                    setOpenId(p.id);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setOpenId(p.id);
+                    }
+                  }}
+                >
                   <DataSheetCell check>
                     <Checkbox
                       state={selected.includes(p.id) ? "on" : "off"}
@@ -241,17 +258,7 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
                     />
                   </DataSheetCell>
                   <DataSheetCell>
-                    <SheetLeadButton
-                      label={`Open ${p.title}`}
-                      onClick={() => setOpenId(p.id)}
-                    >
-                      <LeadCell
-                        align="start"
-                        icon={<IconBookmark size={15} />}
-                        title={p.title}
-                        subtitle={p.summary}
-                      />
-                    </SheetLeadButton>
+                    <LeadCell align="start" icon={<IconBookmark size={15} />} title={p.title} subtitle={p.summary} />
                   </DataSheetCell>
                   <DataSheetCell>
                     {p.document ? (
@@ -270,13 +277,9 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
                       {STATUS_LABEL[p.status]}
                     </StatusChipWithDot>
                   </DataSheetCell>
-                  <DataSheetCell>
-                    <Button variant="brand" size="sm" onClick={() => setOpenId(p.id)}>
-                      View policy
-                    </Button>
-                  </DataSheetCell>
                 </DataSheetRow>
               ))}
+              <DashboardDataSheetFill columns={4} />
             </DataSheet>
 
             <Pagination
@@ -304,11 +307,9 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
           >
             <div className="pt-modal__head pol-modal__head">
               <div className="pol-modal__head-text">
-                <p className="pt-modal__eyebrow">{open.category}</p>
                 <h2 id="pol-modal-title" className="pt-modal__title">
                   {open.title}
                 </h2>
-                <p className="pt-modal__desc">{open.summary}</p>
               </div>
               <IconButton label="Close policy" onClick={() => setOpenId(null)}>
                 <IconClose />
@@ -369,15 +370,9 @@ export function PoliciesPanel({ policies: seed }: { policies: PolicyRow[] }) {
           >
             <div className="pt-modal__head pol-modal__head">
               <div className="pol-modal__head-text">
-                <p className="pt-modal__eyebrow">Policies</p>
                 <h2 id={titleId} className="pt-modal__title">
                   {compose === "document" ? "Add document" : "Add a policy"}
                 </h2>
-                <p className="pt-modal__desc">
-                  {compose === "document"
-                    ? "Upload a source file — we convert it into editable policy text on this rate card."
-                    : "Write the policy yourself. Attaching a source document is optional."}
-                </p>
               </div>
               <IconButton label="Close" onClick={resetCompose}>
                 <IconClose />

@@ -86,7 +86,113 @@ export const SERVICE_TYPE_FILTERS: { value: string; label: string }[] = [
   { value: "Flights", label: "Flights" },
 ];
 
+function directoryService(input: {
+  id: string;
+  vendorId: string;
+  name: string;
+  type: ServiceType;
+  location: string;
+  details: string;
+  about: string;
+  pricingLabel: string;
+  rateCards: ServiceRateCardLink[];
+  imageId: string;
+  imageIds?: string[];
+}): VendorService {
+  const imageUrl = thumb(input.imageId, 640, 480);
+  const galleryIds = input.imageIds?.length ? input.imageIds : [input.imageId];
+  return {
+    ...input,
+    profile: {
+      category: input.type,
+      duration: input.type === "Accommodation" ? "Overnight or multi-night" : "Service based",
+      ageSuitability: "All ages",
+      difficulty: "Not applicable",
+      seasonality: "Available according to the linked rate-card validity.",
+      searchText: `${input.name} ${input.location} ${input.type}`,
+      exclusions: ["Items not listed in the confirmed rate card", "Personal expenses"],
+    },
+    inclusions: ["Products listed on the linked rate card", "Vendor confirmation and support"],
+    rateCardCount: input.rateCards.length,
+    status: "active",
+    imageUrl,
+    imageAlt: input.name,
+    media: galleryIds.map((imageId, index) => ({
+      id: `${input.id}-media-${index + 1}`,
+      title: index === 0 ? `${input.name} primary image` : `${input.name} view ${index + 1}`,
+      imageUrl: thumb(imageId, 640, 480),
+      imageAlt: `${input.name} ${index === 0 ? "exterior" : `view ${index + 1}`}`,
+      usedInBanner: index === 0,
+    })),
+  };
+}
+
 export const VENDOR_SERVICES: VendorService[] = [
+  directoryService({
+    id: "svc-taj-exotica",
+    vendorId: "exhosp",
+    name: "Taj Exotica Resort & Spa",
+    type: "Accommodation",
+    location: "Goa",
+    details: "Beach resort · 12 room types",
+    about: "A beach resort supplied through direct, DMC, and wholesale contracts, each with its own products and rate card.",
+    pricingLabel: "Accommodation tariff · 2026–27",
+    rateCards: [{ id: "rc-acc-2627", name: "Accommodation tariff · 2026–27" }],
+    imageId: "photo-1582719478250-c89cae4dc85b",
+    imageIds: [
+      "photo-1582719478250-c89cae4dc85b",
+      "photo-1566073771259-6a8506099945",
+      "photo-1571896349842-33c89424de2d",
+    ],
+  }),
+  directoryService({
+    id: "svc-taj-lake-palace",
+    vendorId: "kerala-heritage",
+    name: "Taj Lake Palace",
+    type: "Accommodation",
+    location: "Udaipur",
+    details: "Palace hotel · 9 room types",
+    about: "Lake-front palace accommodation with direct and DMC supply options.",
+    pricingLabel: "Palace stay tariff · 2026–27",
+    rateCards: [{ id: "rc-acc-2627", name: "Palace stay tariff · 2026–27" }],
+    imageId: "photo-1564501049412-61c2a3083791",
+  }),
+  directoryService({
+    id: "svc-taj-bekal",
+    vendorId: "coastal",
+    name: "Taj Bekal Resort & Spa",
+    type: "Accommodation",
+    location: "Kerala",
+    details: "Coastal resort · 10 room types",
+    about: "A Kerala coastal resort available through direct, DMC, and wholesale supplier relationships.",
+    pricingLabel: "Bekal direct tariff · 2026–27",
+    rateCards: [{ id: "rc-acc-2627", name: "Bekal direct tariff · 2026–27" }],
+    imageId: "photo-1571896349842-33c89424de2d",
+  }),
+  directoryService({
+    id: "svc-uae-visa",
+    vendorId: "atlas-visa",
+    name: "UAE Tourist Visa",
+    type: "Visa",
+    location: "UAE",
+    details: "30, 60, and 90 day products",
+    about: "Tourist visa processing products with government, centre, and vendor fee components.",
+    pricingLabel: "Visa services tariff · UAE",
+    rateCards: [{ id: "rc-visa-uae", name: "Visa services tariff · UAE" }],
+    imageId: "photo-1436491865332-7a61a109cc05",
+  }),
+  directoryService({
+    id: "svc-kerala-flights",
+    vendorId: "trailmakers",
+    name: "Kerala Flight Ticketing",
+    type: "Flights",
+    location: "India",
+    details: "Domestic and international ticketing",
+    about: "Managed air-ticketing support for domestic and international itineraries.",
+    pricingLabel: "Air ticketing fees · 2026",
+    rateCards: [{ id: "rc-air-2026", name: "Air ticketing fees · 2026" }],
+    imageId: "photo-1436491865332-7a61a109cc05",
+  }),
   {
     id: "svc-lake",
     vendorId: "exhosp",
@@ -282,13 +388,13 @@ export const VENDOR_SERVICES: VendorService[] = [
     rateCardCount: 1,
     rateCards: [{ id: "rc-acc-2627", name: "Activity tariff · 2026" }],
     status: "published",
-    imageUrl: thumb("photo-1551632811-561732d1e5ec", 96, 96),
+    imageUrl: thumb("photo-1506905925346-21bda4d32df4", 96, 96),
     imageAlt: "Ridge path through tea estates",
     media: [
       {
         id: "m-trek-1",
         title: "Ridge path",
-        imageUrl: thumb("photo-1551632811-561732d1e5ec"),
+        imageUrl: thumb("photo-1506905925346-21bda4d32df4"),
         imageAlt: "Trekking path on the ridge",
         kind: "image",
         usedInBanner: true,

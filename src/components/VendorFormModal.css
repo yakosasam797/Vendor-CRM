@@ -51,8 +51,20 @@
 }
 
 .pt-modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   border-bottom: 1px solid var(--line);
   background: var(--surface-2, var(--side));
+}
+
+.pt-modal__head-copy {
+  min-width: 0;
+}
+
+.pt-modal__close {
+  flex: none;
 }
 
 .pt-modal__eyebrow {
@@ -86,6 +98,13 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.pt-modal__message {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .pt-modal__foot {

@@ -76,10 +76,39 @@ const blankHotel = (): RateCardDetail => ({
       priority: "Base",
     },
   ],
-  guests: [],
-  supplements: [],
-  services: [],
-  activities: [],
+  guests: [
+    ["room-1", "Extra adult", "12+", "extra_bed", "all", null, 1],
+    ["room-1", "Child", "6–11", "no_bed", "all", null, 1],
+    ["room-1", "Toddler", "2–5", "existing_bed", "all", 0, 1],
+  ],
+  supplements: [
+    {
+      name: "Supplement 1",
+      applies: "Add dates or condition",
+      amount: null,
+      unit: "per person",
+      basis: "Optional",
+      tone: "neutral",
+    },
+  ],
+  services: [
+    {
+      name: "Service 1",
+      note: "Add service detail",
+      applies: "On request",
+      basis: "Per booking",
+      amount: null,
+    },
+  ],
+  activities: [
+    {
+      name: "Activity 1",
+      note: "Add activity detail",
+      group: "Add capacity",
+      basis: "Per person",
+      amount: null,
+    },
+  ],
   rules: [],
   cancel: [],
   policies: [

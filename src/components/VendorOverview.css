@@ -9,6 +9,28 @@
   padding-bottom: 32px;
 }
 
+.vendor-overview--draft {
+  gap: 0;
+  margin-top: 0;
+}
+
+.vo-draft-profile {
+  margin: 0 calc(var(--page-pad, 16px) * -1);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-left: 0;
+}
+
+.vo-draft-profile__note {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: 12px;
+}
+
+.vendor-draft-overview__empty {
+  min-height: clamp(280px, 40vh, 440px);
+}
+
 .vendor-bookings-panel {
   display: flex;
   flex-direction: column;
@@ -61,6 +83,80 @@
   align-items: center;
   gap: var(--space-2);
   flex: none;
+}
+
+.vendor-bookings-filter {
+  position: relative;
+}
+
+.vendor-bookings-filter .pt-icon-button.is-active {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  background: var(--accent-soft, #edf8f6);
+  color: var(--accent-ink, var(--accent));
+}
+
+.vendor-bookings-filter__menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  min-width: 180px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface);
+  box-shadow: 0 14px 34px rgba(20, 26, 33, 0.14);
+}
+
+.vendor-bookings-filter__menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.vendor-bookings-filter__menu button:hover,
+.vendor-bookings-filter__menu button:focus-visible {
+  background: var(--surface-2, var(--side));
+  outline: none;
+}
+
+.vendor-bookings-filter__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 36px;
+  margin: -6px 0 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface-2, var(--side));
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.vendor-bookings-filter__summary button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink, var(--accent));
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
 }
 
 .vendor-overview__sheet {
@@ -126,8 +222,6 @@
   flex: 1;
 }
 
-/* Vendor profile field matrix. */
-
 .vo-profile {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -174,8 +268,6 @@
   align-items: center;
   gap: 8px;
 }
-
-/* Vendor contacts. */
 
 .vo-contacts {
   list-style: none;
@@ -304,8 +396,6 @@
   outline-offset: 2px;
 }
 
-/* Relationship history is the existing summary-strip pattern, with no extra card. */
-
 .vo-history .summary-section {
   margin-top: 0;
 }
@@ -314,12 +404,10 @@
   margin-bottom: 14px;
 }
 
-/* Full bookings table on the dedicated Bookings tab. */
-
 .vendor-bookings-sheet {
   --vb-check: calc(var(--page-pad, 16px) + 46px);
   --vb-cols: var(--vb-check) minmax(200px, 1.5fr) minmax(130px, 0.95fr) minmax(150px, 1.1fr)
-    120px minmax(130px, 1fr) minmax(140px, 1fr) 110px;
+    120px minmax(130px, 1fr) minmax(140px, 1fr);
 }
 
 .vendor-bookings-sheet .pt-sheet__scroll {
@@ -331,7 +419,7 @@
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--vb-cols);
-  min-width: 1100px;
+  min-width: 990px;
 }
 
 .vendor-bookings-sheet .pt-sheet__cell--check {

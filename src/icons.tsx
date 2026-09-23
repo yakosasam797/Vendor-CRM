@@ -485,6 +485,15 @@ export function IconMore({ size = 16 }: IconProps) {
   );
 }
 
+export function IconSearch({ size = 17 }: IconProps) {
+  return (
+    <Svg size={size} strokeWidth="1.9">
+      <circle cx="11" cy="11" r="7.5" />
+      <path d="m21 21-4.3-4.3" />
+    </Svg>
+  );
+}
+
 export function IconTrash({ size = 15 }: IconProps) {
   return (
     <Svg size={size} strokeWidth="1.8">

@@ -73,6 +73,73 @@
   background: var(--accent-soft, #e7f2f0);
 }
 
+.rc-season__edit-control {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: min(520px, calc(100vw - 300px));
+  min-height: 46px;
+  padding: 5px 6px 5px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.rc-season__edit-control--open,
+.rc-season__edit-control:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.rc-season__edit-control > svg {
+  flex: none;
+  color: var(--ink-2);
+}
+
+.rc-season__edit-copy {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.rc-season__name-input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 650;
+  outline: 0;
+}
+
+.rc-season__edit-copy span {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rc-season__choose {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.rc-season__choose:hover {
+  background: var(--surface-3);
+}
+
 .rc-season__btn svg {
   flex: none;
   color: var(--ink-2);
@@ -420,6 +487,115 @@
   font-size: var(--type-body-empty-sheet-size, 13.5px);
   font-weight: var(--type-body-empty-sheet-weight, 500);
   color: var(--ink-3);
+}
+
+.rc-edit-stack {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.rc-edit-input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--type-body-copy-size);
+  box-sizing: border-box;
+}
+
+.rc-edit-input--strong {
+  font-family: var(--type-body-emphasis-family);
+  font-weight: var(--type-body-emphasis-weight);
+}
+
+.rc-edit-input--header {
+  height: 30px;
+  font-size: var(--type-label-table-head-size);
+  font-weight: var(--type-label-table-head-weight);
+}
+
+.rc-edit-input--number {
+  width: 62px;
+  font-family: var(--font-mono);
+}
+
+.rc-edit-input:focus {
+  border-color: var(--accent);
+  outline: 2px solid color-mix(in srgb, var(--accent) 15%, transparent);
+  outline-offset: 0;
+}
+
+.rc-room-editor {
+  display: grid;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  padding: 5px 0;
+}
+
+.rc-room-editor__head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rc-room-editor__occupancy {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.rc-room-editor__occupancy label {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rc-room-editor__occupancy span {
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rc-room-editor__occupancy input {
+  width: 100%;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  box-sizing: border-box;
+}
+
+.rc-edit-remove {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.rc-edit-remove:hover {
+  border-color: var(--danger, #b42318);
+  color: var(--danger, #b42318);
 }
 
 .rc-hint {

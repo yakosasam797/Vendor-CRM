@@ -2,6 +2,7 @@ import type { AccountDestinationId, SettingsDestinationId } from "./settings/des
 
 export type CrmRoute =
   | { name: "vendors" }
+  | { name: "vendor-new" }
   | { name: "vendor"; id: string }
   | { name: "rate-card"; id: string; vendorId: string }
   | { name: "rate-card-new"; templateId: string; vendorId: string };

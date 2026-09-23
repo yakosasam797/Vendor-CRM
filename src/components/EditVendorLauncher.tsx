@@ -77,7 +77,6 @@ const DESTINATIONS: {
  */
 export function EditVendorLauncherModal({
   open,
-  vendorName,
   onClose,
   onSelect,
   returnFocusRef,
@@ -89,7 +88,6 @@ export function EditVendorLauncherModal({
   returnFocusRef?: RefObject<HTMLElement | null>;
 }) {
   const titleId = useId();
-  const descId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -134,17 +132,12 @@ export function EditVendorLauncherModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={descId}
       >
         <div className="settings-launcher__head">
           <div>
             <h2 id={titleId} className="settings-launcher__title">
               Edit vendor
             </h2>
-            <p id={descId} className="settings-launcher__desc">
-              Edit <strong>{vendorName}</strong> on Overview, or open Services, Rate cards,
-              Packages, Finance, or Docs to work those on their tabs.
-            </p>
           </div>
           <IconButton label="Close" onClick={onClose}>
             <IconClose />

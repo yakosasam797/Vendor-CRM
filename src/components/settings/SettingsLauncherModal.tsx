@@ -36,7 +36,6 @@ export function SettingsLauncherModal({
   returnFocusRef?: React.RefObject<HTMLElement | null>;
 }) {
   const titleId = useId();
-  const descId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [position, setPosition] = useState<React.CSSProperties>();
@@ -144,16 +143,12 @@ export function SettingsLauncherModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        aria-describedby={descId}
       >
         <div className="settings-launcher__head">
           <div>
             <h2 id={titleId} className="settings-launcher__title">
               Workspace settings
             </h2>
-            <p id={descId} className="settings-launcher__desc">
-              Choose a destination. Forms and setup work happen on dedicated pages.
-            </p>
           </div>
           <IconButton label="Close workspace settings" onClick={onClose}>
             <IconClose />

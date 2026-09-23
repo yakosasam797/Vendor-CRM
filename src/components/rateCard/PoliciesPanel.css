@@ -43,14 +43,14 @@
 
 .pol-sheet {
   --pol-check: calc(var(--page-pad, 16px) + 46px);
-  --pol-cols: var(--pol-check) minmax(220px, 1.6fr) minmax(200px, 1.3fr) minmax(110px, 0.7fr) minmax(120px, 0.7fr);
+  --pol-cols: var(--pol-check) minmax(260px, 1.6fr) minmax(240px, 1.3fr) minmax(130px, 0.7fr);
 }
 
 .pol-sheet .pt-sheet__row {
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--pol-cols);
-  min-width: 860px;
+  min-width: 760px;
 }
 
 .pol-doc-empty {

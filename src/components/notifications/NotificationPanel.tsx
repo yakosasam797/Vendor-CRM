@@ -109,9 +109,6 @@ export function NotificationPanel({
             <h2 id={titleId} className="settings-launcher__title">
               Notification center
             </h2>
-            <p className="settings-launcher__desc">
-              Mentions, tasks, approvals, and other workspace updates.
-            </p>
           </div>
           <IconButton label="Close notifications" onClick={onClose}>
             <IconClose />

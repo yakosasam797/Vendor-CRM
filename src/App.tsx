@@ -1,17 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AppShell,
   Avatar,
   CreditsMeter,
   IconButton,
   NotesStrip,
-  SearchField,
 } from "@paryatech/design-system";
 import { AccountLauncher } from "./components/account/AccountLauncher";
 import { NotificationPanel } from "./components/notifications/NotificationPanel";
 import { RoleSwitcher } from "./components/RoleSwitcher";
 import { SettingsLauncherModal } from "./components/settings/SettingsLauncherModal";
+import { UniversalSearch, type UniversalSearchItem } from "./components/UniversalSearch";
 import { VendorsListPage } from "./components/VendorsListPage";
+import { NewVendorPage } from "./components/NewVendorPage";
 import { VendorRateCardsPage } from "./components/VendorRateCardsPage";
 import { RateCardDetailPage } from "./components/rateCard/RateCardDetailPage";
 import { NotesPanel } from "./components/NotesPanel";
@@ -25,13 +26,18 @@ import { canOpenWorkspaceSettings, type OrgRole } from "./permissions";
 import { createBlankCard, getDetailCard } from "./rateCard/cards";
 import { CreateRateCardModal } from "./components/CreateRateCardModal";
 import type { RateCardDetail } from "./rateCard/types";
+import type { PageNavigationContext } from "./pageNavigation";
 import {
   pathForHub,
   parsePathname,
   type CrmRoute,
   type HubRoute,
 } from "./routing";
-import type { AccountDestinationId, SettingsDestinationId } from "./settings/destinations";
+import {
+  SETTINGS_DESTINATIONS,
+  type AccountDestinationId,
+  type SettingsDestinationId,
+} from "./settings/destinations";
 import {
   IconBell,
   IconBrandCaret,
@@ -39,6 +45,7 @@ import {
   IconChevronLeft,
   IconHelp,
   IconNotes,
+  IconSearch,
   IconSettings,
 } from "./icons";
 import "./App.css";
@@ -72,12 +79,20 @@ export default function App() {
   const [openServiceId, setOpenServiceId] = useState<string | null>(null);
   const [createCardOpen, setCreateCardOpen] = useState(false);
   const [activeDraft, setActiveDraft] = useState<RateCardDetail | null>(null);
+  const [universalSearchOpen, setUniversalSearchOpen] = useState(false);
+  const [pageNavigation, setPageNavigation] = useState<PageNavigationContext | null>(null);
 
   const settingsBtnRef = useRef<HTMLElement>(null);
   const notifBtnRef = useRef<HTMLElement>(null);
   const accountBtnRef = useRef<HTMLButtonElement>(null);
+  const searchBtnRef = useRef<HTMLButtonElement>(null);
+  const handlePageNavigationChange = useCallback(
+    (context: PageNavigationContext | null) => setPageNavigation(context),
+    [],
+  );
 
   const leaveHub = () => {
+    setPageNavigation(null);
     setHubRoute(null);
     if (window.location.pathname.startsWith("/settings") ||
       window.location.pathname.startsWith("/account") ||
@@ -87,31 +102,50 @@ export default function App() {
   };
 
   const openVendors = () => {
+    setPageNavigation(null);
     leaveHub();
     setActiveNav("vendors");
     setOpenServiceId(null);
     setCrmRoute({ name: "vendors" });
   };
   const goHome = () => {
+    setPageNavigation(null);
     leaveHub();
     setActiveNav("home");
     setOpenServiceId(null);
     setCrmRoute({ name: "vendors" });
   };
+  const openNavigation = (id: string) => {
+    setPageNavigation(null);
+    setActiveNav(id);
+    leaveHub();
+    setOpenServiceId(null);
+    setCrmRoute({ name: "vendors" });
+  };
   const openVendor = (id: string, message?: string) => {
+    setPageNavigation(null);
     leaveHub();
     setActiveNav("vendors");
     setOpenServiceId(null);
     if (message) setFlash(message);
     setCrmRoute({ name: "vendor", id });
   };
+  const openNewVendor = () => {
+    setPageNavigation(null);
+    leaveHub();
+    setActiveNav("vendors");
+    setOpenServiceId(null);
+    setCrmRoute({ name: "vendor-new" });
+  };
   const openCard = (id: string, vendorId: string) => {
+    setPageNavigation(null);
     leaveHub();
     setActiveNav("vendors");
     setOpenServiceId(null);
     setCrmRoute({ name: "rate-card", id, vendorId });
   };
   const backFromCard = () => {
+    setPageNavigation(null);
     if (crmRoute.name === "rate-card" || crmRoute.name === "rate-card-new") {
       setOpenServiceId(null);
       setCrmRoute({ name: "vendor", id: crmRoute.vendorId });
@@ -120,16 +154,7 @@ export default function App() {
     openVendors();
   };
 
-  const navGroups = useMemo(
-    () =>
-      buildNavGroups(activeNav, (id) => {
-        setActiveNav(id);
-        leaveHub();
-        setOpenServiceId(null);
-        setCrmRoute({ name: "vendors" });
-      }),
-    [activeNav],
-  );
+  const navGroups = buildNavGroups(activeNav, openNavigation);
 
   useEffect(() => {
     const onPop = () => {
@@ -137,6 +162,20 @@ export default function App() {
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useEffect(() => {
+    const onUniversalSearch = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSettingsOpen(false);
+        setAccountOpen(false);
+        setNotifOpen(false);
+        setUniversalSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", onUniversalSearch);
+    return () => window.removeEventListener("keydown", onUniversalSearch);
   }, []);
 
   const goHub = (route: HubRoute) => {
@@ -149,6 +188,7 @@ export default function App() {
 
   const isHub = hubRoute !== null;
   const isVendorsList = !isHub && crmRoute.name === "vendors" && activeNav === "vendors";
+  const isNewVendor = !isHub && crmRoute.name === "vendor-new";
   const isVendorDetail = !isHub && crmRoute.name === "vendor";
   const isHome = !isHub && activeNav === "home" && crmRoute.name === "vendors";
   const isOtherNav =
@@ -169,6 +209,8 @@ export default function App() {
 
   const notesTitle = isVendorsList
     ? "Module notes"
+    : isNewVendor
+      ? "Vendor setup notes"
     : isHome
       ? "Workspace notes"
     : isHub
@@ -233,7 +275,39 @@ export default function App() {
           <li className="rc-crumb-sep" aria-hidden="true">
             ›
           </li>
-          <li aria-current="page">Vendors</li>
+          {pageNavigation ? (
+            <>
+              <li>
+                <button
+                  type="button"
+                  className="app-shell-crumbs__link"
+                  onClick={pageNavigation.onBack}
+                >
+                  {pageNavigation.sectionLabel}
+                </button>
+              </li>
+              <li className="rc-crumb-sep" aria-hidden="true">›</li>
+              <li aria-current="page">{pageNavigation.title}</li>
+            </>
+          ) : (
+            <li aria-current="page">Vendors</li>
+          )}
+        </>
+      ) : isNewVendor ? (
+        <>
+          <li>
+            <button type="button" className="app-shell-crumbs__link" onClick={openVendors}>
+              CRM
+            </button>
+          </li>
+          <li className="rc-crumb-sep" aria-hidden="true">›</li>
+          <li>
+            <button type="button" className="app-shell-crumbs__link" onClick={openVendors}>
+              Vendors
+            </button>
+          </li>
+          <li className="rc-crumb-sep" aria-hidden="true">›</li>
+          <li aria-current="page">Add vendor</li>
         </>
       ) : (
         <>
@@ -282,6 +356,33 @@ export default function App() {
                 </li>
                 <li aria-current="page">{openService.name}</li>
               </>
+            ) : pageNavigation ? (
+              <>
+                <li>
+                  <button
+                    type="button"
+                    className="app-shell-crumbs__link"
+                    onClick={() => {
+                      pageNavigation.onBack();
+                      openVendor(currentVendorId);
+                    }}
+                  >
+                    {vendorName(currentVendorId)}
+                  </button>
+                </li>
+                <li className="rc-crumb-sep" aria-hidden="true">›</li>
+                <li>
+                  <button
+                    type="button"
+                    className="app-shell-crumbs__link"
+                    onClick={pageNavigation.onBack}
+                  >
+                    {pageNavigation.sectionLabel}
+                  </button>
+                </li>
+                <li className="rc-crumb-sep" aria-hidden="true">›</li>
+                <li aria-current="page">{pageNavigation.title}</li>
+              </>
             ) : (
               <li aria-current="page">{vendorName(currentVendorId)}</li>
             )
@@ -315,6 +416,151 @@ export default function App() {
     goHub({ area: "account", id });
   };
 
+  const openUniversalSearch = () => {
+    setSettingsOpen(false);
+    setAccountOpen(false);
+    setNotifOpen(false);
+    setUniversalSearchOpen(true);
+  };
+
+  const closeUniversalSearch = () => {
+    setUniversalSearchOpen(false);
+    window.requestAnimationFrame(() => searchBtnRef.current?.focus());
+  };
+
+  const universalSearchItems: UniversalSearchItem[] = [
+    {
+      id: "page-home",
+      label: "Home",
+      description: "Workspace overview",
+      group: "Pages",
+      keywords: "dashboard workspace",
+      featured: true,
+      onSelect: () => openNavigation("home"),
+    },
+    {
+      id: "page-vendors",
+      label: "Vendors",
+      description: "Browse and manage vendor records",
+      group: "Pages",
+      keywords: "crm suppliers",
+      featured: true,
+      onSelect: openVendors,
+    },
+    {
+      id: "page-customers",
+      label: "Customers",
+      description: "Open customer records",
+      group: "Pages",
+      keywords: "crm clients",
+      featured: true,
+      onSelect: () => openNavigation("customers"),
+    },
+    {
+      id: "page-tasks",
+      label: "All tasks",
+      description: "Review work across the workspace",
+      group: "Pages",
+      keywords: "todos work",
+      featured: true,
+      onSelect: () => openNavigation("tasks"),
+    },
+    {
+      id: "page-inbox",
+      label: "All inbox",
+      description: "Messages and updates",
+      group: "Pages",
+      keywords: "communications messages email",
+      onSelect: () => openNavigation("inbox"),
+    },
+    {
+      id: "page-news",
+      label: "News",
+      description: "Workspace announcements",
+      group: "Pages",
+      onSelect: () => openNavigation("news"),
+    },
+    {
+      id: "page-queries",
+      label: "Queries",
+      description: "Sales enquiries and requests",
+      group: "Pages",
+      keywords: "sales leads",
+      onSelect: () => openNavigation("queries"),
+    },
+    {
+      id: "page-packages",
+      label: "Packages",
+      description: "Travel packages",
+      group: "Pages",
+      onSelect: () => openNavigation("packages"),
+    },
+    {
+      id: "page-bookings",
+      label: "Bookings",
+      description: "Trips and fulfilment",
+      group: "Pages",
+      featured: true,
+      onSelect: () => openNavigation("bookings"),
+    },
+    {
+      id: "page-finances",
+      label: "All finances",
+      description: "Payments and financial activity",
+      group: "Pages",
+      keywords: "invoices payables",
+      onSelect: () => openNavigation("finances"),
+    },
+    {
+      id: "page-team",
+      label: "Team",
+      description: "Workspace members",
+      group: "Pages",
+      onSelect: () => openNavigation("team"),
+    },
+    {
+      id: "page-automations",
+      label: "Automations",
+      description: "Operational workflows",
+      group: "Pages",
+      onSelect: () => openNavigation("automations"),
+    },
+    {
+      id: "page-reports",
+      label: "Reports",
+      description: "Workspace reporting",
+      group: "Pages",
+      onSelect: () => openNavigation("reports"),
+    },
+    {
+      id: "page-notifications",
+      label: "Notifications",
+      description: "View all workspace notifications",
+      group: "Pages",
+      featured: true,
+      onSelect: () => goHub({ area: "notifications" }),
+    },
+    ...vendors.map<UniversalSearchItem>((vendor) => ({
+      id: `vendor-${vendor.id}`,
+      label: vendor.name,
+      description: `${vendor.code} · ${vendor.location}`,
+      group: "Vendors",
+      keywords: `${vendor.categories.join(" ")} ${vendor.owner}`,
+      onSelect: () => openVendor(vendor.id),
+    })),
+    ...(canOpenWorkspaceSettings(orgRole)
+      ? SETTINGS_DESTINATIONS.map<UniversalSearchItem>((destination, index) => ({
+          id: `settings-${destination.id}`,
+          label: destination.title,
+          description: destination.description,
+          group: "Settings",
+          keywords: destination.group,
+          featured: index < 2,
+          onSelect: () => openSettingsDestination(destination.id),
+        }))
+      : []),
+  ];
+
   return (
     <AppShell
       brandName="paryatech"
@@ -338,12 +584,18 @@ export default function App() {
           <IconButton label="Back to workspace" onClick={leaveHub}>
             <IconChevronLeft />
           </IconButton>
+        ) : pageNavigation ? (
+          <IconButton label={pageNavigation.backLabel} onClick={pageNavigation.onBack}>
+            <IconChevronLeft />
+          </IconButton>
         ) : isHome ? undefined : (
           <IconButton
             label={
               isVendorsList
                 ? "Back to home"
-                : isVendorDetail
+                : isNewVendor
+                  ? "Back to vendors"
+                  : isVendorDetail
                   ? openService
                     ? "Back to services"
                     : "Back to vendors"
@@ -352,7 +604,9 @@ export default function App() {
             onClick={
               isVendorsList
                 ? goHome
-                : isVendorDetail
+                : isNewVendor
+                  ? openVendors
+                  : isVendorDetail
                   ? openService
                     ? () => setOpenServiceId(null)
                     : openVendors
@@ -366,11 +620,19 @@ export default function App() {
       crumbs={crumbs}
       actions={
         <>
-          <SearchField
+          <button
+            ref={searchBtnRef}
+            type="button"
             className="app-top-search"
-            placeholder="Search anything"
-            aria-label="Search anything"
-          />
+            aria-label="Open universal search"
+            aria-haspopup="dialog"
+            aria-expanded={universalSearchOpen}
+            onClick={openUniversalSearch}
+          >
+            <IconSearch size={16} />
+            <span>Search anything</span>
+            <kbd aria-hidden="true">Ctrl K</kbd>
+          </button>
           <RoleSwitcher value={orgRole} onChange={setOrgRole} />
           <span ref={settingsBtnRef}>
             <IconButton
@@ -465,16 +727,26 @@ export default function App() {
             setFlash(null);
             openVendor(id);
           }}
-          onVendorCreated={(created) => {
-            setVendors((prev) => [created, ...prev]);
-            openVendor(
-              created.id,
-              "Vendor created successfully. Complete the setup to make this vendor operational.",
-            );
-          }}
+          onAddVendor={openNewVendor}
+          onOpenRateCard={(vendorId, rateCardId) => openCard(rateCardId, vendorId)}
+          onNavigationContextChange={handlePageNavigationChange}
           onVendorsChange={(next) => {
             setVendors(next);
             setFlash("Vendor details updated successfully.");
+          }}
+        />
+      ) : isNewVendor ? (
+        <NewVendorPage
+          vendors={vendors}
+          orgRole={orgRole}
+          onCancel={openVendors}
+          onViewExisting={(id) => openVendor(id)}
+          onCreated={(created) => {
+            setVendors((previous) => [created, ...previous]);
+            openVendor(
+              created.id,
+              "Vendor saved as a draft. Add services when you are ready to build the record.",
+            );
           }}
         />
       ) : isVendorDetail && crmRoute.name === "vendor" ? (
@@ -486,6 +758,7 @@ export default function App() {
           onClearFlash={() => setFlash(null)}
           openServiceId={openServiceId}
           onOpenServiceIdChange={setOpenServiceId}
+          onNavigationContextChange={handlePageNavigationChange}
           onOpenVendor={(id) => openVendor(id)}
           onVendorsChange={(next) => {
             setVendors(next);
@@ -514,7 +787,6 @@ export default function App() {
             crmRoute.name === "rate-card-new" ? (activeDraft ?? undefined) : undefined
           }
           startEditing={crmRoute.name === "rate-card-new"}
-          onBack={backFromCard}
           onOpenNotes={openNotes}
           onDraftChange={
             crmRoute.name === "rate-card-new"
@@ -540,6 +812,10 @@ export default function App() {
             });
           }}
         />
+      ) : null}
+
+      {universalSearchOpen ? (
+        <UniversalSearch items={universalSearchItems} onClose={closeUniversalSearch} />
       ) : null}
 
       <SettingsLauncherModal

@@ -20,6 +20,7 @@ export type VendorRole =
   | "Airline";
 
 export type VendorStatus =
+  | "Draft"
   | "Setup incomplete"
   | "Active"
   | "Inactive"
@@ -47,8 +48,8 @@ export interface Vendor {
   code: string;
   name: string;
   initials: string;
-  /** Optional logo mark — list falls back to initials when absent */
-  logoUrl?: string;
+  /** Optional vendor photo or brand image used in directory rows */
+  imageUrl?: string;
   /** Canonical multi-select from Add/Edit vendor */
   categories: ServiceCategory[];
   /** Derived filter chips for the All Vendors tabs */
@@ -60,6 +61,21 @@ export interface Vendor {
   phone: string;
   email: string;
   labels: string[];
+  whatsapp?: string;
+  state?: string;
+  address?: string;
+  postalCode?: string;
+  legalName?: string;
+  gstin?: string;
+  pan?: string;
+  dmcScope?: string;
+  specializations?: string;
+  reservationsEmail?: string;
+  emergencyPhone?: string;
+  confirmationSla?: string;
+  confirmationChannel?: string;
+  paymentTerms?: string;
+  internalNotes?: string;
   updated: string;
   owner: string;
   ownerInitials: string;
@@ -105,7 +121,7 @@ export const INTERNAL_OWNERS = [
 ] as const;
 
 export const VENDOR_STATUS_OPTIONS: VendorStatus[] = [
-  "Setup incomplete",
+  "Draft",
   "Active",
   "Inactive",
   "Archived",
@@ -207,6 +223,8 @@ function seedVendor(
 ): Vendor {
   const categories = rolesToCategories(partial.roles);
   const [city = "Kochi", country = "India"] = partial.location.split(",").map((s: string) => s.trim());
+  const status = partial.status ?? "Active";
+  const isDraft = status === "Draft";
   return {
     ...partial,
     categories,
@@ -216,13 +234,13 @@ function seedVendor(
     contactName: partial.contactName ?? "",
     phone: partial.phone ?? "",
     email: partial.email ?? "",
-    status: partial.status ?? "Active",
+    status,
     setup: {
       profileComplete: true,
-      hasService: true,
-      hasContactsDocs: true,
-      hasRateCard: true,
-      activated: (partial.status ?? "Active") === "Active",
+      hasService: !isDraft,
+      hasContactsDocs: !isDraft,
+      hasRateCard: !isDraft,
+      activated: status === "Active",
     },
     activity: [
       {
@@ -244,7 +262,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-TRAILMAKERS",
     name: "Trailmakers Experiences",
     initials: "TE",
-    logoUrl: "/vendor-logos/trailmakers.svg",
+    imageUrl: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Activity", "Airline", "Transport"],
     location: "Kochi, India",
     labels: [],
@@ -257,7 +275,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-EXHOSP",
     name: "Example Hospitality",
     initials: "EH",
-    logoUrl: "/vendor-logos/example-hospitality.svg",
+    imageUrl: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["DMC", "Hotelier"],
     location: "Kochi, India",
     labels: [],
@@ -273,7 +291,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-WANDERLUST",
     name: "Wanderlust Trails",
     initials: "WT",
-    logoUrl: "/vendor-logos/wanderlust.svg",
+    imageUrl: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["DMC", "Hotelier", "Transport"],
     location: "Kochi, India",
     labels: [],
@@ -286,6 +304,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-ATLASVISA",
     name: "Atlas Visa Services",
     initials: "AV",
+    imageUrl: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Visa"],
     location: "Kochi, India",
     labels: [],
@@ -298,6 +317,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-SUMMIT",
     name: "Summit Adventures",
     initials: "SA",
+    imageUrl: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Activity", "Transport"],
     location: "Kochi, India",
     labels: [],
@@ -310,6 +330,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-COASTAL",
     name: "Coastal Stay Properties",
     initials: "CS",
+    imageUrl: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Hotelier"],
     location: "Kochi, India",
     labels: [],
@@ -322,6 +343,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-HORIZON",
     name: "Horizon DMC Partners",
     initials: "HD",
+    imageUrl: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["DMC", "Transport", "Hotelier"],
     location: "Kochi, India",
     labels: [],
@@ -334,7 +356,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-BLUEWAVE",
     name: "BlueWave Transfers",
     initials: "BT",
-    logoUrl: "/vendor-logos/bluewave.svg",
+    imageUrl: "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Transport"],
     location: "Kochi, India",
     labels: [],
@@ -347,7 +369,7 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-KHERITAGE",
     name: "Kerala Heritage Hotels",
     initials: "KH",
-    logoUrl: "/vendor-logos/kerala-heritage.svg",
+    imageUrl: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Hotelier", "DMC"],
     location: "Kochi, India",
     labels: [],
@@ -360,12 +382,45 @@ export const SEED_VENDORS: Vendor[] = [
     code: "V-SPICEROUTE",
     name: "Spice Route Experiences",
     initials: "SR",
+    imageUrl: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=160&h=160&q=80",
     roles: ["Activity", "DMC", "Transport"],
     location: "Kochi, India",
     labels: [],
     updated: "3 months ago",
     owner: "Lakshmi Das",
     ownerInitials: "LD",
+  }),
+  seedVendor({
+    id: "harbour-light-stays",
+    code: "V-HARBOURLIGHT",
+    name: "Harbour Light Stays",
+    initials: "HL",
+    roles: ["Hotelier"],
+    location: "Alappuzha, India",
+    contactName: "Naveen Joseph",
+    phone: "+91 98471 24018",
+    email: "naveen@harbourlight.in",
+    labels: [],
+    updated: "Just now",
+    owner: "Meera Joseph",
+    ownerInitials: "MJ",
+    status: "Draft",
+  }),
+  seedVendor({
+    id: "malabar-transit",
+    code: "V-MALABARTRANSIT",
+    name: "Malabar Transit Co.",
+    initials: "MT",
+    roles: ["Transport"],
+    location: "Kozhikode, India",
+    contactName: "Fathima Rahman",
+    phone: "+91 98951 76304",
+    email: "fathima@malabartransit.in",
+    labels: [],
+    updated: "Just now",
+    owner: "Nisha Thomas",
+    ownerInitials: "NT",
+    status: "Draft",
   }),
 ];
 

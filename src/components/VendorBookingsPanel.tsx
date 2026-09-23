@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Avatar,
   Button,
@@ -18,39 +18,74 @@ import {
   Tooltip,
   type CheckboxState,
 } from "@paryatech/design-system";
+import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import {
   BOOKING_FINANCE_LABEL,
   BOOKING_FINANCE_TONE,
   BOOKING_STATUS_LABEL,
   BOOKING_STATUS_TONE,
   VENDOR_BOOKINGS,
+  type VendorBookingStatus,
 } from "../data/vendorOverview";
-import { IconCalendar, IconFilter, IconImport, IconPin } from "../icons";
+import { IconCalendar, IconCheck, IconFilter, IconImport, IconPin } from "../icons";
 import { BookingViewModal } from "./BookingViewModal";
-import { SheetLeadButton } from "./SheetLeadButton";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import "./VendorOverview.css";
+
+type BookingStatusFilter = "all" | VendorBookingStatus;
+
+const BOOKING_STATUS_FILTERS: Array<{ value: BookingStatusFilter; label: string }> = [
+  { value: "all", label: "All bookings" },
+  { value: "upcoming", label: BOOKING_STATUS_LABEL.upcoming },
+  { value: "on-trip", label: BOOKING_STATUS_LABEL["on-trip"] },
+  { value: "at-risk", label: BOOKING_STATUS_LABEL["at-risk"] },
+  { value: "completed", label: BOOKING_STATUS_LABEL.completed },
+  { value: "cancelled", label: BOOKING_STATUS_LABEL.cancelled },
+];
 
 /**
  * Full searchable bookings table for this vendor — lives on the Bookings tab.
  */
 export function VendorBookingsPanel() {
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("all");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [viewBooking, setViewBooking] = useState<(typeof VENDOR_BOOKINGS)[number] | null>(null);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!filterRef.current?.contains(event.target as Node)) setFilterOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFilterOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [filterOpen]);
 
   const bookings = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return VENDOR_BOOKINGS;
-    return VENDOR_BOOKINGS.filter(
-      (row) =>
+    return VENDOR_BOOKINGS.filter((row) => {
+      if (statusFilter !== "all" && row.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
         row.title.toLowerCase().includes(q) ||
         row.ref.toLowerCase().includes(q) ||
         row.service.toLowerCase().includes(q) ||
-        row.ownerName.toLowerCase().includes(q),
-    );
-  }, [query]);
+        row.ownerName.toLowerCase().includes(q)
+      );
+    });
+  }, [query, statusFilter]);
 
   const headerState: CheckboxState =
     selected.length === 0
@@ -60,7 +95,7 @@ export function VendorBookingsPanel() {
         : "indeterminate";
 
   return (
-    <div className="vendor-bookings-panel">
+    <div className="vendor-bookings-panel dashboard-table-panel">
       <div className="vendor-overview__toolbar">
         <SearchField
           fullWidth
@@ -74,19 +109,70 @@ export function VendorBookingsPanel() {
           aria-label="Search bookings from this vendor"
         />
         <div className="vendor-overview__tools">
-          <Tooltip tip="Filter">
-            <IconButton label="Filter bookings">
-              <IconFilter />
-            </IconButton>
-          </Tooltip>
+          <div className="vendor-bookings-filter" ref={filterRef}>
+            <Tooltip tip="Filter by status">
+              <IconButton
+                className={statusFilter === "all" ? undefined : "is-active"}
+                label={`Filter bookings${
+                  statusFilter === "all" ? "" : `: ${BOOKING_STATUS_LABEL[statusFilter]}`
+                }`}
+                aria-expanded={filterOpen}
+                aria-haspopup="menu"
+                onClick={() => setFilterOpen((open) => !open)}
+              >
+                <IconFilter />
+              </IconButton>
+            </Tooltip>
+            {filterOpen ? (
+              <div
+                className="vendor-bookings-filter__menu"
+                role="menu"
+                aria-label="Filter bookings by status"
+              >
+                {BOOKING_STATUS_FILTERS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={statusFilter === option.value}
+                    onClick={() => {
+                      setStatusFilter(option.value);
+                      setSelected([]);
+                      setPage(1);
+                      setFilterOpen(false);
+                    }}
+                  >
+                    <span>{option.label}</span>
+                    {statusFilter === option.value ? <IconCheck /> : null}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="vendor-overview__sheet">
+      {statusFilter !== "all" ? (
+        <div className="vendor-bookings-filter__summary" role="status">
+          Showing {BOOKING_STATUS_LABEL[statusFilter].toLowerCase()} bookings
+          <button
+            type="button"
+            onClick={() => {
+              setStatusFilter("all");
+              setSelected([]);
+              setPage(1);
+            }}
+          >
+            Clear filter
+          </button>
+        </div>
+      ) : null}
+
+      <div className="vendor-overview__sheet dashboard-table-end">
         {bookings.length === 0 ? (
           <EmptyState
-            title="No bookings match this search"
-            description="Try another booking name, reference, or service."
+            title="No bookings match this view"
+            description="Clear the filter or try another booking name, reference, service, or owner."
           />
         ) : (
           <>
@@ -107,10 +193,27 @@ export function VendorBookingsPanel() {
                 <DataSheetCell>Status</DataSheetCell>
                 <DataSheetCell>Finance</DataSheetCell>
                 <DataSheetCell>Owner</DataSheetCell>
-                <DataSheetCell>Action</DataSheetCell>
               </DataSheetHeader>
               {bookings.map((row) => (
-                <DataSheetRow key={row.id}>
+                <DataSheetRow
+                  key={row.id}
+                  className="data-row--interactive"
+                  role="link"
+                  tabIndex={0}
+                  aria-label={`Open ${row.title}`}
+                  onClick={(event) => {
+                    const target = event.target as HTMLElement;
+                    if (target.closest("button, a, input, select, textarea")) return;
+                    setViewBooking(row);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setViewBooking(row);
+                    }
+                  }}
+                >
                   <DataSheetCell check>
                     <Checkbox
                       state={selected.includes(row.id) ? "on" : "off"}
@@ -127,12 +230,7 @@ export function VendorBookingsPanel() {
                     />
                   </DataSheetCell>
                   <DataSheetCell>
-                    <SheetLeadButton
-                      label={`Open ${row.title}`}
-                      onClick={() => setViewBooking(row)}
-                    >
-                      <LeadCell icon={<IconPin />} title={row.title} subtitle={row.ref} />
-                    </SheetLeadButton>
+                    <LeadCell icon={<IconPin />} title={row.title} subtitle={row.ref} />
                   </DataSheetCell>
                   <DataSheetCell>
                     <StackCell>
@@ -172,13 +270,9 @@ export function VendorBookingsPanel() {
                       <span className="vendor-bookings-sheet__owner-name">{row.ownerName}</span>
                     </span>
                   </DataSheetCell>
-                  <DataSheetCell>
-                    <Button variant="brand" size="sm" onClick={() => setViewBooking(row)}>
-                      View
-                    </Button>
-                  </DataSheetCell>
                 </DataSheetRow>
               ))}
+              <DashboardDataSheetFill columns={7} />
             </DataSheet>
             {selected.length > 0 ? (
               <ListBulkBar

@@ -184,16 +184,16 @@ export function createVendor(
     updated: nowStamp(),
     owner: values.owner,
     ownerInitials: ownerInitials(values.owner),
-    status: "Setup incomplete",
+    status: "Draft",
     setup: {
-      profileComplete: false,
+      profileComplete: true,
       hasService: false,
       hasContactsDocs: false,
       hasRateCard: false,
       activated: false,
     },
     activity: [
-      activityEvent(id, actor, "Created vendor profile — setup incomplete", "Vendor"),
+      activityEvent(id, actor, "Created vendor draft", "Vendor"),
     ],
     assignedMemberIds: [],
   };
@@ -306,6 +306,6 @@ export function emptyVendorFormValues(): VendorFormValues {
     phone: "",
     email: "",
     owner: "Anjali Menon",
-    status: "Setup incomplete",
+    status: "Draft",
   };
 }

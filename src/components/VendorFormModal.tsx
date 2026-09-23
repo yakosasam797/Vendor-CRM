@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useState } from "react";
-import { Button, StatusChip } from "@paryatech/design-system";
+import { Button, IconButton, StatusChip } from "@paryatech/design-system";
 import {
   INTERNAL_OWNERS,
   SERVICE_CATEGORIES,
@@ -8,6 +8,7 @@ import {
   type Vendor,
 } from "../data/vendors";
 import { ForbiddenError, type OrgRole } from "../permissions";
+import { IconClose } from "../icons";
 import {
   createVendor,
   emptyVendorFormValues,
@@ -132,21 +133,14 @@ export function VendorFormModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="pt-modal__head">
-          <p className="pt-modal__eyebrow">Vendors</p>
-          <h2 id={titleId} className="pt-modal__title">
-            {mode === "create" ? "Add vendor" : "Edit profile"}
-          </h2>
-          {mode === "create" ? (
-            <p className="pt-modal__desc">
-              Create the supplier profile now. Services, rate cards, packages and finance can be
-              added afterward on their tabs.
-            </p>
-          ) : (
-            <p className="pt-modal__desc">
-              Name, categories, location, contact, owner and status. Services, rate cards, packages
-              and finance are edited on their own tabs.
-            </p>
-          )}
+          <div className="pt-modal__head-copy">
+            <h2 id={titleId} className="pt-modal__title">
+              {mode === "create" ? "Add vendor" : "Edit profile"}
+            </h2>
+          </div>
+          <IconButton className="pt-modal__close" label="Close" onClick={onClose}>
+            <IconClose />
+          </IconButton>
         </div>
 
         <div className="pt-modal__body">

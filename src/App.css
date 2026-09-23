@@ -49,14 +49,47 @@
 }
 
 /* Booking topbar search — soft-rect, no scope chip */
-.app-top-search {
+button.app-top-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 36px;
   flex: 0 1 340px;
   max-width: 380px;
   min-width: 0;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
 }
 
-.app-top-search .pt-search {
-  width: 100%;
+button.app-top-search:hover {
+  border-color: var(--line-hover);
+  background: var(--surface-3);
+}
+
+button.app-top-search:focus-visible {
+  border-color: var(--pink);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-person-soft);
+}
+
+.app-top-search > svg {
+  flex: none;
+  color: var(--ink-2);
+}
+
+.app-top-search > span {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Soft-rect util icons — match booking, not pills */
@@ -97,8 +130,14 @@
 }
 
 @media (max-width: 1000px) {
-  .app-top-search {
+  button.app-top-search {
     flex: 1 1 200px;
     max-width: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-top-search kbd {
+    display: none;
   }
 }

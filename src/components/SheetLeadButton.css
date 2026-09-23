@@ -11,7 +11,12 @@
 }
 
 .sheet-lead-btn:hover {
-  color: var(--ink);
+  color: var(--accent-ink, var(--accent));
+}
+
+.sheet-lead-btn:hover .pt-sheet__title {
+  color: var(--accent-ink, var(--accent));
+  text-decoration: underline;
 }
 
 .sheet-lead-btn:focus-visible {

@@ -6,6 +6,8 @@ export interface VendorTask {
   id: string;
   title: string;
   context: string;
+  description?: string;
+  priority?: "P1" | "P2" | "P3";
   assigneeName: string;
   assigneeRole: string;
   assigneeInitials: string;

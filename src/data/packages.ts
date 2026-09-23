@@ -1,4 +1,5 @@
 import type { StatusTone } from "@paryatech/design-system";
+import type { ServiceCategory } from "./vendors";
 
 export type PackageStatus = "live" | "reprice" | "draft";
 
@@ -7,6 +8,7 @@ export interface VendorPackage {
   name: string;
   detail: string;
   services: string;
+  serviceTypes: ServiceCategory[];
   pricedFrom: string;
   pricedFromKind: string;
   sellPrice: string;
@@ -38,6 +40,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Kerala Backwaters Escape",
     detail: "4N · Kochi–Alleppey",
     services: "Lake Resort 2N · houseboat 1N · transfer",
+    serviceTypes: ["Accommodation", "Transport"],
     pricedFrom: "Accom. 2026–27",
     pricedFromKind: "Rate card",
     sellPrice: "₹68,400",
@@ -50,6 +53,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Cardamom Trail Weekend",
     detail: "2N · Thekkady",
     services: "Hill Retreat 2N · tour · safari",
+    serviceTypes: ["Accommodation", "Activities"],
     pricedFrom: "Accom. 2025–26",
     pricedFromKind: "Rate card",
     sellPrice: "₹32,800",
@@ -62,6 +66,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Family Kochi Stay",
     detail: "3N · Kochi",
     services: "Lake Resort 3N · city tour · transfer",
+    serviceTypes: ["Accommodation", "Activities", "Transport"],
     pricedFrom: "Accom. 2026–27",
     pricedFromKind: "Rate card",
     sellPrice: "₹54,200",
@@ -74,6 +79,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Spice Belt Day",
     detail: "Day · Munnar foothills",
     services: "Plantation tour · lunch · transfers",
+    serviceTypes: ["Activities", "Transport"],
     pricedFrom: "Activity 2026",
     pricedFromKind: "Rate card",
     sellPrice: "₹8,900",
@@ -86,6 +92,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Hill Weekend Circuit",
     detail: "3N · Munnar–Thekkady",
     services: "Hill 2N · Lake 1N · transfers",
+    serviceTypes: ["Accommodation", "Transport"],
     pricedFrom: "Accom. 2025–26",
     pricedFromKind: "Rate card",
     sellPrice: "₹41,600",
@@ -98,6 +105,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Monsoon Lake Soft Launch",
     detail: "2N · Kochi",
     services: "Lake Resort 2N · monsoon walk",
+    serviceTypes: ["Accommodation", "Activities"],
     pricedFrom: "—",
     pricedFromKind: "Unpriced",
     sellPrice: "—",
@@ -110,6 +118,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Corporate Offsite Kochi",
     detail: "2N · Kochi",
     services: "Lake 2N · meeting room · transfers",
+    serviceTypes: ["Accommodation", "Transport"],
     pricedFrom: "Accom. 2026–27",
     pricedFromKind: "Rate card",
     sellPrice: "₹96,000",
@@ -122,6 +131,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     name: "Honeymoon Backwaters",
     detail: "5N · Alleppey–Kumarakom",
     services: "Houseboat 2N · Lake 3N · dinner",
+    serviceTypes: ["Accommodation", "Cruise"],
     pricedFrom: "Accom. 2026–27",
     pricedFromKind: "Rate card",
     sellPrice: "₹1,12,500",

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Avatar,
   Button,
@@ -14,7 +14,8 @@ import {
   StackLine,
   type CheckboxState,
 } from "@paryatech/design-system";
-import { IconCalendar, IconClock, IconImport, IconModule } from "../icons";
+import { DashboardDataSheetFill } from "./DashboardDataSheet";
+import { IconCalendar, IconCheck, IconChevronDown, IconClock, IconImport, IconModule } from "../icons";
 import "./ActivityPanel.css";
 
 export type ActivityRow = {
@@ -40,8 +41,28 @@ export function ActivityPanel({
 }) {
   const [query, setQuery] = useState("");
   const [module, setModule] = useState<string>("All modules");
+  const [filterOpen, setFilterOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const filterRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!filterOpen) return;
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!filterRef.current?.contains(event.target as Node)) setFilterOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFilterOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [filterOpen]);
 
   const modules = useMemo(() => {
     const set = new Set(rows.map((r) => r.module));
@@ -69,7 +90,7 @@ export function ActivityPanel({
         : "indeterminate";
 
   return (
-    <div className="act">
+    <div className="act dashboard-table-panel">
       <div className="act-toolbar">
         <SearchField
           fullWidth
@@ -82,27 +103,45 @@ export function ActivityPanel({
           placeholder={searchPlaceholder}
           aria-label={searchPlaceholder}
         />
-        <label className="act-filter">
-          <IconModule size={15} />
-          <select
-            value={module}
-            aria-label="Filter by module"
-            onChange={(e) => {
-              setModule(e.target.value);
-              setPage(1);
-              setSelected([]);
-            }}
+        <div className={`act-filter${filterOpen ? " is-open" : ""}`} ref={filterRef}>
+          <button
+            type="button"
+            className="act-filter__trigger"
+            aria-label={`Filter by module: ${module}`}
+            aria-haspopup="menu"
+            aria-expanded={filterOpen}
+            onClick={() => setFilterOpen((open) => !open)}
           >
-            {modules.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </label>
+            <IconModule size={15} />
+            <span>{module}</span>
+            <IconChevronDown size={14} />
+          </button>
+          {filterOpen ? (
+            <div className="act-filter__menu" role="menu" aria-label="Filter activity by module">
+              {modules.map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={module === item}
+                  className={module === item ? "is-selected" : undefined}
+                  onClick={() => {
+                    setModule(item);
+                    setPage(1);
+                    setSelected([]);
+                    setFilterOpen(false);
+                  }}
+                >
+                  <span>{item}</span>
+                  {module === item ? <IconCheck size={14} /> : null}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <div className="act-sheet-wrap">
+      <div className="act-sheet-wrap dashboard-table-end">
         <DataSheet className="act-sheet" aria-label={ariaLabel}>
           <DataSheetHeader>
             <DataSheetCell check>
@@ -175,6 +214,7 @@ export function ActivityPanel({
               </DataSheetRow>
             ))
           )}
+          <DashboardDataSheetFill columns={5} />
         </DataSheet>
 
         {selected.length > 0 ? (

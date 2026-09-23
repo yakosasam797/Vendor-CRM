@@ -25,7 +25,16 @@ export interface PayableRow {
   action: "pay-now" | "pay-balance" | "schedule" | "receipt";
 }
 
-export type DocStatus = "expiring" | "awaiting" | "verified";
+export interface AccountTransaction {
+  id: string;
+  date: string;
+  reference: string;
+  description: string;
+  debit: number;
+  credit: number;
+}
+
+export type DocStatus = "expired" | "expiring" | "awaiting" | "verified";
 
 export interface ComplianceDoc {
   id: string;
@@ -33,7 +42,8 @@ export interface ComplianceDoc {
   file: string;
   reference: string;
   validTo: string;
-  validTone?: "warn";
+  validUntil?: string;
+  validTone?: "warn" | "bad";
   ownerName: string;
   ownerInitials: string;
   status: DocStatus;
@@ -48,21 +58,21 @@ export const FINANCE_METRICS: FinanceMetric[] = [
   {
     id: "billed",
     label: "Billed to date",
-    value: "₹2,46,000",
-    note: "9 invoices raised by this supplier",
+    value: "₹4,20,100",
+    note: "8 invoices raised by this supplier",
   },
   {
     id: "settled",
     label: "Settled",
-    value: "₹1,45,200",
-    note: "59% of everything billed",
+    value: "₹2,81,300",
+    note: "67% of everything billed",
     tone: "ok",
   },
   {
     id: "outstanding",
     label: "Outstanding",
-    value: "₹1,00,800",
-    note: "3 invoices open · 6 settled",
+    value: "₹1,38,800",
+    note: "3 invoices open · 5 settled",
   },
   {
     id: "overdue",
@@ -80,8 +90,8 @@ export const FINANCE_METRICS: FinanceMetric[] = [
   {
     id: "headroom",
     label: "Credit headroom",
-    value: "₹99,200",
-    note: "50% of the limit is committed",
+    value: "₹61,200",
+    note: "69% of the limit is committed",
     tone: "ok",
   },
   {
@@ -229,7 +239,124 @@ export const PAYABLES: PayableRow[] = [
   },
 ];
 
+/** Vendor ledger used by the statement-of-account view. Debits are supplier invoices. */
+export const ACCOUNT_TRANSACTIONS: AccountTransaction[] = [
+  {
+    id: "txn-1",
+    date: "2026-04-28",
+    reference: "INV-2026-0218",
+    description: "Iyer family · Varkala",
+    debit: 33600,
+    credit: 0,
+  },
+  {
+    id: "txn-2",
+    date: "2026-05-02",
+    reference: "PAY-2026-0108",
+    description: "Payment against INV-2026-0218",
+    debit: 0,
+    credit: 33600,
+  },
+  {
+    id: "txn-3",
+    date: "2026-05-09",
+    reference: "INV-2026-0261",
+    description: "Desai group · Thekkady",
+    debit: 54000,
+    credit: 0,
+  },
+  {
+    id: "txn-4",
+    date: "2026-05-13",
+    reference: "PAY-2026-0129",
+    description: "Payment against INV-2026-0261",
+    debit: 0,
+    credit: 54000,
+  },
+  {
+    id: "txn-5",
+    date: "2026-05-22",
+    reference: "INV-2026-0294",
+    description: "Nair anniversary",
+    debit: 28500,
+    credit: 0,
+  },
+  {
+    id: "txn-6",
+    date: "2026-05-25",
+    reference: "PAY-2026-0144",
+    description: "Payment against INV-2026-0294",
+    debit: 0,
+    credit: 28500,
+  },
+  {
+    id: "txn-7",
+    date: "2026-06-04",
+    reference: "INV-2026-0330",
+    description: "Corporate retreat · Munnar",
+    debit: 112000,
+    credit: 0,
+  },
+  {
+    id: "txn-8",
+    date: "2026-06-10",
+    reference: "PAY-2026-0162",
+    description: "Payment against INV-2026-0330",
+    debit: 0,
+    credit: 112000,
+  },
+  {
+    id: "txn-9",
+    date: "2026-06-18",
+    reference: "INV-2026-0355",
+    description: "Singh family · Kochi",
+    debit: 41200,
+    credit: 0,
+  },
+  {
+    id: "txn-10",
+    date: "2026-06-20",
+    reference: "PAY-2026-0175",
+    description: "Payment against INV-2026-0355",
+    debit: 0,
+    credit: 41200,
+  },
+  {
+    id: "txn-11",
+    date: "2026-07-12",
+    reference: "INV-2026-0398",
+    description: "Kapoor group · Alleppey",
+    debit: 48000,
+    credit: 0,
+  },
+  {
+    id: "txn-12",
+    date: "2026-07-18",
+    reference: "PAY-2026-0201",
+    description: "Part payment against INV-2026-0398",
+    debit: 0,
+    credit: 12000,
+  },
+  {
+    id: "txn-13",
+    date: "2026-07-28",
+    reference: "INV-2026-0412",
+    description: "XYZ Family · Dubai",
+    debit: 30000,
+    credit: 0,
+  },
+  {
+    id: "txn-14",
+    date: "2026-08-02",
+    reference: "INV-2026-0381",
+    description: "Mehta honeymoon",
+    debit: 72800,
+    credit: 0,
+  },
+];
+
 export const DOC_STATUS_TONE: Record<DocStatus, StatusTone> = {
+  expired: "blocked",
   expiring: "progress",
   awaiting: "open",
   verified: "done",
@@ -251,6 +378,7 @@ export const COMPLIANCE_DOCS: ComplianceDoc[] = [
     file: "icici-lom-8841.pdf",
     reference: "POL/8841/26",
     validTo: "28 Sep 2026",
+    validUntil: "2026-09-28",
     validTone: "warn",
     ownerName: "Deepa Thomas",
     ownerInitials: "DT",
@@ -264,6 +392,7 @@ export const COMPLIANCE_DOCS: ComplianceDoc[] = [
     file: "eh-rate-agreement-26.pdf",
     reference: "AGR/2026/EH",
     validTo: "31 Mar 2027",
+    validUntil: "2027-03-31",
     ownerName: "Rahul Sharma",
     ownerInitials: "RS",
     status: "awaiting",
@@ -300,6 +429,7 @@ export const COMPLIANCE_DOCS: ComplianceDoc[] = [
     file: "eh-cancel-policy-2026.pdf",
     reference: "POL/CANCEL/26",
     validTo: "31 Mar 2027",
+    validUntil: "2027-03-31",
     ownerName: "Ravi Nair",
     ownerInitials: "RN",
     status: "verified",
@@ -324,6 +454,7 @@ export const COMPLIANCE_DOCS: ComplianceDoc[] = [
     file: "fire-safety-kochi-2025.pdf",
     reference: "FSC/KKD/1182",
     validTo: "14 Jan 2027",
+    validUntil: "2027-01-14",
     ownerName: "Ravi Nair",
     ownerInitials: "RN",
     status: "verified",
@@ -336,6 +467,7 @@ export const COMPLIANCE_DOCS: ComplianceDoc[] = [
     file: "trade-licence-eh-2026.pdf",
     reference: "TL/KOC/4421",
     validTo: "31 Dec 2026",
+    validUntil: "2026-12-31",
     ownerName: "Deepa Thomas",
     ownerInitials: "DT",
     status: "verified",

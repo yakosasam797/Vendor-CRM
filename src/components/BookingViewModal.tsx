@@ -53,11 +53,9 @@ export function BookingViewModal({
       >
         <div className="pt-modal__head booking-view-modal__head">
           <div className="booking-view-modal__titles">
-            <p className="pt-modal__eyebrow">Booking</p>
             <h2 id={titleId} className="pt-modal__title">
               {booking.title}
             </h2>
-            <p className="pt-modal__desc pt-mono">{booking.ref}</p>
           </div>
           <IconButton label="Close booking" onClick={onClose}>
             <IconClose />
@@ -75,6 +73,10 @@ export function BookingViewModal({
           </div>
 
           <dl className="booking-view-modal__facts">
+            <div>
+              <dt>Booking reference</dt>
+              <dd className="pt-mono">{booking.ref}</dd>
+            </div>
             <div>
               <dt>Travel</dt>
               <dd>

@@ -162,7 +162,6 @@ export function RateCardDetailPage({
   cardId,
   seedCard,
   startEditing = false,
-  onBack,
   onOpenNotes,
   onDraftChange,
 }: {
@@ -170,7 +169,6 @@ export function RateCardDetailPage({
   /** Prefers this over the seed catalog — used for newly created drafts. */
   seedCard?: RateCardDetail;
   startEditing?: boolean;
-  onBack: () => void;
   /** Opens the global sidebar notes panel for this rate card. */
   onOpenNotes?: () => void;
   /** Called whenever local draft changes (keeps App draft in sync). */
@@ -225,9 +223,6 @@ export function RateCardDetailPage({
     return (
       <div className="rc-detail">
         <p>Rate card not found.</p>
-        <Button variant="brand" size="sm" onClick={onBack}>
-          Back to list
-        </Button>
       </div>
     );
   }
@@ -311,7 +306,11 @@ export function RateCardDetailPage({
   const saveSeason = (nextSeason: Season, mode: "add" | "edit", index?: number) => {
     updateCard((base) => {
       if (mode === "edit" && index != null) {
-        const seasons = base.seasons.map((s, i) => (i === index ? nextSeason : s));
+        const current = base.seasons[index];
+        const safeSeason = nextSeason.dates === "Not set" && current
+          ? { ...nextSeason, dates: current.dates, summary: current.summary, nights: current.nights }
+          : nextSeason;
+        const seasons = base.seasons.map((s, i) => (i === index ? safeSeason : s));
         return { ...base, seasons };
       }
       const seasons = [...base.seasons, nextSeason];
@@ -348,6 +347,100 @@ export function RateCardDetailPage({
         : base.weekendExtra;
       return { ...base, rooms, prices, weekendExtra };
     });
+  };
+
+  const updateSeasonName = (name: string) => {
+    updateCard((base) => ({
+      ...base,
+      seasons: base.seasons.map((item, index) => index === seasonIdx ? { ...item, name } : item),
+    }));
+  };
+
+  const updateMeal = (index: number, label: string) => {
+    updateCard((base) => ({
+      ...base,
+      meals: base.meals.map((meal, mealIndex) => mealIndex === index ? { ...meal, label } : meal),
+    }));
+  };
+
+  const updateRoom = (index: number, patch: Partial<RateCardDetail["rooms"][number]>) => {
+    updateCard((base) => ({
+      ...base,
+      rooms: base.rooms.map((room, roomIndex) => roomIndex === index ? { ...room, ...patch } : room),
+    }));
+  };
+
+  const removeRoom = (index: number) => {
+    updateCard((base) => {
+      if (base.rooms.length <= 1) return base;
+      const removedId = base.rooms[index]?.id;
+      return {
+        ...base,
+        rooms: base.rooms.filter((_, roomIndex) => roomIndex !== index),
+        prices: base.prices.filter((_, roomIndex) => roomIndex !== index),
+        weekendExtra: base.weekendExtra?.filter((_, roomIndex) => roomIndex !== index),
+        guests: base.guests.filter((guest) => guest[0] !== removedId),
+      };
+    });
+  };
+
+  const addGuest = () => {
+    updateCard((base) => ({
+      ...base,
+      guests: [
+        ...base.guests,
+        [base.rooms[0]?.id ?? "room-1", "Guest", "Age band", "no_bed", "all", null, 1],
+      ],
+    }));
+  };
+
+  const updateGuest = (index: number, field: number, value: string | number | null) => {
+    updateCard((base) => ({
+      ...base,
+      guests: base.guests.map((guest, guestIndex) => {
+        if (guestIndex !== index) return guest;
+        const next = [...guest] as RateCardDetail["guests"][number];
+        next[field] = value as never;
+        return next;
+      }),
+    }));
+  };
+
+  const removeGuest = (index: number) => {
+    updateCard((base) => ({ ...base, guests: base.guests.filter((_, rowIndex) => rowIndex !== index) }));
+  };
+
+  const addSupplement = () => {
+    updateCard((base) => ({
+      ...base,
+      supplements: [...base.supplements, { name: `Supplement ${base.supplements.length + 1}`, applies: "On request", amount: null, unit: "per person", basis: "Optional", tone: "neutral" }],
+    }));
+  };
+
+  const updateSupplement = (index: number, patch: Partial<RateCardDetail["supplements"][number]>) => {
+    updateCard((base) => ({ ...base, supplements: base.supplements.map((row, rowIndex) => rowIndex === index ? { ...row, ...patch } : row) }));
+  };
+
+  const addActivity = () => {
+    updateCard((base) => ({
+      ...base,
+      activities: [...base.activities, { name: `Activity ${base.activities.length + 1}`, note: "Add activity detail", group: "Add capacity", basis: "Per person", amount: null }],
+    }));
+  };
+
+  const updateActivity = (index: number, patch: Partial<RateCardDetail["activities"][number]>) => {
+    updateCard((base) => ({ ...base, activities: base.activities.map((row, rowIndex) => rowIndex === index ? { ...row, ...patch } : row) }));
+  };
+
+  const addService = () => {
+    updateCard((base) => ({
+      ...base,
+      services: [...base.services, { name: `Service ${base.services.length + 1}`, note: "Add service detail", applies: "On request", basis: "Per booking", amount: null }],
+    }));
+  };
+
+  const updateService = (index: number, patch: Partial<RateCardDetail["services"][number]>) => {
+    updateCard((base) => ({ ...base, services: base.services.map((row, rowIndex) => rowIndex === index ? { ...row, ...patch } : row) }));
   };
 
   return (
@@ -429,21 +522,46 @@ export function RateCardDetailPage({
           <div className="rc-season">
             <div className="rc-season__picker" ref={seasonRef}>
               <span className="rc-season__label">Season</span>
-              <button
-                type="button"
-                className={`rc-season__btn${seasonOpen ? " rc-season__btn--open" : ""}`}
-                onClick={() => setSeasonOpen((o) => !o)}
-                aria-expanded={seasonOpen}
-                aria-haspopup="listbox"
-              >
-                <span className="rc-season__value">
+              {editing && season ? (
+                <div className={`rc-season__edit-control${seasonOpen ? " rc-season__edit-control--open" : ""}`}>
                   <IconCalendar size={13} />
-                  {season
-                    ? `${season.name} · ${season.dates} · ${season.priority}`
-                    : "No seasons yet"}
-                </span>
-                <IconChevronDown size={13} />
-              </button>
+                  <div className="rc-season__edit-copy">
+                    <input
+                      className="rc-season__name-input"
+                      value={season.name}
+                      onChange={(event) => updateSeasonName(event.target.value)}
+                      aria-label="Season name"
+                    />
+                    <span>{season.dates} · {season.priority}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="rc-season__choose"
+                    onClick={() => setSeasonOpen((open) => !open)}
+                    aria-label="Choose season"
+                    aria-expanded={seasonOpen}
+                    aria-haspopup="listbox"
+                  >
+                    <IconChevronDown size={13} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={`rc-season__btn${seasonOpen ? " rc-season__btn--open" : ""}`}
+                  onClick={() => setSeasonOpen((o) => !o)}
+                  aria-expanded={seasonOpen}
+                  aria-haspopup="listbox"
+                >
+                  <span className="rc-season__value">
+                    <IconCalendar size={13} />
+                    {season
+                      ? `${season.name} · ${season.dates} · ${season.priority}`
+                      : "No seasons yet"}
+                  </span>
+                  <IconChevronDown size={13} />
+                </button>
+              )}
               {seasonOpen ? (
                 <div className="rc-season__menu" role="listbox">
                   {card.seasons.map((s, i) => (
@@ -572,19 +690,57 @@ export function RateCardDetailPage({
             >
               <DataSheetHeader>
                 <DataSheetCell>Room / product</DataSheetCell>
-                {card.meals.map((m) => (
-                  <DataSheetCell key={m.code}>{m.label}</DataSheetCell>
+                {card.meals.map((m, mealIndex) => (
+                  <DataSheetCell key={m.code}>
+                    {editing ? (
+                      <input
+                        className="rc-edit-input rc-edit-input--header"
+                        value={m.label}
+                        onChange={(event) => updateMeal(mealIndex, event.target.value)}
+                        aria-label={`${m.code} product name`}
+                      />
+                    ) : m.label}
+                  </DataSheetCell>
                 ))}
               </DataSheetHeader>
               {card.rooms.map((room, ri) => (
                 <DataSheetRow key={room.id}>
                   <DataSheetCell>
-                    <LeadCell
-                      align="start"
-                      icon={<IconBed size={15} />}
-                      title={room.name}
-                      subtitle={`${room.note} · incl. ${room.baseOccupancy} / max ${room.maxOccupancy}`}
-                    />
+                    {editing ? (
+                      <div className="rc-room-editor">
+                        <div className="rc-room-editor__head">
+                          <input
+                            className="rc-edit-input rc-edit-input--strong"
+                            value={room.name}
+                            onChange={(event) => updateRoom(ri, { name: event.target.value })}
+                            aria-label={`Room ${ri + 1} name`}
+                          />
+                          {card.rooms.length > 1 ? (
+                            <button type="button" className="rc-edit-remove" onClick={() => removeRoom(ri)} aria-label={`Remove ${room.name}`}>
+                              <IconClose size={13} />
+                            </button>
+                          ) : null}
+                        </div>
+                        <input
+                          className="rc-edit-input"
+                          value={room.note}
+                          onChange={(event) => updateRoom(ri, { note: event.target.value })}
+                          aria-label={`${room.name} detail`}
+                        />
+                        <div className="rc-room-editor__occupancy">
+                          <label><span>Base adults</span><input type="number" min={1} value={room.baseOccupancy} onChange={(event) => updateRoom(ri, { baseOccupancy: Math.max(1, Number(event.target.value) || 1) })} /></label>
+                          <label><span>Max adults</span><input type="number" min={1} value={room.maxOccupancy} onChange={(event) => updateRoom(ri, { maxOccupancy: Math.max(1, Number(event.target.value) || 1) })} /></label>
+                          <label><span>Max toddlers / beds</span><input type="number" min={0} value={room.maxBeds} onChange={(event) => updateRoom(ri, { maxBeds: Math.max(0, Number(event.target.value) || 0) })} /></label>
+                        </div>
+                      </div>
+                    ) : (
+                      <LeadCell
+                        align="start"
+                        icon={<IconBed size={15} />}
+                        title={room.name}
+                        subtitle={`${room.note} · incl. ${room.baseOccupancy} / max ${room.maxOccupancy}`}
+                      />
+                    )}
                   </DataSheetCell>
                   {card.meals.map((_, mi) => {
                     const amount = card.prices[ri]?.[mi]?.[seasonIdx] ?? null;
@@ -611,12 +767,15 @@ export function RateCardDetailPage({
             </DataSheet>
           </Section>
 
-          {card.guests.length > 0 ? (
-            <Section title={catLabel(card, "guests", "Extra guest and bed charges")}>
+          {card.guests.length > 0 || editing ? (
+            <Section
+              title={catLabel(card, "guests", "Extra guest and bed charges")}
+              action={editing ? <Button variant="brand" size="sm" onClick={addGuest}><IconPlus />Add guest charge</Button> : undefined}
+            >
               <DataSheet
                 className="rc-sheet rc-sheet--guests"
                 style={sheetCols(
-                  "minmax(180px, 1.2fr) minmax(120px, 1fr) minmax(100px, 0.9fr) minmax(140px, 1.1fr) minmax(120px, 0.9fr) minmax(80px, 0.6fr)",
+                  `minmax(180px, 1.2fr) minmax(120px, 1fr) minmax(100px, 0.9fr) minmax(140px, 1.1fr) minmax(120px, 0.9fr) minmax(80px, 0.6fr)${editing ? " 64px" : ""}`,
                 )}
                 aria-label={catLabel(card, "guests", "Extra guest and bed charges")}
               >
@@ -627,35 +786,45 @@ export function RateCardDetailPage({
                   <DataSheetCell>Bed</DataSheetCell>
                   <DataSheetCell>Charge</DataSheetCell>
                   <DataSheetCell>Max</DataSheetCell>
+                  {editing ? <DataSheetCell>Action</DataSheetCell> : null}
                 </DataSheetHeader>
                 {card.guests.slice(0, 12).map((g, i) => {
                   const room = card.rooms.find((r) => r.id === g[0]);
                   return (
                     <DataSheetRow key={i}>
                       <DataSheetCell>
-                        <LeadCell icon={<IconHotel size={15} />} title={room?.name ?? g[0]} />
+                        {editing ? (
+                          <select className="rc-edit-input" value={g[0]} onChange={(event) => updateGuest(i, 0, event.target.value)} aria-label={`Guest row ${i + 1} room`}>
+                            {card.rooms.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                          </select>
+                        ) : <LeadCell icon={<IconHotel size={15} />} title={room?.name ?? g[0]} />}
                       </DataSheetCell>
                       <DataSheetCell>
-                        <CellIcon icon={<IconUser size={13} />}>{g[1]}</CellIcon>
+                        {editing ? <input className="rc-edit-input" value={g[1]} onChange={(event) => updateGuest(i, 1, event.target.value)} aria-label={`Guest row ${i + 1} type`} /> : <CellIcon icon={<IconUser size={13} />}>{g[1]}</CellIcon>}
                       </DataSheetCell>
                       <DataSheetCell>
-                        <CellIcon icon={<IconCalendar size={13} />}>{g[2]}</CellIcon>
+                        {editing ? <input className="rc-edit-input" value={g[2]} onChange={(event) => updateGuest(i, 2, event.target.value)} aria-label={`Guest row ${i + 1} age`} /> : <CellIcon icon={<IconCalendar size={13} />}>{g[2]}</CellIcon>}
                       </DataSheetCell>
                       <DataSheetCell>
-                        <CellIcon icon={<IconBed size={13} />}>
-                          {BED_LABEL[g[3]] ?? g[3]}
-                        </CellIcon>
+                        {editing ? (
+                          <select className="rc-edit-input" value={g[3]} onChange={(event) => updateGuest(i, 3, event.target.value)} aria-label={`Guest row ${i + 1} bed`}>
+                            {Object.entries(BED_LABEL).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                          </select>
+                        ) : <CellIcon icon={<IconBed size={13} />}>{BED_LABEL[g[3]] ?? g[3]}</CellIcon>}
                       </DataSheetCell>
                       <DataSheetCell>
                         <PriceChip
                           amount={g[5]}
                           currency={card.currency}
                           taxConfirmed={card.taxConfirmed}
+                          editing={editing}
+                          onChange={(next) => updateGuest(i, 5, next)}
                         />
                       </DataSheetCell>
                       <DataSheetCell>
-                        <span className="pt-mono rc-sheet__max">{g[6]}</span>
+                        {editing ? <input className="rc-edit-input rc-edit-input--number" type="number" min={0} value={g[6]} onChange={(event) => updateGuest(i, 6, Math.max(0, Number(event.target.value) || 0))} aria-label={`Guest row ${i + 1} maximum`} /> : <span className="pt-mono rc-sheet__max">{g[6]}</span>}
                       </DataSheetCell>
+                      {editing ? <DataSheetCell><button type="button" className="rc-edit-remove" onClick={() => removeGuest(i)} aria-label={`Remove guest charge ${i + 1}`}><IconClose size={13} /></button></DataSheetCell> : null}
                     </DataSheetRow>
                   );
                 })}
@@ -663,11 +832,14 @@ export function RateCardDetailPage({
             </Section>
           ) : null}
 
-          <Section title={catLabel(card, "special", "Supplements")}>
+          <Section
+            title={catLabel(card, "special", "Supplements")}
+            action={editing ? <Button variant="brand" size="sm" onClick={addSupplement}><IconPlus />Add supplement</Button> : undefined}
+          >
             <DataSheet
               className="rc-sheet rc-sheet--supplements"
               style={sheetCols(
-                "minmax(200px, 1.5fr) minmax(160px, 1.2fr) minmax(120px, 0.9fr) minmax(120px, 0.9fr)",
+                `minmax(200px, 1.5fr) minmax(160px, 1.2fr) minmax(120px, 0.9fr) minmax(120px, 0.9fr)${editing ? " 64px" : ""}`,
               )}
               aria-label={catLabel(card, "special", "Supplements")}
             >
@@ -676,6 +848,7 @@ export function RateCardDetailPage({
                 <DataSheetCell>Applies</DataSheetCell>
                 <DataSheetCell>Basis</DataSheetCell>
                 <DataSheetCell>Amount</DataSheetCell>
+                {editing ? <DataSheetCell>Action</DataSheetCell> : null}
               </DataSheetHeader>
               {card.supplements.length === 0 ? (
                 <DataSheetRow>
@@ -685,42 +858,44 @@ export function RateCardDetailPage({
                   <DataSheetCell />
                   <DataSheetCell />
                   <DataSheetCell />
+                  {editing ? <DataSheetCell /> : null}
                 </DataSheetRow>
               ) : (
-                card.supplements.map((s) => (
-                  <DataSheetRow key={s.name}>
+                card.supplements.map((s, supplementIndex) => (
+                  <DataSheetRow key={`${supplementIndex}-${s.name}`}>
                     <DataSheetCell>
-                      <LeadCell
-                        align="start"
-                        icon={<IconCard size={15} />}
-                        title={s.name}
-                        subtitle={s.unit}
-                      />
+                      {editing ? <div className="rc-edit-stack"><input className="rc-edit-input rc-edit-input--strong" value={s.name} onChange={(event) => updateSupplement(supplementIndex, { name: event.target.value })} aria-label={`Supplement ${supplementIndex + 1} name`} /><input className="rc-edit-input" value={s.unit} onChange={(event) => updateSupplement(supplementIndex, { unit: event.target.value })} aria-label={`${s.name} unit`} /></div> : <LeadCell align="start" icon={<IconCard size={15} />} title={s.name} subtitle={s.unit} />}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <CellIcon icon={<IconCalendar size={13} />}>{s.applies}</CellIcon>
+                      {editing ? <input className="rc-edit-input" value={s.applies} onChange={(event) => updateSupplement(supplementIndex, { applies: event.target.value })} aria-label={`${s.name} applies`} /> : <CellIcon icon={<IconCalendar size={13} />}>{s.applies}</CellIcon>}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <StatusChip tone={toneToStatus(s.tone)}>{s.basis}</StatusChip>
+                      {editing ? <select className="rc-edit-input" value={s.basis} onChange={(event) => updateSupplement(supplementIndex, { basis: event.target.value, tone: event.target.value === "Mandatory" ? "danger" : event.target.value === "Unresolved" ? "warning" : "neutral" })} aria-label={`${s.name} basis`}><option>Mandatory</option><option>Optional</option><option>Unresolved</option><option>Included</option></select> : <StatusChip tone={toneToStatus(s.tone)}>{s.basis}</StatusChip>}
                     </DataSheetCell>
                     <DataSheetCell>
                       <PriceChip
                         amount={s.amount}
                         currency={card.currency}
                         taxConfirmed={card.taxConfirmed}
+                        editing={editing}
+                        onChange={(next) => updateSupplement(supplementIndex, { amount: next })}
                       />
                     </DataSheetCell>
+                    {editing ? <DataSheetCell><button type="button" className="rc-edit-remove" onClick={() => updateCard((base) => ({ ...base, supplements: base.supplements.filter((_, index) => index !== supplementIndex) }))} aria-label={`Remove ${s.name}`}><IconClose size={13} /></button></DataSheetCell> : null}
                   </DataSheetRow>
                 ))
               )}
             </DataSheet>
           </Section>
 
-          <Section title={catLabel(card, "activities", "Activities")}>
+          <Section
+            title={catLabel(card, "activities", "Activities")}
+            action={editing ? <Button variant="brand" size="sm" onClick={addActivity}><IconPlus />Add activity</Button> : undefined}
+          >
             <DataSheet
               className="rc-sheet rc-sheet--activities"
               style={sheetCols(
-                "minmax(220px, 1.6fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 0.9fr)",
+                `minmax(220px, 1.6fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(120px, 0.9fr)${editing ? " 64px" : ""}`,
               )}
               aria-label={catLabel(card, "activities", "Activities")}
             >
@@ -729,6 +904,7 @@ export function RateCardDetailPage({
                 <DataSheetCell>Group</DataSheetCell>
                 <DataSheetCell>Basis</DataSheetCell>
                 <DataSheetCell>Amount</DataSheetCell>
+                {editing ? <DataSheetCell>Action</DataSheetCell> : null}
               </DataSheetHeader>
               {card.activities.length === 0 ? (
                 <DataSheetRow>
@@ -738,42 +914,44 @@ export function RateCardDetailPage({
                   <DataSheetCell />
                   <DataSheetCell />
                   <DataSheetCell />
+                  {editing ? <DataSheetCell /> : null}
                 </DataSheetRow>
               ) : (
-                card.activities.map((a) => (
-                  <DataSheetRow key={a.name}>
+                card.activities.map((a, activityIndex) => (
+                  <DataSheetRow key={`${activityIndex}-${a.name}`}>
                     <DataSheetCell>
-                      <LeadCell
-                        align="start"
-                        icon={<IconCamera size={15} />}
-                        title={a.name}
-                        subtitle={a.note}
-                      />
+                      {editing ? <div className="rc-edit-stack"><input className="rc-edit-input rc-edit-input--strong" value={a.name} onChange={(event) => updateActivity(activityIndex, { name: event.target.value })} aria-label={`Activity ${activityIndex + 1} name`} /><input className="rc-edit-input" value={a.note} onChange={(event) => updateActivity(activityIndex, { note: event.target.value })} aria-label={`${a.name} detail`} /></div> : <LeadCell align="start" icon={<IconCamera size={15} />} title={a.name} subtitle={a.note} />}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <CellIcon icon={<IconPin size={13} />}>{a.group}</CellIcon>
+                      {editing ? <input className="rc-edit-input" value={a.group} onChange={(event) => updateActivity(activityIndex, { group: event.target.value })} aria-label={`${a.name} capacity`} /> : <CellIcon icon={<IconPin size={13} />}>{a.group}</CellIcon>}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <CellIcon icon={<IconBookmark size={12} />}>{a.basis}</CellIcon>
+                      {editing ? <input className="rc-edit-input" value={a.basis} onChange={(event) => updateActivity(activityIndex, { basis: event.target.value })} aria-label={`${a.name} basis`} /> : <CellIcon icon={<IconBookmark size={12} />}>{a.basis}</CellIcon>}
                     </DataSheetCell>
                     <DataSheetCell>
                       <PriceChip
                         amount={a.amount}
                         currency={card.currency}
                         taxConfirmed={card.taxConfirmed}
+                        editing={editing}
+                        onChange={(next) => updateActivity(activityIndex, { amount: next })}
                       />
                     </DataSheetCell>
+                    {editing ? <DataSheetCell><button type="button" className="rc-edit-remove" onClick={() => updateCard((base) => ({ ...base, activities: base.activities.filter((_, index) => index !== activityIndex) }))} aria-label={`Remove ${a.name}`}><IconClose size={13} /></button></DataSheetCell> : null}
                   </DataSheetRow>
                 ))
               )}
             </DataSheet>
           </Section>
 
-          <Section title={catLabel(card, "services", "Services")}>
+          <Section
+            title={catLabel(card, "services", "Services")}
+            action={editing ? <Button variant="brand" size="sm" onClick={addService}><IconPlus />Add service</Button> : undefined}
+          >
             <DataSheet
               className="rc-sheet rc-sheet--services"
               style={sheetCols(
-                "minmax(220px, 1.6fr) minmax(140px, 1fr) minmax(120px, 1fr) minmax(120px, 0.9fr)",
+                `minmax(220px, 1.6fr) minmax(140px, 1fr) minmax(120px, 1fr) minmax(120px, 0.9fr)${editing ? " 64px" : ""}`,
               )}
               aria-label={catLabel(card, "services", "Services")}
             >
@@ -782,6 +960,7 @@ export function RateCardDetailPage({
                 <DataSheetCell>Applies</DataSheetCell>
                 <DataSheetCell>Basis</DataSheetCell>
                 <DataSheetCell>Amount</DataSheetCell>
+                {editing ? <DataSheetCell>Action</DataSheetCell> : null}
               </DataSheetHeader>
               {card.services.length === 0 ? (
                 <DataSheetRow>
@@ -791,23 +970,19 @@ export function RateCardDetailPage({
                   <DataSheetCell />
                   <DataSheetCell />
                   <DataSheetCell />
+                  {editing ? <DataSheetCell /> : null}
                 </DataSheetRow>
               ) : (
-                card.services.map((s) => (
-                  <DataSheetRow key={s.name}>
+                card.services.map((s, serviceIndex) => (
+                  <DataSheetRow key={`${serviceIndex}-${s.name}`}>
                     <DataSheetCell>
-                      <LeadCell
-                        align="start"
-                        icon={<IconPin size={15} />}
-                        title={s.name}
-                        subtitle={s.note}
-                      />
+                      {editing ? <div className="rc-edit-stack"><input className="rc-edit-input rc-edit-input--strong" value={s.name} onChange={(event) => updateService(serviceIndex, { name: event.target.value })} aria-label={`Service ${serviceIndex + 1} name`} /><input className="rc-edit-input" value={s.note} onChange={(event) => updateService(serviceIndex, { note: event.target.value })} aria-label={`${s.name} detail`} /></div> : <LeadCell align="start" icon={<IconPin size={15} />} title={s.name} subtitle={s.note} />}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <CellIcon icon={<IconCalendar size={13} />}>{s.applies}</CellIcon>
+                      {editing ? <input className="rc-edit-input" value={s.applies} onChange={(event) => updateService(serviceIndex, { applies: event.target.value })} aria-label={`${s.name} applies`} /> : <CellIcon icon={<IconCalendar size={13} />}>{s.applies}</CellIcon>}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <CellIcon icon={<IconBookmark size={12} />}>{s.basis}</CellIcon>
+                      {editing ? <input className="rc-edit-input" value={s.basis} onChange={(event) => updateService(serviceIndex, { basis: event.target.value })} aria-label={`${s.name} basis`} /> : <CellIcon icon={<IconBookmark size={12} />}>{s.basis}</CellIcon>}
                     </DataSheetCell>
                     <DataSheetCell>
                       <PriceChip
@@ -815,8 +990,11 @@ export function RateCardDetailPage({
                         currency={card.currency}
                         taxConfirmed={card.taxConfirmed}
                         sub={s.amount === 0 ? "Complimentary" : undefined}
+                        editing={editing}
+                        onChange={(next) => updateService(serviceIndex, { amount: next })}
                       />
                     </DataSheetCell>
+                    {editing ? <DataSheetCell><button type="button" className="rc-edit-remove" onClick={() => updateCard((base) => ({ ...base, services: base.services.filter((_, index) => index !== serviceIndex) }))} aria-label={`Remove ${s.name}`}><IconClose size={13} /></button></DataSheetCell> : null}
                   </DataSheetRow>
                 ))
               )}

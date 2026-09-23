@@ -15,16 +15,18 @@ import {
   IconGlobe,
   IconMail,
   IconPhone,
+  IconPlus,
   IconRefresh,
   IconWarn,
 } from "../icons";
+import { ActivityPanel } from "./ActivityPanel";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip } from "./SummaryStrip";
 import { VendorSetupChecklist } from "./VendorSetupChecklist";
-import { ActivityPanel } from "./ActivityPanel";
 import "./VendorOverview.css";
 
 const STATUS_TONE = {
+  Draft: "progress",
   "Setup incomplete": "progress",
   Active: "done",
   Inactive: "open",
@@ -33,7 +35,7 @@ const STATUS_TONE = {
 
 function contactsForVendor(vendor: Vendor): KeyContact[] {
   if (vendor.id === "exhosp") return KEY_CONTACTS;
-  if (!vendor.contactName && !vendor.phone && !vendor.email) return KEY_CONTACTS;
+  if (!vendor.contactName && !vendor.phone && !vendor.email) return [];
 
   return [
     {
@@ -87,6 +89,80 @@ export function VendorOverview({
     ) : null;
   }
 
+  if (vendor.status === "Draft") {
+    const draftFields = [
+      ["Service categories", vendor.categories.join(" · ")],
+      ["Base location", vendor.location],
+      ["Internal owner", vendor.owner],
+      ["Primary contact", vendor.contactName],
+      ["Phone", vendor.phone],
+      ["WhatsApp", vendor.whatsapp],
+      ["Email", vendor.email],
+      ["Labels", vendor.labels.join(" · ")],
+      ["Legal name", vendor.legalName],
+      ["GSTIN", vendor.gstin],
+      ["PAN", vendor.pan],
+      [
+        "Address",
+        vendor.address || vendor.state || vendor.postalCode
+          ? [vendor.address, vendor.city, vendor.state, vendor.postalCode, vendor.country]
+              .filter(Boolean)
+              .join(", ")
+          : "",
+      ],
+      ["DMC scope", vendor.dmcScope],
+      ["Specialisations", vendor.specializations],
+      ["Reservations email", vendor.reservationsEmail],
+      ["Emergency phone", vendor.emergencyPhone],
+      ["Confirmation SLA", vendor.confirmationSla],
+      ["Confirmation channel", vendor.confirmationChannel],
+      ["Payment terms", vendor.paymentTerms],
+      ["Internal notes", vendor.internalNotes],
+    ].filter((field): field is [string, string] => Boolean(field[1]));
+
+    return (
+      <div className="vendor-overview vendor-overview--draft">
+        {flash ? <div className="vendor-setup__flash" role="status">{flash}</div> : null}
+
+        <section className="vo-panel vo-draft-profile" aria-labelledby="vo-draft-profile-title">
+          <div className="vo-panel__head">
+            <div>
+              <h2 id="vo-draft-profile-title" className="vo-panel__title">Profile details</h2>
+              <p className="vo-draft-profile__note">Saved from Add vendor</p>
+            </div>
+            {canEdit ? (
+              <Button variant="brand" size="sm" onClick={onEditProfile}>Edit profile</Button>
+            ) : null}
+          </div>
+          <div className="vo-panel__body">
+            <dl className="vo-profile">
+              {draftFields.map(([label, value]) => (
+                <div className="vo-profile__field" key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        <EmptyState
+          className="vendor-draft-overview__empty"
+          title="No services yet"
+          description="Add the first service to start building this vendor record."
+          action={
+            canEdit ? (
+              <Button variant="primary" size="sm" onClick={() => onJumpTab("services")}>
+                <IconPlus />
+                Add services
+              </Button>
+            ) : undefined
+          }
+        />
+      </div>
+    );
+  }
+
   const contacts = contactsForVendor(vendor);
   const contactsExpanded = expandedContactsVendorId === vendor.id;
   const visibleContacts = contactsExpanded ? contacts : contacts.slice(0, 2);
@@ -98,11 +174,7 @@ export function VendorOverview({
   return (
     <div className="vendor-overview">
       <div className="vo-history">
-        <SummaryStrip
-          title="Operating history"
-          columns={4}
-          fields={operatingHistory}
-        />
+        <SummaryStrip title="Operating history" columns={4} fields={operatingHistory} />
       </div>
 
       <VendorSetupChecklist

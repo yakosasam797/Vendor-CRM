@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Button,
   Checkbox,
@@ -7,10 +7,13 @@ import {
   DataSheetHeader,
   DataSheetRow,
   EmptyState,
+  FilterSelect,
   IconButton,
   LeadCell,
   Pagination,
   SearchField,
+  StackCell,
+  StackLine,
   TabBar,
   Tooltip,
   type CheckboxState,
@@ -20,13 +23,15 @@ import {
   RATE_CARDS,
   STATUS_LABEL,
   STATUS_TONE,
+  type RateCardStatus,
 } from "../data/rateCards";
-import { getVendor, vendorIdea, type Vendor } from "../data/vendors";
+import { getVendor, type Vendor } from "../data/vendors";
 import { vendorActivityForVendor } from "../data/vendorOverview";
 import { can, type OrgRole } from "../permissions";
-import { IconCalendar, IconFilter, IconImport, IconPin, IconPlus, IconRefresh } from "../icons";
+import type { PageNavigationChange } from "../pageNavigation";
+import { IconCheck, IconFilter, IconPin, IconPlus } from "../icons";
+import { AnchoredImport } from "./AnchoredImport";
 import { CommunicationPanel } from "./CommunicationPanel";
-import { EditVendorLauncherModal, type VendorEditDestination } from "./EditVendorLauncher";
 import { RateCardCoverageCell, RateCardValidityCell } from "./rateCardCells";
 import { PackagesPanel } from "./PackagesPanel";
 import { ServicesPanel } from "./ServicesPanel";
@@ -39,8 +44,10 @@ import { VendorFinancePanel } from "./VendorFinancePanel";
 import { VendorFormModal } from "./VendorFormModal";
 import { VendorOverview } from "./VendorOverview";
 import { VendorProfileHeader } from "./VendorProfileHeader";
-import { SheetLeadButton } from "./SheetLeadButton";
-import { servicesForVendor } from "../data/services";
+import { DashboardDataSheetFill } from "./DashboardDataSheet";
+import { SERVICE_TYPE_FILTERS, servicesForVendor } from "../data/services";
+import { AddServicesModal, type DraftLinkedService } from "./AddServicesModal";
+import { ServiceTypeIcon, ServiceTypeLabel, type ServiceTypeName } from "./ServiceTypeLabel";
 import "./VendorRateCardsPage.css";
 
 const BASE_TABS: TabItem[] = [
@@ -56,6 +63,269 @@ const BASE_TABS: TabItem[] = [
   { id: "activity", label: "Activity" },
 ];
 
+type RateCardStatusFilter = "all" | RateCardStatus;
+
+const RATE_CARD_FILTER_OPTIONS: Array<{
+  value: RateCardStatusFilter;
+  label: string;
+}> = [
+  { value: "all", label: "All rate cards" },
+  { value: "published", label: "Published" },
+  { value: "draft", label: "Draft" },
+  { value: "expired", label: "Expired" },
+];
+
+const DRAFT_TAB_COPY: Record<string, { title: string; description: string; action?: string }> = {
+  services: {
+    title: "No services yet",
+    description: "Add the first service to start building this vendor record.",
+    action: "Add services",
+  },
+  "rate-cards": {
+    title: "No rate cards yet",
+    description: "Rate cards can be added after the vendor's first service is available.",
+    action: "Add rate card",
+  },
+  packages: {
+    title: "No packages yet",
+    description: "Packages created with this vendor will appear here.",
+    action: "Build package",
+  },
+  bookings: {
+    title: "No bookings yet",
+    description: "Bookings linked to this vendor will appear here.",
+    action: "Add booking",
+  },
+  finance: {
+    title: "No finance details yet",
+    description: "Add bank details and finance terms for staff reference.",
+    action: "Add bank details",
+  },
+  docs: {
+    title: "No documents yet",
+    description: "Upload the first compliance or vendor document.",
+    action: "Upload document",
+  },
+  tasks: {
+    title: "No tasks yet",
+    description: "Create a task when this draft needs follow-up.",
+    action: "Add task",
+  },
+  comms: {
+    title: "No communications yet",
+    description: "Messages linked to this vendor will appear here.",
+    action: "Start communication",
+  },
+  activity: {
+    title: "No activity yet",
+    description: "Changes to this draft will appear here.",
+  },
+};
+
+function DraftVendorTab({
+  tab,
+  canEdit,
+  onAction,
+  onNewCard,
+}: {
+  tab: string;
+  canEdit: boolean;
+  onAction?: () => void;
+  onNewCard?: () => void;
+}) {
+  const copy = DRAFT_TAB_COPY[tab] ?? {
+    title: "Nothing here yet",
+    description: "Add details when this vendor is ready.",
+  };
+
+  return (
+    <div className="vendor-draft-tab">
+      <EmptyState
+        title={copy.title}
+        description={copy.description}
+        action={
+          copy.action && canEdit ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={tab === "rate-cards" ? onNewCard : onAction}
+            >
+              <IconPlus />
+              {copy.action}
+            </Button>
+          ) : undefined
+        }
+      />
+    </div>
+  );
+}
+
+function serviceTypeForTable(type: ServiceTypeName): ServiceTypeName {
+  if (type === "Activities") return "Activity";
+  if (type === "DMC") return "DMC/Ground handling";
+  return type;
+}
+
+function DraftServicesPanel({
+  services,
+  canEdit,
+  onAdd,
+}: {
+  services: DraftLinkedService[];
+  canEdit: boolean;
+  onAdd: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return services.filter((service) => {
+      const serviceType = serviceTypeForTable(service.type);
+      if (typeFilter !== "all" && serviceType !== typeFilter) return false;
+      if (!q) return true;
+      return `${service.name} ${serviceType} ${service.location} ${service.sourceDetail}`
+        .toLowerCase()
+        .includes(q);
+    });
+  }, [query, services, typeFilter]);
+
+  const headerState: CheckboxState =
+    selected.length === 0
+      ? "off"
+      : selected.length === filtered.length && filtered.length > 0
+        ? "on"
+        : "indeterminate";
+
+  const toggleAll = (state: CheckboxState) => {
+    setSelected(state === "on" ? filtered.map((service) => service.id) : []);
+  };
+
+  const toggleRow = (id: string, state: CheckboxState) => {
+    setSelected((current) =>
+      state === "on"
+        ? current.includes(id) ? current : [...current, id]
+        : current.filter((item) => item !== id),
+    );
+  };
+
+  const emptyTitle = services.length === 0 ? "No services added yet" : "No services match this search";
+  const emptyDescription = services.length === 0
+    ? "Use Add service to link the first service to this vendor."
+    : "Try another service name or clear the type filter.";
+
+  return (
+    <div className="draft-services-panel dashboard-table-panel">
+      <div className="vendor-page__toolbar services-panel__toolbar">
+        <SearchField
+          fullWidth
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setPage(1);
+            setSelected([]);
+          }}
+          placeholder="Search service name"
+          aria-label="Search service name"
+        />
+        <div className="vendor-page__tools">
+          <FilterSelect
+            tip="Filter by service type"
+            label="Type"
+            options={SERVICE_TYPE_FILTERS}
+            value={typeFilter}
+            onChange={(value) => {
+              setTypeFilter(value);
+              setPage(1);
+              setSelected([]);
+            }}
+          />
+        </div>
+        {canEdit ? (
+          <div className="vendor-page__actions">
+            <AnchoredImport buttonLabel="Import services" />
+            <Button variant="primary" size="sm" onClick={onAdd}>
+              <IconPlus />
+              Add service
+            </Button>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="vendor-page__sheet dashboard-table-end">
+        <DataSheet className="services-sheet draft-services-sheet" aria-label="Draft vendor services">
+          <DataSheetHeader>
+            <DataSheetCell check>
+              <Checkbox state={headerState} onCheckedChange={toggleAll} label="Select all services" />
+            </DataSheetCell>
+            <DataSheetCell>Service</DataSheetCell>
+            <DataSheetCell>Service type</DataSheetCell>
+            <DataSheetCell>Important details</DataSheetCell>
+            <DataSheetCell>Media</DataSheetCell>
+            <DataSheetCell>Current pricing</DataSheetCell>
+            <DataSheetCell>Status</DataSheetCell>
+          </DataSheetHeader>
+          {filtered.map((service) => {
+            const serviceType = serviceTypeForTable(service.type);
+            return (
+              <DataSheetRow key={service.id}>
+                <DataSheetCell check>
+                  <Checkbox
+                    state={selected.includes(service.id) ? "on" : "off"}
+                    onCheckedChange={(state) => toggleRow(service.id, state)}
+                    label={`Select ${service.name}`}
+                  />
+                </DataSheetCell>
+                <DataSheetCell>
+                  <LeadCell
+                    align="start"
+                    icon={
+                      <span className="draft-services-sheet__thumb" aria-hidden="true">
+                        <ServiceTypeIcon type={serviceType} size={15} />
+                      </span>
+                    }
+                    title={service.name}
+                    subtitle={service.location}
+                  />
+                </DataSheetCell>
+                <DataSheetCell><ServiceTypeLabel type={serviceType} /></DataSheetCell>
+                <DataSheetCell><span className="services-sheet__details">{service.sourceDetail}</span></DataSheetCell>
+                <DataSheetCell><span className="svc-media-cell__count">0 images</span></DataSheetCell>
+                <DataSheetCell>
+                  <StackCell>
+                    <StackLine>Not priced</StackLine>
+                    <StackLine muted><span className="services-sheet__rate-count pt-mono">0</span> Rate cards</StackLine>
+                  </StackCell>
+                </DataSheetCell>
+                <DataSheetCell><StatusChipWithDot tone="progress">Draft</StatusChipWithDot></DataSheetCell>
+              </DataSheetRow>
+            );
+          })}
+          {filtered.length === 0 ? (
+            <DataSheetRow className="services-sheet__empty-row">
+              <DataSheetCell className="services-sheet__empty-cell">
+                <div>
+                  <strong>{emptyTitle}</strong>
+                  <span>{emptyDescription}</span>
+                </div>
+              </DataSheetCell>
+            </DataSheetRow>
+          ) : null}
+          <DashboardDataSheetFill columns={7} />
+        </DataSheet>
+        <Pagination
+          rangeLabel={filtered.length ? `Showing 1–${filtered.length} of ${filtered.length} services` : "Showing 0 of 0 services"}
+          page={page}
+          pageCount={1}
+          onPageChange={setPage}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function VendorRateCardsPage({
   vendorId,
   vendors,
@@ -68,6 +338,7 @@ export function VendorRateCardsPage({
   onOpenVendor,
   openServiceId = null,
   onOpenServiceIdChange,
+  onNavigationContextChange,
 }: {
   vendorId: string;
   vendors: Vendor[];
@@ -80,19 +351,29 @@ export function VendorRateCardsPage({
   onOpenVendor: (id: string) => void;
   openServiceId?: string | null;
   onOpenServiceIdChange?: (id: string | null) => void;
+  onNavigationContextChange?: PageNavigationChange;
 }) {
   const vendor = getVendor(vendorId, vendors) ?? getVendor("exhosp", vendors)!;
   const [tab, setTab] = useState("overview");
   const [query, setQuery] = useState("");
+  const [rateCardStatusFilter, setRateCardStatusFilter] =
+    useState<RateCardStatusFilter>("all");
+  const [rateCardFilterOpen, setRateCardFilterOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
-  const [editLauncherOpen, setEditLauncherOpen] = useState(false);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [addServicesOpen, setAddServicesOpen] = useState(false);
+  const [packageDetailOpen, setPackageDetailOpen] = useState(false);
+  const [draftServicesByVendor, setDraftServicesByVendor] = useState<Record<string, DraftLinkedService[]>>({});
   const [documentRequestDraft, setDocumentRequestDraft] = useState<{
     id: number;
     body: string;
   } | null>(null);
+  const [openTaskCount, setOpenTaskCount] = useState(5);
+  const rateCardFilterRef = useRef<HTMLDivElement>(null);
   const canEdit = can(orgRole, "vendor.edit");
+  const isDraft = vendor.status === "Draft";
+  const draftLinkedServices = draftServicesByVendor[vendor.id] ?? [];
 
   const vendorServices = servicesForVendor(vendor.id);
   const serviceCount = vendorServices.length;
@@ -103,45 +384,66 @@ export function VendorRateCardsPage({
   const tabs: TabItem[] = useMemo(
     () =>
       BASE_TABS.map((t) => {
+        if (isDraft) {
+          if (t.id === "services" && draftLinkedServices.length > 0) {
+            return { ...t, count: draftLinkedServices.length };
+          }
+          return { ...t, count: undefined };
+        }
         if (t.id === "services") return { ...t, count: serviceCount || undefined };
         if (t.id === "activity") return { ...t, count: activityCount || undefined };
+        if (t.id === "tasks") return { ...t, count: openTaskCount || undefined };
         return t;
       }),
-    [activityCount, serviceCount],
+    [activityCount, draftLinkedServices.length, isDraft, openTaskCount, serviceCount],
   );
 
   const setVendorTab = (next: string) => {
     if (next !== "services") onOpenServiceIdChange?.(null);
+    if (next !== "packages") setPackageDetailOpen(false);
     if (next !== "comms") setDocumentRequestDraft(null);
+    if (next !== "rate-cards") setRateCardFilterOpen(false);
     setTab(next);
-  };
-
-  const onEditDestination = (id: VendorEditDestination) => {
-    setEditLauncherOpen(false);
-    if (id === "profile") {
-      // Profile edits live on Overview — name, categories (title idea), location, contact.
-      onOpenServiceIdChange?.(null);
-      setTab("overview");
-      setEditProfileOpen(true);
-      return;
-    }
-    setVendorTab(id);
   };
 
   useEffect(() => {
     if (openServiceId) setTab("services");
   }, [openServiceId]);
 
+  useEffect(() => {
+    if (!rateCardFilterOpen) return;
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!rateCardFilterRef.current?.contains(event.target as Node)) {
+        setRateCardFilterOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setRateCardFilterOpen(false);
+    };
+
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [rateCardFilterOpen]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return RATE_CARDS;
-    return RATE_CARDS.filter(
-      (card) =>
+    return RATE_CARDS.filter((card) => {
+      if (rateCardStatusFilter !== "all" && card.status !== rateCardStatusFilter) {
+        return false;
+      }
+      return (
+        !q ||
         card.title.toLowerCase().includes(q) ||
         card.property.toLowerCase().includes(q) ||
-        card.category.toLowerCase().includes(q),
-    );
-  }, [query]);
+        card.category.toLowerCase().includes(q)
+      );
+    });
+  }, [query, rateCardStatusFilter]);
 
   const headerState: CheckboxState =
     selected.length === 0 ? "off" : selected.length === filtered.length && filtered.length > 0 ? "on" : "indeterminate";
@@ -173,19 +475,15 @@ export function VendorRateCardsPage({
 
   return (
     <div className="vendor-page">
-      {activeService ? null : (
+      {activeService || packageDetailOpen ? null : (
         <>
           <VendorProfileHeader
             code={vendor.code}
             location={vendor.location}
             name={vendor.name}
-            idea={vendorIdea(vendor)}
             status={vendor.status}
-            ownerName={vendor.owner}
-            ownerRole="Owner · Vendor desk"
-            ownerInitials={vendor.ownerInitials}
             canEdit={canEdit}
-            onEdit={() => setEditLauncherOpen(true)}
+            onEdit={() => setEditProfileOpen(true)}
           />
 
           <div className="vendor-page__tabs">
@@ -203,7 +501,20 @@ export function VendorRateCardsPage({
             onClearFlash?.();
             setVendorTab(next);
           }}
-          onEditProfile={() => setEditLauncherOpen(true)}
+          onEditProfile={() => setEditProfileOpen(true)}
+        />
+      ) : isDraft && tab === "services" ? (
+        <DraftServicesPanel
+          services={draftLinkedServices}
+          canEdit={canEdit}
+          onAdd={() => setAddServicesOpen(true)}
+        />
+      ) : isDraft ? (
+        <DraftVendorTab
+          tab={tab}
+          canEdit={canEdit}
+          onAction={tab === "services" ? () => setAddServicesOpen(true) : undefined}
+          onNewCard={onNewCard}
         />
       ) : tab === "activity" ? (
         <VendorActivityPanel vendor={vendor} />
@@ -217,18 +528,22 @@ export function VendorRateCardsPage({
             onOpenServiceIdChange?.(id);
             if (id) setTab("services");
           }}
+          onNavigationContextChange={onNavigationContextChange}
           onOpenRateCard={onOpenCard}
         />
       ) : tab === "packages" ? (
-        <PackagesPanel />
+        <PackagesPanel
+          onDetailOpenChange={setPackageDetailOpen}
+          onNavigationContextChange={onNavigationContextChange}
+        />
       ) : tab === "bookings" ? (
         <VendorBookingsPanel />
       ) : tab === "finance" ? (
-        <VendorFinancePanel />
+        <VendorFinancePanel vendorName={vendor.name} canEdit={canEdit} />
       ) : tab === "docs" ? (
         <VendorDocsPanel onRequestDocuments={openDocumentRequest} />
       ) : tab === "tasks" ? (
-        <TasksPanel />
+        <TasksPanel onOpenTaskCountChange={setOpenTaskCount} />
       ) : tab === "comms" ? (
         <CommunicationPanel
           linkLabel="linked to this vendor"
@@ -254,27 +569,51 @@ export function VendorRateCardsPage({
               aria-label="Search card name or property"
             />
             <div className="vendor-page__tools">
-              <Tooltip tip="Filter">
-                <IconButton label="Filter">
-                  <IconFilter />
-                </IconButton>
-              </Tooltip>
-              <Tooltip tip="Stay dates">
-                <IconButton label="Stay dates">
-                  <IconCalendar />
-                </IconButton>
-              </Tooltip>
-              <Tooltip tip="Refresh">
-                <IconButton label="Refresh">
-                  <IconRefresh size={16} />
-                </IconButton>
-              </Tooltip>
+              <div className="rate-card-filter" ref={rateCardFilterRef}>
+                <Tooltip tip="Filter by status">
+                  <IconButton
+                    className={rateCardStatusFilter === "all" ? undefined : "is-active"}
+                    label={`Filter rate cards${
+                      rateCardStatusFilter === "all"
+                        ? ""
+                        : `: ${STATUS_LABEL[rateCardStatusFilter]}`
+                    }`}
+                    aria-expanded={rateCardFilterOpen}
+                    aria-haspopup="menu"
+                    onClick={() => setRateCardFilterOpen((open) => !open)}
+                  >
+                    <IconFilter />
+                  </IconButton>
+                </Tooltip>
+                {rateCardFilterOpen ? (
+                  <div
+                    className="rate-card-filter__menu"
+                    role="menu"
+                    aria-label="Filter rate cards by status"
+                  >
+                    {RATE_CARD_FILTER_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={rateCardStatusFilter === option.value}
+                        onClick={() => {
+                          setRateCardStatusFilter(option.value);
+                          setSelected([]);
+                          setPage(1);
+                          setRateCardFilterOpen(false);
+                        }}
+                      >
+                        <span>{option.label}</span>
+                        {rateCardStatusFilter === option.value ? <IconCheck /> : null}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
             <div className="vendor-page__actions">
-              <Button variant="brand" size="sm">
-                <IconImport />
-                Import tariff
-              </Button>
+              <AnchoredImport buttonLabel="Import tariff" />
               <Button variant="primary" size="sm" onClick={onNewCard}>
                 <IconPlus />
                 New rate card
@@ -282,11 +621,27 @@ export function VendorRateCardsPage({
             </div>
           </div>
 
-          <div className="vendor-page__sheet">
+          {rateCardStatusFilter !== "all" ? (
+            <div className="rate-card-filter__summary" role="status">
+              Showing {STATUS_LABEL[rateCardStatusFilter].toLowerCase()} rate cards
+              <button
+                type="button"
+                onClick={() => {
+                  setRateCardStatusFilter("all");
+                  setSelected([]);
+                  setPage(1);
+                }}
+              >
+                Clear filter
+              </button>
+            </div>
+          ) : null}
+
+          <div className="vendor-page__sheet dashboard-table-end">
             {filtered.length === 0 ? (
               <EmptyState
-                title="No rate cards match this search"
-                description="Try another card name or property."
+                title="No rate cards match this view"
+                description="Try another card name, property, or status filter."
               />
             ) : (
               <>
@@ -300,10 +655,27 @@ export function VendorRateCardsPage({
                   <DataSheetCell>Stay validity</DataSheetCell>
                   <DataSheetCell>Status</DataSheetCell>
                   <DataSheetCell>Coverage</DataSheetCell>
-                  <DataSheetCell>Action</DataSheetCell>
                 </DataSheetHeader>
                 {filtered.map((card) => (
-                  <DataSheetRow key={card.id}>
+                  <DataSheetRow
+                    key={card.id}
+                    className="data-row--interactive"
+                    role="link"
+                    tabIndex={0}
+                    aria-label={`Open ${card.title}`}
+                    onClick={(event) => {
+                      const target = event.target as HTMLElement;
+                      if (target.closest("button, a, input, select, textarea")) return;
+                      onOpenCard(card.id);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        onOpenCard(card.id);
+                      }
+                    }}
+                  >
                     <DataSheetCell check>
                       <Checkbox
                         state={selected.includes(card.id) ? "on" : "off"}
@@ -312,16 +684,7 @@ export function VendorRateCardsPage({
                       />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <SheetLeadButton
-                        label={`Open ${card.title}`}
-                        onClick={() => onOpenCard(card.id)}
-                      >
-                        <LeadCell
-                          icon={<IconPin />}
-                          title={card.title}
-                          subtitle={card.ref}
-                        />
-                      </SheetLeadButton>
+                      <LeadCell icon={<IconPin />} title={card.title} subtitle={card.ref} />
                     </DataSheetCell>
                     <DataSheetCell>
                       <div className="rate-card-sheet__property">
@@ -352,19 +715,9 @@ export function VendorRateCardsPage({
                         detail={card.coverageDetail}
                       />
                     </DataSheetCell>
-                    <DataSheetCell>
-                      {card.action === "continue" ? (
-                        <Button variant="primary" size="sm" onClick={() => onOpenCard(card.id)}>
-                          Continue
-                        </Button>
-                      ) : (
-                        <Button variant="brand" size="sm" onClick={() => onOpenCard(card.id)}>
-                          Open
-                        </Button>
-                      )}
-                    </DataSheetCell>
                   </DataSheetRow>
                 ))}
+                <DashboardDataSheetFill columns={6} />
               </DataSheet>
                 <Pagination
                   rangeLabel={`Showing 1–${filtered.length} of ${filtered.length} rate cards`}
@@ -377,13 +730,6 @@ export function VendorRateCardsPage({
           </div>
         </>
       )}
-
-      <EditVendorLauncherModal
-        open={editLauncherOpen}
-        vendorName={vendor.name}
-        onClose={() => setEditLauncherOpen(false)}
-        onSelect={onEditDestination}
-      />
 
       <VendorFormModal
         mode="edit"
@@ -403,6 +749,22 @@ export function VendorRateCardsPage({
           onOpenVendor(id);
         }}
       />
+
+      {addServicesOpen ? (
+        <AddServicesModal
+          open
+          vendorName={vendor.name}
+          onClose={() => setAddServicesOpen(false)}
+          onAdd={(services) => {
+            setDraftServicesByVendor((current) => {
+              const byId = new Map((current[vendor.id] ?? []).map((service) => [service.id, service]));
+              services.forEach((service) => byId.set(service.id, service));
+              return { ...current, [vendor.id]: [...byId.values()] };
+            });
+            setTab("services");
+          }}
+        />
+      ) : null}
     </div>
   );
 }

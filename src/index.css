@@ -20,6 +20,27 @@ body {
   color: var(--ink);
 }
 
+/* A DataSheet row is one record: hover the complete record, never one cell. */
+@media (hover: hover) {
+  #root
+    .pt-sheet
+    .pt-sheet__row:hover:not(.pt-sheet__head):not(.pt-sheet__row--loading)
+    > .pt-sheet__cell {
+    background: var(--surface-2, var(--side));
+  }
+}
+
+#root .pt-sheet__row.data-row--interactive {
+  cursor: pointer;
+}
+
+#root .pt-sheet__row.data-row--interactive:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
 /*
   Design-system mobile rule sets `.pt-frame { height: auto }` which grows the
   document. Keep the inset shell viewport-bound so only the workspace scrolls.

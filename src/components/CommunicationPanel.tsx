@@ -209,9 +209,6 @@ export function CommunicationPanel({
                 <h2 id="comm-new-title" className="rc-modal__title">
                   Select recipient
                 </h2>
-                <p id="comm-recipient-help" className="comm-modal-help">
-                  Choose who you want to email. You can write your message in the conversation.
-                </p>
               </div>
               <IconButton label="Close" onClick={() => setNewOpen(false)}>
                 <IconClose />
@@ -223,7 +220,6 @@ export function CommunicationPanel({
                 id="nm-recipient"
                 value={selectedRecipientId}
                 onChange={(e) => setSelectedRecipientId(e.target.value)}
-                aria-describedby="comm-recipient-help"
                 autoFocus
               >
                 {convos.map((conversation) => (

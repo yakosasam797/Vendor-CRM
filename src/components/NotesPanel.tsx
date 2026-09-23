@@ -32,9 +32,6 @@ export function NotesPanel({
             <h2 id="notes-panel-title" className="notes-panel__title">
               {title}
             </h2>
-            <p className="notes-panel__count">
-              {notes.length} note{notes.length === 1 ? "" : "s"}
-            </p>
           </div>
           <IconButton label="Close notes" onClick={onClose}>
             <IconClose />
