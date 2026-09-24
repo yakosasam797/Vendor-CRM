@@ -56,10 +56,12 @@ import { AnchoredImport } from "./AnchoredImport";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTestRate } from "./ServiceTestRate";
+import { ServicePolicies } from "./ServicePolicies";
 import { ServiceTypeIcon, ServiceTypeLabel, ServiceTypeList } from "./ServiceTypeLabel";
 import "./VendorsListPage.css";
 
 type Perspective = "vendors" | "services";
+type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
 
 type VendorDirectoryRow = {
   vendor: Vendor;
@@ -474,7 +476,7 @@ function ServiceDirectoryDetail({
   onOpenVendor: (id: string) => void;
   onOpenRateCard: (vendorId: string, rateCardId: string) => void;
 }) {
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState<ServiceDetailTab>("overview");
   const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
   const [vendorMenuId, setVendorMenuId] = useState<string | null>(null);
   const vendorMenuRef = useRef<HTMLDivElement>(null);
@@ -562,6 +564,7 @@ function ServiceDirectoryDetail({
     { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
     { id: "vendors", label: "Vendors", count: connections.length },
     { id: "test-rate", label: "Test rate" },
+    { id: "policies", label: "Policies" },
   ];
 
   useEffect(() => {
@@ -605,7 +608,7 @@ function ServiceDirectoryDetail({
       </header>
 
       <div className="service-directory-detail__tabs">
-        <TabBar items={tabs} value={tab} onValueChange={setTab} aria-label="Service sections" />
+        <TabBar items={tabs} value={tab} onValueChange={(value) => setTab(value as ServiceDetailTab)} aria-label="Service sections" />
       </div>
 
       {tab === "overview" ? (
@@ -682,7 +685,7 @@ function ServiceDirectoryDetail({
           connections={connections}
           vendors={vendors}
         />
-      ) : (
+      ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
           <div className="service-vendors-overview__summary">
             <SummaryStrip title="Vendor coverage" columns={4} fields={vendorSummary} />
@@ -775,7 +778,9 @@ function ServiceDirectoryDetail({
             )}
           </section>
         </div>
-      )}
+      ) : tab === "policies" ? (
+        <ServicePolicies serviceName={service.name} category={service.category} />
+      ) : null}
     </div>
   );
 }

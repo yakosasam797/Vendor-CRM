@@ -41,9 +41,24 @@ const TASK_ASSIGNEES = [
   { name: "Vrushabh Jain", role: "Owner", initials: "VJ", tone: "pink" as const },
 ];
 
+export type TaskLinkOption = {
+  id: string;
+  label: string;
+  meta?: string;
+};
+
+export type TaskLinkGroup = {
+  id: string;
+  label: string;
+  recordLabel: string;
+  options: TaskLinkOption[];
+};
+
 type TaskDraft = {
   title: string;
   description: string;
+  linkedSection: string;
+  linkedRecordId: string;
   status: TaskStatus;
   priority: (typeof PRIORITY_OPTIONS)[number];
   assignee: string;
@@ -51,15 +66,29 @@ type TaskDraft = {
   dueTime: string;
 };
 
-const EMPTY_TASK_DRAFT: TaskDraft = {
-  title: "",
-  description: "",
-  status: "Open",
-  priority: "P2",
-  assignee: TASK_ASSIGNEES[0].name,
-  dueDate: "",
-  dueTime: "",
-};
+function createEmptyTaskDraft(linkGroups: TaskLinkGroup[]): TaskDraft {
+  const firstGroup = linkGroups[0];
+  return {
+    title: "",
+    description: "",
+    linkedSection: firstGroup?.id ?? "",
+    linkedRecordId: firstGroup?.options[0]?.id ?? "",
+    status: "Open",
+    priority: "P2",
+    assignee: TASK_ASSIGNEES[0].name,
+    dueDate: "",
+    dueTime: "",
+  };
+}
+
+function nextTaskId(tasks: VendorTask[]) {
+  const year = new Date().getFullYear();
+  const largestSequence = tasks.reduce((largest, task) => {
+    const match = task.id.match(/(\d+)$/);
+    return match ? Math.max(largest, Number(match[1])) : largest;
+  }, 0);
+  return `TSK-${year}-${String(largestSequence + 1).padStart(6, "0")}`;
+}
 
 function formatTaskDue(dateValue: string, timeValue: string) {
   if (!dateValue) return "—";
@@ -86,17 +115,26 @@ function formatTaskDue(dateValue: string, timeValue: string) {
 }
 
 function AddTaskPopover({
+  taskId,
+  vendorName,
+  linkGroups,
   onClose,
   onCreate,
 }: {
+  taskId: string;
+  vendorName: string;
+  linkGroups: TaskLinkGroup[];
   onClose: () => void;
   onCreate: (task: VendorTask) => void;
 }) {
   const titleId = useId();
   const popoverRef = useRef<HTMLFormElement>(null);
-  const [draft, setDraft] = useState<TaskDraft>(EMPTY_TASK_DRAFT);
+  const [draft, setDraft] = useState<TaskDraft>(() => createEmptyTaskDraft(linkGroups));
   const [showError, setShowError] = useState(false);
   const selectedAssignee = TASK_ASSIGNEES.find((person) => person.name === draft.assignee) ?? TASK_ASSIGNEES[0];
+  const selectedLinkGroup = linkGroups.find((group) => group.id === draft.linkedSection) ?? linkGroups[0];
+  const selectedLinkRecord = selectedLinkGroup?.options.find((option) => option.id === draft.linkedRecordId)
+    ?? selectedLinkGroup?.options[0];
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -118,6 +156,15 @@ function AddTaskPopover({
     if (key === "title") setShowError(false);
   };
 
+  const setLinkedSection = (sectionId: string) => {
+    const nextGroup = linkGroups.find((group) => group.id === sectionId);
+    setDraft((current) => ({
+      ...current,
+      linkedSection: sectionId,
+      linkedRecordId: nextGroup?.options[0]?.id ?? "",
+    }));
+  };
+
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const title = draft.title.trim();
@@ -126,10 +173,15 @@ function AddTaskPopover({
       return;
     }
     const assignee = TASK_ASSIGNEES.find((person) => person.name === draft.assignee) ?? TASK_ASSIGNEES[0];
+    const linkedSection = selectedLinkGroup?.label ?? "Overview";
+    const linkedRecordName = selectedLinkRecord?.label ?? vendorName;
     onCreate({
-      id: `tsk-${Date.now()}`,
+      id: taskId,
       title,
-      context: draft.description.trim() || `${draft.priority} · General follow-up`,
+      context: `${linkedSection} · ${linkedRecordName}`,
+      linkedSection: selectedLinkGroup?.id,
+      linkedRecordId: selectedLinkRecord?.id,
+      linkedRecordName,
       description: draft.description.trim(),
       priority: draft.priority,
       assigneeName: assignee.name,
@@ -155,7 +207,7 @@ function AddTaskPopover({
         <div className="pt-modal__head">
           <div className="pt-modal__head-copy">
             <h2 id={titleId} className="pt-modal__title">Add task</h2>
-            <p className="pt-modal__desc">Create a follow-up for this vendor.</p>
+            <p className="pt-modal__desc">Create a follow-up and link it to the right vendor record.</p>
           </div>
           <IconButton className="pt-modal__close" label="Close task form" onClick={onClose}>
             <IconClose />
@@ -163,6 +215,14 @@ function AddTaskPopover({
         </div>
 
         <div className="pt-modal__body task-create-modal__body">
+          <div className="task-create-modal__identity" aria-label={`Task ID ${taskId}`}>
+            <div>
+              <span>Task ID</span>
+              <code>{taskId}</code>
+            </div>
+            <small>Generated automatically</small>
+          </div>
+
           <div className="pt-mf">
             <label className="pt-mf__l" htmlFor="task-title">Task name</label>
             <input
@@ -177,6 +237,46 @@ function AddTaskPopover({
             />
             {showError ? <span id="task-title-error" className="task-create-modal__error">Enter a task name.</span> : null}
           </div>
+
+          <fieldset className="task-create-modal__link">
+            <legend className="pt-mf__l">Link task to</legend>
+            <p>Choose the section and exact record this work belongs to.</p>
+            <div className="task-create-modal__grid">
+              <div className="pt-mf">
+                <label className="pt-mf__l" htmlFor="task-link-section">Section</label>
+                <select
+                  id="task-link-section"
+                  className="pt-mf__i"
+                  value={draft.linkedSection}
+                  onChange={(event) => setLinkedSection(event.target.value)}
+                >
+                  {linkGroups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}
+                </select>
+              </div>
+              <div className="pt-mf">
+                <label className="pt-mf__l" htmlFor="task-link-record">{selectedLinkGroup?.recordLabel ?? "Record"}</label>
+                <select
+                  id="task-link-record"
+                  className="pt-mf__i"
+                  value={draft.linkedRecordId}
+                  onChange={(event) => setField("linkedRecordId", event.target.value)}
+                >
+                  {selectedLinkGroup?.options.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}{option.meta ? ` — ${option.meta}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="task-create-modal__path" aria-live="polite">
+              <span>{vendorName}</span>
+              <span aria-hidden="true">/</span>
+              <span>{selectedLinkGroup?.label}</span>
+              <span aria-hidden="true">/</span>
+              <strong>{selectedLinkRecord?.label}</strong>
+            </div>
+          </fieldset>
 
           <div className="pt-mf">
             <label className="pt-mf__l" htmlFor="task-description">Description <span>Optional</span></label>
@@ -319,7 +419,12 @@ function TaskSheet({
               />
             </DataSheetCell>
             <DataSheetCell>
-              <LeadCell align="start" icon={<IconTaskCheck size={15} />} title={task.title} subtitle={task.context} />
+              <LeadCell
+                align="start"
+                icon={<IconTaskCheck size={15} />}
+                title={task.title}
+                subtitle={`${task.id} · ${task.context}`}
+              />
             </DataSheetCell>
             <DataSheetCell>
               <div className="tasks-sheet__who">
@@ -369,9 +474,13 @@ function TaskSheet({
  */
 export function TasksPanel({
   canAddTask,
+  vendorName,
+  linkGroups,
   onOpenTaskCountChange,
 }: {
   canAddTask: boolean;
+  vendorName: string;
+  linkGroups: TaskLinkGroup[];
   onOpenTaskCountChange?: (count: number) => void;
 }) {
   const [openQuery, setOpenQuery] = useState("");
@@ -404,7 +513,7 @@ export function TasksPanel({
         return false;
       }
       if (!q) return true;
-      const hay = `${task.title} ${task.context} ${task.assigneeName}`.toLowerCase();
+      const hay = `${task.id} ${task.title} ${task.context} ${task.description ?? ""} ${task.assigneeName}`.toLowerCase();
       return hay.includes(q);
     });
   }, [openQuery, openTasks, statusFilter]);
@@ -413,7 +522,7 @@ export function TasksPanel({
     const q = doneQuery.trim().toLowerCase();
     if (!q) return doneTasks;
     return doneTasks.filter((task) => {
-      const hay = `${task.title} ${task.context} ${task.assigneeName}`.toLowerCase();
+      const hay = `${task.id} ${task.title} ${task.context} ${task.description ?? ""} ${task.assigneeName}`.toLowerCase();
       return hay.includes(q);
     });
   }, [doneQuery, doneTasks]);
@@ -486,7 +595,13 @@ export function TasksPanel({
                 Add task
               </Button>
               {createOpen ? (
-                <AddTaskPopover onClose={() => setCreateOpen(false)} onCreate={createTask} />
+                <AddTaskPopover
+                  taskId={nextTaskId([...openTasks, ...doneTasks])}
+                  vendorName={vendorName}
+                  linkGroups={linkGroups}
+                  onClose={() => setCreateOpen(false)}
+                  onCreate={createTask}
+                />
               ) : null}
             </div>
           ) : null}
@@ -549,7 +664,8 @@ export function TasksPanel({
               </IconButton>
             </div>
             <dl className="task-detail__meta">
-              <div><dt>Context</dt><dd>{activeTask.context}</dd></div>
+              <div><dt>Task ID</dt><dd><code className="task-detail__id">{activeTask.id}</code></dd></div>
+              <div><dt>Linked to</dt><dd>{activeTask.context}</dd></div>
               {activeTask.description ? <div><dt>Description</dt><dd>{activeTask.description}</dd></div> : null}
               {activeTask.priority ? <div><dt>Priority</dt><dd>{activeTask.priority}</dd></div> : null}
               <div><dt>Assignee</dt><dd>{activeTask.assigneeName}</dd></div>

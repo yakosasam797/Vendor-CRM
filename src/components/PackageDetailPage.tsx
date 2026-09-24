@@ -102,54 +102,54 @@ const BLOCK_LIBRARY: BlockTemplate[] = [
 const INITIAL_ITINERARY: PackageDay[] = [
   {
     day: 1,
-    date: "Monday, 12 October",
-    place: "Arrive in Kochi",
+    date: "Kochi",
+    place: "Arrival and Fort Kochi",
     events: [
-      { id: "d1-flight", kind: "flight", kicker: "Flight · 01h 20m", title: "Bangalore to Kochi", meta: "IndiGo 6E-6445 · 07:30 BLR → 08:50 COK", description: "15 kg check-in · 7 kg cabin baggage" },
-      { id: "d1-transfer", kind: "transfer", kicker: "Private transfer · 55 min", title: "Kochi airport to Fort Kochi", meta: "AC sedan · 3 seats · 2 luggage bags", service: "Kochi Airport Transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹1,850" },
-      { id: "d1-stay", kind: "stay", kicker: "Hotel · 2 nights", title: "Example Lake Resort", meta: "Garden View · 1 room · 2 adults · CP breakfast", description: "Check-in 14:00 · Check-out after breakfast on Day 3", imageUrl: SUPPORTING_MEDIA[0].src, imageAlt: SUPPORTING_MEDIA[0].alt, service: "Example Lake Resort", serviceId: "svc-lake", serviceVendorId: "exhosp", vendor: "Example Hospitality", rateCard: "Accommodation tariff 2026–27", amount: "₹14,400" },
+      { id: "d1-flight", kind: "flight", kicker: "Arrival flight", title: "Flight to Kochi", meta: "Arrival airport: COK", description: "Airline, sector and schedule are confirmed for each booking." },
+      { id: "d1-transfer", kind: "transfer", kicker: "Private arrival transfer", title: "Kochi airport to Fort Kochi", meta: "Private AC vehicle · Airport pickup", description: "Pickup follows the confirmed flight arrival.", service: "Kochi Airport Transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹1,850" },
+      { id: "d1-stay", kind: "stay", kicker: "Hotel · 2 nights", title: "Example Lake Resort", meta: "Garden View · Breakfast included", description: "Standard check-in; checkout after breakfast on Day 3.", imageUrl: SUPPORTING_MEDIA[0].src, imageAlt: SUPPORTING_MEDIA[0].alt, service: "Example Lake Resort", serviceId: "svc-lake", serviceVendorId: "exhosp", vendor: "Example Hospitality", rateCard: "Accommodation tariff 2026–27", amount: "₹14,400" },
     ],
   },
   {
     day: 2,
-    date: "Tuesday, 13 October",
-    place: "Kochi heritage day",
+    date: "Kochi",
+    place: "Heritage and culture",
     events: [
       { id: "d2-meal", kind: "meal", kicker: "Meal", title: "Breakfast at the resort", meta: "Included in CP meal plan" },
-      { id: "d2-activity", kind: "activity", kicker: "Sightseeing · 5 hrs", title: "Fort Kochi and Mattancherry trail", meta: "Chinese fishing nets · Dutch Palace · Jew Town · spice market", description: "Private local guide and entry tickets included. Pickup from the resort at 09:30.", imageUrl: SUPPORTING_MEDIA[1].src, imageAlt: SUPPORTING_MEDIA[1].alt, service: "Kochi heritage walk", serviceVendorId: "kerala-heritage", vendor: "Kerala Heritage Co.", rateCard: "Kochi experiences 2026", amount: "₹4,800" },
-      { id: "d2-note", kind: "note", kicker: "Open time", title: "Evening at leisure", meta: "No service planned after 16:30" },
+      { id: "d2-activity", kind: "activity", kicker: "Guided sightseeing", title: "Fort Kochi and Mattancherry trail", meta: "Fishing nets · Dutch Palace · Jew Town", description: "Private guide and entry tickets included; timing stays flexible.", imageUrl: SUPPORTING_MEDIA[1].src, imageAlt: SUPPORTING_MEDIA[1].alt, service: "Kochi heritage walk", serviceVendorId: "kerala-heritage", vendor: "Kerala Heritage Co.", rateCard: "Kochi experiences 2026", amount: "₹4,800" },
+      { id: "d2-note", kind: "note", kicker: "Open time", title: "Evening at leisure", meta: "No pre-booked service" },
     ],
   },
   {
     day: 3,
-    date: "Wednesday, 14 October",
-    place: "Kochi to Alleppey",
+    date: "Alleppey",
+    place: "Backwater journey",
     events: [
-      { id: "d3-meal", kind: "meal", kicker: "Meal", title: "Breakfast and hotel checkout", meta: "Checkout by 09:00" },
-      { id: "d3-transfer", kind: "transfer", kicker: "Private transfer · 2 hrs", title: "Fort Kochi to Alleppey jetty", meta: "AC sedan · pickup 09:30", service: "Kochi–Alleppey transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹3,400" },
-      { id: "d3-activity", kind: "activity", kicker: "Cruise · overnight", title: "Private backwater houseboat", meta: "Alleppey canals · village route · sunset anchorage", description: "Lunch, evening tea and dinner are served on board. Air conditioning runs from 21:00 to 06:00.", imageUrl: photo("photo-1602216056096-3b40cc0c9944", 1300, 820), imageAlt: "Houseboat crossing the Kerala backwaters", service: "Alleppey houseboat", serviceVendorId: "coastal", vendor: "Coastal Stay Properties", rateCard: "Houseboat FIT tariff", amount: "₹18,500" },
+      { id: "d3-meal", kind: "meal", kicker: "Meal", title: "Breakfast and hotel checkout", meta: "Depart after breakfast" },
+      { id: "d3-transfer", kind: "transfer", kicker: "Private intercity transfer", title: "Fort Kochi to Alleppey jetty", meta: "Private AC vehicle · Hotel pickup", description: "Pickup is coordinated with houseboat boarding.", service: "Kochi–Alleppey transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹3,400" },
+      { id: "d3-activity", kind: "activity", kicker: "Overnight cruise", title: "Private backwater houseboat", meta: "Village route · Sunset anchorage", description: "Meals included with an overnight stay on the backwaters.", imageUrl: photo("photo-1602216056096-3b40cc0c9944", 1300, 820), imageAlt: "Houseboat crossing the Kerala backwaters", service: "Alleppey houseboat", serviceVendorId: "coastal", vendor: "Coastal Stay Properties", rateCard: "Houseboat FIT tariff", amount: "₹18,500" },
     ],
   },
   {
     day: 4,
-    date: "Thursday, 15 October",
-    place: "Kumarakom backwaters",
+    date: "Kumarakom",
+    place: "Lake and village experience",
     events: [
-      { id: "d4-meal", kind: "meal", kicker: "Meal", title: "Breakfast on the houseboat", meta: "Disembark at 09:00" },
-      { id: "d4-transfer", kind: "transfer", kicker: "Private transfer · 45 min", title: "Alleppey jetty to Kumarakom", meta: "AC sedan · assisted hotel check-in", service: "Backwater corridor transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹1,600" },
-      { id: "d4-stay", kind: "stay", kicker: "Hotel · 1 night", title: "Kumarakom Lake Retreat", meta: "Lake View · 1 room · MAP breakfast and dinner", description: "Check-in 13:00 · dinner and next-day breakfast included", imageUrl: photo("photo-1571896349842-33c89424de2d", 900, 600), imageAlt: "Pool at a lakeside resort", service: "Kumarakom Lake Retreat", serviceVendorId: "wanderlust", vendor: "Wanderlust Trails", rateCard: "Backwater stay rates 2026–27", amount: "₹9,800" },
-      { id: "d4-activity", kind: "activity", kicker: "Activity · 2 hrs", title: "Sunset canoe and village visit", meta: "Private guide · life jackets · tea stop", service: "Backwater Kayak", serviceId: "svc-kayak", serviceVendorId: "trailmakers", vendor: "Trailmaker Experiences", rateCard: "Activity tariff 2026", amount: "₹3,200" },
+      { id: "d4-meal", kind: "meal", kicker: "Meal", title: "Breakfast on the houseboat", meta: "Disembark after breakfast" },
+      { id: "d4-transfer", kind: "transfer", kicker: "Private transfer", title: "Alleppey jetty to Kumarakom", meta: "Private AC vehicle · Assisted check-in", service: "Backwater corridor transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Kerala transfers 2026", amount: "₹1,600" },
+      { id: "d4-stay", kind: "stay", kicker: "Hotel · 1 night", title: "Kumarakom Lake Retreat", meta: "Lake View · Breakfast and dinner", description: "Standard check-in with dinner and next-day breakfast included.", imageUrl: photo("photo-1571896349842-33c89424de2d", 900, 600), imageAlt: "Pool at a lakeside resort", service: "Kumarakom Lake Retreat", serviceVendorId: "wanderlust", vendor: "Wanderlust Trails", rateCard: "Backwater stay rates 2026–27", amount: "₹9,800" },
+      { id: "d4-activity", kind: "activity", kicker: "Guided activity", title: "Sunset canoe and village visit", meta: "Private guide · Safety equipment · Tea stop", service: "Backwater Kayak", serviceId: "svc-kayak", serviceVendorId: "trailmakers", vendor: "Trailmaker Experiences", rateCard: "Activity tariff 2026", amount: "₹3,200" },
     ],
   },
   {
     day: 5,
-    date: "Friday, 16 October",
-    place: "Departure from Kochi",
+    date: "Kochi",
+    place: "Departure",
     events: [
       { id: "d5-meal", kind: "meal", kicker: "Meal", title: "Breakfast at the resort", meta: "Included in MAP meal plan" },
-      { id: "d5-checkout", kind: "checkout", kicker: "Hotel checkout", title: "Kumarakom Lake Retreat", meta: "Checkout by 10:00" },
-      { id: "d5-transfer", kind: "transfer", kicker: "Private transfer · 2h 15m", title: "Kumarakom to Kochi airport", meta: "AC sedan · pickup 10:00", service: "Kochi Airport Transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹3,600" },
-      { id: "d5-flight", kind: "flight", kicker: "Flight · 01h 20m", title: "Kochi to Bengaluru", meta: "IndiGo 6E-6474 · 15:10 COK → 16:30 BLR", description: "15 kg check-in · 7 kg cabin baggage" },
+      { id: "d5-checkout", kind: "checkout", kicker: "Hotel checkout", title: "Kumarakom Lake Retreat", meta: "Standard checkout" },
+      { id: "d5-transfer", kind: "transfer", kicker: "Private departure transfer", title: "Kumarakom to Kochi airport", meta: "Private AC vehicle · Airport drop", description: "Departure time follows the confirmed flight schedule.", service: "Kochi Airport Transfer", serviceId: "svc-transfer-cok", serviceVendorId: "trailmakers", vendor: "Bluewave Transport", rateCard: "Airport transfer rates 2026", amount: "₹3,600" },
+      { id: "d5-flight", kind: "flight", kicker: "Departure flight", title: "Flight from Kochi", meta: "Departure airport: COK", description: "Airline, destination and schedule are confirmed for each booking." },
     ],
   },
 ];
@@ -177,7 +177,23 @@ function EventIcon({ kind }: { kind: EventKind }) {
     checkout: <IconHotel size={15} />,
     note: <IconPlus size={15} />,
   };
-  return <span className={`package-event__icon package-event__icon--${kind}`} aria-hidden="true">{icons[kind]}</span>;
+  return <span className="package-event__icon" data-kind={kind} aria-hidden="true">{icons[kind]}</span>;
+}
+
+function sellPriceValue(sellPrice: string) {
+  return Number(sellPrice.replace(/[^0-9.]/g, ""));
+}
+
+function formatRupees(value: number) {
+  return value ? `₹${Math.round(value).toLocaleString("en-IN")}` : "—";
+}
+
+function estimatedPackageCost(sellPrice: string) {
+  return formatRupees(sellPriceValue(sellPrice) * 0.76);
+}
+
+function estimatedCategoryCost(sellPrice: string, share: number) {
+  return formatRupees(sellPriceValue(sellPrice) * 0.76 * share);
 }
 
 function includedSummary(events: PackageEvent[]) {
@@ -201,21 +217,27 @@ function includedSummary(events: PackageEvent[]) {
 function PackageEventRow({
   event,
   position,
+  isEditing,
   onEdit,
   onRemove,
   onOpenService,
 }: {
   event: PackageEvent;
   position: number;
+  isEditing: boolean;
   onEdit: () => void;
   onRemove: () => void;
   onOpenService: () => void;
 }) {
   const isLinked = Boolean(event.service && event.vendor);
+  const sourceFallback = event.kind === "meal"
+    ? "Included in package"
+    : event.kind === "note"
+      ? "Package note"
+      : "Needs service link";
   const [imageFailed, setImageFailed] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
   const actionsRef = useRef<HTMLDivElement>(null);
-  const summary = event.description || event.meta || event.kicker;
 
   useEffect(() => {
     if (!actionsOpen) return;
@@ -227,7 +249,9 @@ function PackageEventRow({
   }, [actionsOpen]);
 
   return (
-    <article className={`package-event package-event--${event.kind}`}>
+    <article
+      className={`package-event${isEditing ? " is-editing" : " is-readonly"}${isLinked ? " is-linked" : ""}`}
+    >
       <div className="package-event__sequence" aria-label={`Block ${position}`}>
         <span>{String(position).padStart(2, "0")}</span>
       </div>
@@ -246,37 +270,56 @@ function PackageEventRow({
       </div>
 
       <div className="package-event__body">
-        <div className="package-event__topline">
-          <div className="package-event__title-group">
-            <h3>{event.title}</h3>
-            <p className="package-event__description">{summary}</p>
-          </div>
-          <div className="package-event__commercial">
-            {event.kind === "note" ? (
-              <StatusChipWithDot tone="open">Content only</StatusChipWithDot>
-            ) : null}
-            {event.amount ? <strong>{event.amount}</strong> : null}
-          </div>
-        </div>
+        <span className="package-event__kicker">{event.kicker}</span>
+        <h3>{event.title}</h3>
+      </div>
+
+      <div className="package-event__summary">
+        {event.meta ? <p>{event.meta}</p> : <p>{event.description ?? "Package itinerary item"}</p>}
+        {event.meta && event.description ? <span>{event.description}</span> : null}
+      </div>
+
+      <div className="package-event__source">
+        {event.vendor || event.rateCard ? (
+          <>
+            {event.vendor ? <strong>{event.vendor}</strong> : null}
+            {event.rateCard ? <span>{event.rateCard}</span> : null}
+          </>
+        ) : <span className={sourceFallback === "Needs service link" ? "is-attention" : undefined}>{sourceFallback}</span>}
+      </div>
+
+      <div className="package-event__cost">
+        <span>{event.amount ? "Cost" : event.kind === "meal" ? "Price" : "Cost"}</span>
+        <strong>{event.amount ?? (event.kind === "meal" ? "Included" : "—")}</strong>
       </div>
 
       <div className="package-event__actions" ref={actionsRef}>
         {isLinked ? (
-          <button type="button" className="package-event__service-link" onClick={onOpenService}>
+          <button
+            type="button"
+            className="package-event__service-link"
+            aria-label={`View ${event.title}`}
+            aria-haspopup="dialog"
+            onClick={onOpenService}
+          >
             View
           </button>
         ) : null}
-        <IconButton
-          label={`More actions for ${event.title}`}
-          aria-expanded={actionsOpen}
-          aria-haspopup="menu"
-          onClick={() => setActionsOpen((open) => !open)}
-        ><IconMore /></IconButton>
-        {actionsOpen ? (
-          <div className="package-event__actions-menu" role="menu" aria-label={`Actions for ${event.title}`}>
-            <button type="button" role="menuitem" onClick={() => { setActionsOpen(false); onEdit(); }}><IconPencil />Edit block</button>
-            <button type="button" role="menuitem" className="is-danger" onClick={() => { setActionsOpen(false); onRemove(); }}><IconTrash />Delete block</button>
-          </div>
+        {isEditing ? (
+          <>
+            <IconButton
+              label={`More actions for ${event.title}`}
+              aria-expanded={actionsOpen}
+              aria-haspopup="menu"
+              onClick={() => setActionsOpen((open) => !open)}
+            ><IconMore /></IconButton>
+            {actionsOpen ? (
+              <div className="package-event__actions-menu" role="menu" aria-label={`Actions for ${event.title}`}>
+                <button type="button" role="menuitem" onClick={() => { setActionsOpen(false); onEdit(); }}><IconPencil />Edit block</button>
+                <button type="button" role="menuitem" className="is-danger" onClick={() => { setActionsOpen(false); onRemove(); }}><IconTrash />Delete block</button>
+              </div>
+            ) : null}
+          </>
         ) : null}
       </div>
     </article>
@@ -285,19 +328,25 @@ function PackageEventRow({
 
 export function PackageDetailPage({
   pkg,
+  canEdit = true,
   onUpdate,
   onOpenService,
 }: {
   pkg: VendorPackage;
+  canEdit?: boolean;
   onUpdate?: (next: VendorPackage) => void;
   onOpenService?: (serviceId: string | undefined, vendorId: string | undefined) => void;
 }) {
   const [record, setRecord] = useState(pkg);
+  const [isEditing, setIsEditing] = useState(false);
   const [tab, setTab] = useState<PackageTab>("itinerary");
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const [days, setDays] = useState<PackageDay[]>(() => pkg.services === "Services not added yet"
     ? [{ day: 1, date: "Date not set", place: "Plan this day", events: [] }]
     : INITIAL_ITINERARY);
-  const [collapsedDays, setCollapsedDays] = useState<number[]>([]);
+  const [collapsedDays, setCollapsedDays] = useState<number[]>(() => pkg.services === "Services not added yet"
+    ? []
+    : INITIAL_ITINERARY.slice(1).map((day) => day.day));
   const [media, setMedia] = useState<PackageMedia[]>(() => pkg.imageUrl
     ? [
         { id: "primary", src: pkg.imageUrl, alt: pkg.imageAlt, label: "Primary banner", primary: true },
@@ -310,9 +359,10 @@ export function PackageDetailPage({
   const [eventDraft, setEventDraft] = useState<PackageEvent>(NEW_SERVICE);
   const [addDay, setAddDay] = useState<number | null>(null);
   const [blockQuery, setBlockQuery] = useState("");
-  const [packageDraft, setPackageDraft] = useState({ name: pkg.name, detail: pkg.detail, sellPrice: pkg.sellPrice, status: pkg.status });
+  const [packageDraft, setPackageDraft] = useState({ name: pkg.name, detail: pkg.detail, summary: pkg.summary, sellPrice: pkg.sellPrice, status: pkg.status });
   const uploadRef = useRef<HTMLInputElement>(null);
   const eventCounterRef = useRef(0);
+  const editSnapshotRef = useRef<{ record: VendorPackage; days: PackageDay[]; media: PackageMedia[] } | null>(null);
 
   const orderedMedia = useMemo(
     () => [...media].sort((a, b) => Number(b.primary) - Number(a.primary)),
@@ -320,7 +370,8 @@ export function PackageDetailPage({
   );
   const metrics = useMemo(() => {
     const events = days.flatMap((day) => day.events);
-    return { events };
+    const linked = events.filter((event) => event.service && event.vendor).length;
+    return { events, linked };
   }, [days]);
   const nightCount = Number(record.detail.match(/(\d+)\s*N/i)?.[1] ?? Math.max(days.length - 1, 0));
   const destination = record.detail.split("\u00b7").at(-1)?.trim() || record.detail;
@@ -385,21 +436,72 @@ export function PackageDetailPage({
       : [...current, day]);
   };
 
+  const allDaysCollapsed = days.length > 0 && collapsedDays.length === days.length;
+  const toggleAllDays = () => {
+    setCollapsedDays(allDaysCollapsed ? [] : days.map((day) => day.day));
+  };
+
   const showNotice = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice((current) => (current === message ? null : current)), 5000);
   };
 
-  const beginEditPackage = () => {
-    setPackageDraft({ name: record.name, detail: record.detail, sellPrice: record.sellPrice, status: record.status });
+  const openPackageSettings = () => {
+    setPackageDraft({ name: record.name, detail: record.detail, summary: record.summary, sellPrice: record.sellPrice, status: record.status });
     setModal("edit-package");
   };
+
+  const beginEditPackage = () => {
+    editSnapshotRef.current = {
+      record: { ...record },
+      days: days.map((day) => ({ ...day, events: day.events.map((event) => ({ ...event })) })),
+      media: media.map((item) => ({ ...item })),
+    };
+    setNotice(null);
+    setTab("itinerary");
+    setIsEditing(true);
+  };
+
+  const cancelPackageEdit = () => {
+    const snapshot = editSnapshotRef.current;
+    if (snapshot) {
+      setRecord(snapshot.record);
+      setDays(snapshot.days);
+      setMedia(snapshot.media);
+      onUpdate?.(snapshot.record);
+    }
+    editSnapshotRef.current = null;
+    setModal(null);
+    setNotice(null);
+    setIsEditing(false);
+  };
+
+  const finishPackageEdit = () => {
+    editSnapshotRef.current = null;
+    setModal(null);
+    setIsEditing(false);
+    showNotice("Package changes saved. Review pricing and policies before publishing.");
+  };
+
+  useEffect(() => {
+    if (canEdit || !isEditing) return;
+    const snapshot = editSnapshotRef.current;
+    if (snapshot) {
+      setRecord(snapshot.record);
+      setDays(snapshot.days);
+      setMedia(snapshot.media);
+      onUpdate?.(snapshot.record);
+    }
+    editSnapshotRef.current = null;
+    setModal(null);
+    setIsEditing(false);
+  }, [canEdit, isEditing, onUpdate]);
 
   const savePackage = () => {
     if (!packageDraft.name.trim()) return;
     updateRecord({ ...record, ...packageDraft, name: packageDraft.name.trim(), detail: packageDraft.detail.trim() });
     setModal(null);
-    showNotice("Package details saved. Review the commercial summary before publishing changes.");
+    showNotice("Package settings updated. Continue editing the itinerary or save the package.");
   };
 
   const beginAddService = (day: number) => {
@@ -545,9 +647,28 @@ export function PackageDetailPage({
           </div>
         </div>
         <div className="package-detail__header-actions">
-          <Button variant="primary" size="sm" onClick={beginEditPackage}><IconPencil />Edit package</Button>
+          <div className="package-detail__commercial-summary">
+            <span>Sell price</span>
+            <strong>{record.sellPrice}</strong>
+            <small>Cost {estimatedPackageCost(record.sellPrice)} · Margin 24%</small>
+          </div>
+          {isEditing ? (
+            <div className="package-detail__edit-actions">
+              <Button variant="brand" size="sm" onClick={cancelPackageEdit}>Cancel</Button>
+              <Button variant="primary" size="sm" onClick={finishPackageEdit}><IconCheck />Save package</Button>
+            </div>
+          ) : canEdit ? (
+            <Button variant="primary" size="sm" onClick={beginEditPackage}><IconPencil />Edit package</Button>
+          ) : null}
         </div>
       </header>
+
+      {isEditing ? (
+        <div className="package-edit-mode" role="status">
+          <div><IconPencil size={15} /><span><strong>Editing package</strong><small>Update package settings, media, days, and service blocks. Save when the package is ready.</small></span></div>
+          <span>{metrics.events.length} blocks · {metrics.linked} linked services</span>
+        </div>
+      ) : null}
 
       {notice ? (
         <div className="package-detail__notice" role="status">
@@ -572,20 +693,40 @@ export function PackageDetailPage({
         <>
           <div className="package-builder-bar">
             <div className="package-builder-bar__summary">
-              <span><strong>Itinerary</strong></span>
+              <span><strong>Itinerary</strong><small>{days.length} days · {metrics.events.length} blocks · {metrics.linked} linked services</small></span>
             </div>
-            <Button variant="brand" size="sm" onClick={addItineraryDay}><IconPlus />Add another day</Button>
+            <div className="package-builder-bar__actions">
+              <button type="button" className="package-builder-bar__toggle" onClick={toggleAllDays}>{allDaysCollapsed ? "Expand all" : "Collapse all"}</button>
+              {isEditing ? (
+                <>
+                <Button variant="brand" size="sm" onClick={openPackageSettings}><IconPencil />Package settings</Button>
+                <Button variant="brand" size="sm" onClick={() => setModal("media")}><IconImage />Media</Button>
+                <Button variant="primary" size="sm" onClick={addItineraryDay}><IconPlus />Add day</Button>
+                </>
+              ) : null}
+            </div>
           </div>
+
+          {record.summary ? (
+            <section className="package-overview" aria-label="Package overview">
+              <div>
+                <strong>Package overview</strong>
+                <p className={summaryExpanded ? "is-expanded" : undefined}>{record.summary}</p>
+              </div>
+              {record.summary.length > 150 ? (
+                <button type="button" onClick={() => setSummaryExpanded((expanded) => !expanded)} aria-expanded={summaryExpanded}>{summaryExpanded ? "Show less" : "View all"}</button>
+              ) : null}
+            </section>
+          ) : null}
 
           <div className="package-itinerary">
             <main className="package-days">
               {days.map((day) => {
                 const isCollapsed = collapsedDays.includes(day.day);
                 return (
-                  <section className="package-day" id={`package-day-${day.day}`} key={day.day}>
+                  <section className={`package-day ${isCollapsed ? "is-collapsed" : "is-expanded"}`} id={`package-day-${day.day}`} key={day.day}>
                     <header className="package-day__head">
-                      <span className="package-day__number">Day {day.day}</span>
-                      <div><h2>{day.place}</h2><p>{day.date}</p></div>
+                      <div className="package-day__title"><span className="package-day__number">Day {day.day}</span><span className="package-day__separator" aria-hidden="true">·</span><h2>{day.date}</h2><p>{day.place}</p></div>
                       <div className="package-day__summary">
                         <span>{day.events.length} block{day.events.length === 1 ? "" : "s"}{includedSummary(day.events) ? ` · ${includedSummary(day.events)}` : " · Ready to structure"}</span>
                       </div>
@@ -600,6 +741,7 @@ export function PackageDetailPage({
                             <PackageEventRow
                               event={event}
                               position={index + 1}
+                              isEditing={isEditing}
                               key={event.id}
                               onEdit={() => beginEditEvent(day.day, event)}
                               onRemove={() => beginRemoveEvent(day.day, event)}
@@ -609,13 +751,13 @@ export function PackageDetailPage({
                         ) : (
                           <div className="package-day__empty"><IconPackages size={18} /><span><strong>No blocks yet</strong><small>Add a flight, stay, transfer, activity, visa, meal, or custom note.</small></span></div>
                         )}
-                        <button type="button" className="package-day__add" onClick={() => beginAddService(day.day)}><IconPlus size={14} />Add block to Day {day.day}</button>
+                        {isEditing ? <button type="button" className="package-day__add" onClick={() => beginAddService(day.day)}><IconPlus size={14} />Add block to Day {day.day}</button> : null}
                       </>
                     ) : null}
                   </section>
                 );
               })}
-              <button type="button" className="package-itinerary__add-day" onClick={addItineraryDay}><IconPlus size={14} />Add another day</button>
+              {isEditing ? <button type="button" className="package-itinerary__add-day" onClick={addItineraryDay}><IconPlus size={14} />Add another day</button> : null}
             </main>
           </div>
         </>
@@ -655,11 +797,12 @@ export function PackageDetailPage({
           <header><span>Commercial summary</span><h2>Cost and readiness</h2><p>One operational view of every service used to build this package.</p></header>
           {metrics.events.length ? <div className="package-cost-table">
             <div className="package-cost-table__head"><span>Service group</span><span>Linked items</span><span>Cost</span><span>Status</span></div>
-            <div><strong>Accommodation</strong><span>3 stays · 4 nights</span><span>₹42,700</span><StatusChipWithDot tone="done">Priced</StatusChipWithDot></div>
-            <div><strong>Transport</strong><span>4 private transfers</span><span>₹10,450</span><StatusChipWithDot tone="done">Priced</StatusChipWithDot></div>
-            <div><strong>Activities</strong><span>3 experiences</span><span>₹8,000</span><StatusChipWithDot tone="done">Priced</StatusChipWithDot></div>
-            <div><strong>Flights</strong><span>2 sectors · actual at booking</span><span>₹7,250</span><StatusChipWithDot tone="progress">Indicative</StatusChipWithDot></div>
-            <div className="package-cost-table__total"><strong>Package total</strong><span>2 adults · 1 room</span><span>{record.sellPrice}</span><strong>24% margin</strong></div>
+            <div><strong>Accommodation</strong><span>3 stays · 4 nights</span><span>{estimatedCategoryCost(record.sellPrice, 0.625)}</span><StatusChipWithDot tone="done">Priced</StatusChipWithDot></div>
+            <div><strong>Transport</strong><span>4 private transfers</span><span>{estimatedCategoryCost(record.sellPrice, 0.153)}</span><StatusChipWithDot tone="done">Priced</StatusChipWithDot></div>
+            <div><strong>Activities</strong><span>3 experiences</span><span>{estimatedCategoryCost(record.sellPrice, 0.113)}</span><StatusChipWithDot tone="done">Priced</StatusChipWithDot></div>
+            <div><strong>Flights</strong><span>2 sectors · actual at booking</span><span>{estimatedCategoryCost(record.sellPrice, 0.109)}</span><StatusChipWithDot tone="progress">Indicative</StatusChipWithDot></div>
+            <div className="package-cost-table__total"><strong>Total cost</strong><span>{metrics.events.length} blocks · {metrics.linked} linked services</span><span>{estimatedPackageCost(record.sellPrice)}</span><strong>Cost basis</strong></div>
+            <div className="package-cost-table__sell"><strong>Sell price</strong><span>Customer-facing package price</span><span>{record.sellPrice}</span><strong>24% margin</strong></div>
           </div> : <div className="package-summary-empty"><IconPackages size={20} /><strong>No services in this package yet</strong><span>Return to Itinerary and add the first service. Cost and readiness will appear here as the day plan is built.</span><Button variant="brand" size="sm" onClick={() => setTab("itinerary")}>Build itinerary</Button></div>}
           <div className={`package-readiness${metrics.events.length ? "" : " package-readiness--incomplete"}`}><IconCard size={16} /><div><strong>{metrics.events.length ? "Ready for pricing review" : "Setup incomplete"}</strong><span>{metrics.events.length ? "Review linked services and current prices before publishing. Flights remain indicative until ticketed." : "Add at least one itinerary service and a banner before publishing this package."}</span></div></div>
         </section>
@@ -668,16 +811,17 @@ export function PackageDetailPage({
       {modal === "edit-package" ? (
         <div className="pt-modal-overlay" role="presentation" onClick={() => setModal(null)}>
           <div className="pt-modal package-action-modal" role="dialog" aria-modal="true" aria-labelledby="edit-package-title" onClick={(event) => event.stopPropagation()}>
-            <header className="pt-modal__head package-action-modal__head"><h2 className="pt-modal__title" id="edit-package-title">Edit package</h2><IconButton label="Close edit package" onClick={() => setModal(null)}><IconClose /></IconButton></header>
+            <header className="pt-modal__head package-action-modal__head"><h2 className="pt-modal__title" id="edit-package-title">Package settings</h2><IconButton label="Close package settings" onClick={() => setModal(null)}><IconClose /></IconButton></header>
             <div className="pt-modal__body">
               <label className="pt-mf"><span className="pt-mf__l">Package name</span><input className="pt-mf__i" value={packageDraft.name} onChange={(event) => setPackageDraft({ ...packageDraft, name: event.target.value })} /></label>
               <label className="pt-mf"><span className="pt-mf__l">Route / duration</span><input className="pt-mf__i" value={packageDraft.detail} onChange={(event) => setPackageDraft({ ...packageDraft, detail: event.target.value })} /></label>
+              <label className="pt-mf"><span className="pt-mf__l">Package overview</span><textarea className="pt-mf__i" rows={5} maxLength={600} value={packageDraft.summary} onChange={(event) => setPackageDraft({ ...packageDraft, summary: event.target.value })} /></label>
               <div className="pt-mf-row">
                 <label className="pt-mf"><span className="pt-mf__l">Sell price</span><input className="pt-mf__i" value={packageDraft.sellPrice} onChange={(event) => setPackageDraft({ ...packageDraft, sellPrice: event.target.value })} /></label>
                 <label className="pt-mf"><span className="pt-mf__l">Status</span><select className="pt-mf__i" value={packageDraft.status} onChange={(event) => setPackageDraft({ ...packageDraft, status: event.target.value as PackageStatus })}><option value="live">Live</option><option value="reprice">Re-price</option><option value="draft">Draft</option></select></label>
               </div>
             </div>
-            <footer className="pt-modal__foot"><Button variant="brand" size="sm" onClick={() => setModal(null)}>Cancel</Button><Button variant="primary" size="sm" onClick={savePackage} disabled={!packageDraft.name.trim()}><IconCheck />Save changes</Button></footer>
+            <footer className="pt-modal__foot"><Button variant="brand" size="sm" onClick={() => setModal(null)}>Cancel</Button><Button variant="primary" size="sm" onClick={savePackage} disabled={!packageDraft.name.trim()}><IconCheck />Update settings</Button></footer>
           </div>
         </div>
       ) : null}

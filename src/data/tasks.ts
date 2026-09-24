@@ -6,6 +6,9 @@ export interface VendorTask {
   id: string;
   title: string;
   context: string;
+  linkedSection?: string;
+  linkedRecordId?: string;
+  linkedRecordName?: string;
   description?: string;
   priority?: "P1" | "P2" | "P3";
   assigneeName: string;
@@ -25,7 +28,7 @@ export const TASK_STATUS_TONE: Record<TaskStatus, StatusTone> = {
 
 export const OPEN_VENDOR_TASKS: VendorTask[] = [
   {
-    id: "tsk-1",
+    id: "TSK-2026-000001",
     title: "Confirm rate card for 2026–27 season",
     context: "Rate cards · Accommodation tariff",
     assigneeName: "Anjali Menon",
@@ -36,7 +39,7 @@ export const OPEN_VENDOR_TASKS: VendorTask[] = [
     status: "In progress",
   },
   {
-    id: "tsk-2",
+    id: "TSK-2026-000002",
     title: "Collect signed contract amendment",
     context: "Docs · Commercial",
     assigneeName: "Meera Joseph",
@@ -47,7 +50,7 @@ export const OPEN_VENDOR_TASKS: VendorTask[] = [
     status: "Open",
   },
   {
-    id: "tsk-3",
+    id: "TSK-2026-000003",
     title: "Update stop-sale notice window",
     context: "Commercial · Terms",
     assigneeName: "Anjali Menon",
@@ -58,7 +61,7 @@ export const OPEN_VENDOR_TASKS: VendorTask[] = [
     status: "Open",
   },
   {
-    id: "tsk-4",
+    id: "TSK-2026-000004",
     title: "Review group allotment request",
     context: "Services · Example Lake Resort",
     assigneeName: "Vrushabh Jain",
@@ -69,7 +72,7 @@ export const OPEN_VENDOR_TASKS: VendorTask[] = [
     status: "Open",
   },
   {
-    id: "tsk-5",
+    id: "TSK-2026-000005",
     title: "Publish Hill Retreat draft tariff",
     context: "Blocked by missing meal plans",
     assigneeName: "Anjali Menon",
@@ -83,7 +86,7 @@ export const OPEN_VENDOR_TASKS: VendorTask[] = [
 
 export const DONE_VENDOR_TASKS: VendorTask[] = [
   {
-    id: "tsk-d1",
+    id: "TSK-2026-000006",
     title: "Onboard primary vendor contacts",
     context: "Overview · Contacts",
     assigneeName: "Anjali Menon",
@@ -94,7 +97,7 @@ export const DONE_VENDOR_TASKS: VendorTask[] = [
     status: "Done",
   },
   {
-    id: "tsk-d2",
+    id: "TSK-2026-000007",
     title: "Import base accommodation tariff",
     context: "Rate cards · Example Lake Resort",
     assigneeName: "Meera Joseph",
@@ -105,7 +108,7 @@ export const DONE_VENDOR_TASKS: VendorTask[] = [
     status: "Done",
   },
   {
-    id: "tsk-d3",
+    id: "TSK-2026-000008",
     title: "Set payment terms to Net 30",
     context: "Commercial · Terms",
     assigneeName: "Vrushabh Jain",

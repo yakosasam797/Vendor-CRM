@@ -26,7 +26,10 @@ import {
   type RateCardStatus,
 } from "../data/rateCards";
 import { getVendor, type Vendor } from "../data/vendors";
-import { vendorActivityForVendor } from "../data/vendorOverview";
+import { VENDOR_BOOKINGS, vendorActivityForVendor } from "../data/vendorOverview";
+import { COMPLIANCE_DOCS, PAYABLES } from "../data/vendorFinance";
+import { VENDOR_CONVERSATIONS } from "../data/communications";
+import { VENDOR_PACKAGES } from "../data/packages";
 import { can, type OrgRole } from "../permissions";
 import type { PageNavigationChange } from "../pageNavigation";
 import { IconCheck, IconFilter, IconPin, IconPlus } from "../icons";
@@ -36,7 +39,7 @@ import { RateCardCoverageCell, RateCardValidityCell } from "./rateCardCells";
 import { PackagesPanel } from "./PackagesPanel";
 import { ServicesPanel } from "./ServicesPanel";
 import { StatusChipWithDot } from "./StatusChipWithDot";
-import { TasksPanel } from "./TasksPanel";
+import { TasksPanel, type TaskLinkGroup } from "./TasksPanel";
 import { VendorBookingsPanel } from "./VendorBookingsPanel";
 import { VendorActivityPanel } from "./VendorActivityPanel";
 import { VendorDocsPanel } from "./VendorDocsPanel";
@@ -62,6 +65,18 @@ const BASE_TABS: TabItem[] = [
   { id: "comms", label: "Communications", count: 2 },
   { id: "activity", label: "Activity" },
 ];
+
+const TASK_PACKAGE_IDS_BY_VENDOR: Record<string, string[]> = {
+  trailmakers: ["pkg-1", "pkg-2"],
+  exhosp: ["pkg-3", "pkg-7"],
+  wanderlust: ["pkg-5", "pkg-8"],
+  coastal: ["pkg-4", "pkg-6"],
+};
+
+function taskPackagesForVendor(vendorId: string) {
+  const packageIds = TASK_PACKAGE_IDS_BY_VENDOR[vendorId] ?? [];
+  return VENDOR_PACKAGES.filter((item) => packageIds.includes(item.id));
+}
 
 type RateCardStatusFilter = "all" | RateCardStatus;
 
@@ -378,6 +393,64 @@ export function VendorRateCardsPage({
 
   const vendorServices = servicesForVendor(vendor.id);
   const serviceCount = vendorServices.length;
+  const taskLinkGroups: TaskLinkGroup[] = [
+      {
+        id: "overview",
+        label: "Overview",
+        recordLabel: "Vendor record",
+        options: [{ id: vendor.id, label: vendor.name, meta: vendor.code }],
+      },
+      {
+        id: "services",
+        label: "Services",
+        recordLabel: "Service",
+        options: servicesForVendor(vendor.id).map((service) => ({
+          id: service.id,
+          label: service.name,
+          meta: `${service.type} · ${service.location}`,
+        })),
+      },
+      {
+        id: "rate-cards",
+        label: "Rate cards",
+        recordLabel: "Rate card",
+        options: RATE_CARDS.map((card) => ({ id: card.id, label: card.title, meta: card.ref })),
+      },
+      {
+        id: "packages",
+        label: "Packages",
+        recordLabel: "Package",
+        options: taskPackagesForVendor(vendor.id).map((item) => ({ id: item.id, label: item.name, meta: item.detail })),
+      },
+      {
+        id: "bookings",
+        label: "Bookings",
+        recordLabel: "Booking",
+        options: VENDOR_BOOKINGS.map((booking) => ({ id: booking.id, label: booking.title, meta: booking.ref })),
+      },
+      {
+        id: "finance",
+        label: "Finance",
+        recordLabel: "Invoice",
+        options: PAYABLES.map((payable) => ({ id: payable.id, label: payable.invoice, meta: payable.booking })),
+      },
+      {
+        id: "docs",
+        label: "Documents",
+        recordLabel: "Document",
+        options: COMPLIANCE_DOCS.map((document) => ({ id: document.id, label: document.name, meta: document.reference })),
+      },
+      {
+        id: "comms",
+        label: "Communications",
+        recordLabel: "Conversation",
+        options: VENDOR_CONVERSATIONS.map((conversation) => ({
+          id: conversation.id,
+          label: conversation.name,
+          meta: conversation.role,
+        })),
+      },
+  ].filter((group) => group.options.length > 0);
   const activeService = openServiceId
     ? vendorServices.find((service) => service.id === openServiceId)
     : undefined;
@@ -535,6 +608,8 @@ export function VendorRateCardsPage({
         />
       ) : tab === "packages" ? (
         <PackagesPanel
+          vendorId={vendor.id}
+          canEdit={canEdit}
           onDetailOpenChange={setPackageDetailOpen}
           onNavigationContextChange={onNavigationContextChange}
           onOpenService={(serviceId, serviceVendorId) => {
@@ -550,7 +625,12 @@ export function VendorRateCardsPage({
       ) : tab === "docs" ? (
         <VendorDocsPanel canEdit={canEdit} onRequestDocuments={openDocumentRequest} />
       ) : tab === "tasks" ? (
-        <TasksPanel canAddTask={canAddTask} onOpenTaskCountChange={setOpenTaskCount} />
+        <TasksPanel
+          canAddTask={canAddTask}
+          vendorName={vendor.name}
+          linkGroups={taskLinkGroups}
+          onOpenTaskCountChange={setOpenTaskCount}
+        />
       ) : tab === "comms" ? (
         <CommunicationPanel
           contactName={vendor.name}

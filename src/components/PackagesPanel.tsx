@@ -51,22 +51,39 @@ const FILTER_OPTIONS: Array<{ value: StatusFilter; label: string }> = [
   { value: "draft", label: "Draft" },
 ];
 
-const EMPTY_PACKAGE: Pick<VendorPackage, "name" | "detail" | "sellPrice"> = {
+const EMPTY_PACKAGE: Pick<VendorPackage, "name" | "detail" | "summary" | "sellPrice"> = {
   name: "",
   detail: "",
+  summary: "",
   sellPrice: "",
 };
 
+const PACKAGE_IDS_BY_VENDOR: Record<string, string[]> = {
+  trailmakers: ["pkg-1", "pkg-2"],
+  exhosp: ["pkg-3", "pkg-7"],
+  wanderlust: ["pkg-5", "pkg-8"],
+  coastal: ["pkg-4", "pkg-6"],
+};
+
+function packagesForVendor(vendorId: string) {
+  const packageIds = PACKAGE_IDS_BY_VENDOR[vendorId] ?? [];
+  return VENDOR_PACKAGES.filter((pkg) => packageIds.includes(pkg.id));
+}
+
 export function PackagesPanel({
+  vendorId = "trailmakers",
+  canEdit = true,
   onDetailOpenChange,
   onNavigationContextChange,
   onOpenService,
 }: {
+  vendorId?: string;
+  canEdit?: boolean;
   onDetailOpenChange?: (open: boolean) => void;
   onNavigationContextChange?: PageNavigationChange;
   onOpenService?: (serviceId: string | undefined, vendorId: string | undefined) => void;
 }) {
-  const [packages, setPackages] = useState<VendorPackage[]>(() => [...VENDOR_PACKAGES]);
+  const [packages, setPackages] = useState<VendorPackage[]>(() => packagesForVendor(vendorId));
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [filterOpen, setFilterOpen] = useState(false);
@@ -77,6 +94,13 @@ export function PackagesPanel({
   const [buildOpen, setBuildOpen] = useState(false);
   const [buildDraft, setBuildDraft] = useState(EMPTY_PACKAGE);
   const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setPackages(packagesForVendor(vendorId));
+    setOpenPackageId(null);
+    setSelected([]);
+    setNotice(null);
+  }, [vendorId]);
 
   const openPackage = openPackageId
     ? packages.find((item) => item.id === openPackageId)
@@ -168,6 +192,7 @@ export function PackagesPanel({
       id: `pkg-${Date.now()}`,
       name,
       detail: buildDraft.detail.trim() || "Route and duration not added",
+      summary: buildDraft.summary.trim() || "Add a short overview that explains the journey, pace and intended experience.",
       services: "Services not added yet",
       serviceTypes: ["Accommodation"],
       pricedFrom: "—",
@@ -188,6 +213,7 @@ export function PackagesPanel({
     return (
       <PackageDetailPage
         pkg={openPackage}
+        canEdit={canEdit}
         onOpenService={onOpenService}
         onUpdate={(next) =>
           setPackages((current) =>
@@ -249,10 +275,12 @@ export function PackagesPanel({
               </div>
             ) : null}
           </div>
-          <Button variant="primary" size="sm" onClick={() => setBuildOpen(true)}>
-            <IconPlus />
-            Build package
-          </Button>
+          {canEdit ? (
+            <Button variant="primary" size="sm" onClick={() => setBuildOpen(true)}>
+              <IconPlus />
+              Build package
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -330,7 +358,7 @@ export function PackagesPanel({
                   <DataSheetCell><span className="packages-sheet__price pt-mono">{pkg.sellPrice}</span></DataSheetCell>
                   <DataSheetCell><StatusChipWithDot tone={PACKAGE_STATUS_TONE[pkg.status]}>{PACKAGE_STATUS_LABEL[pkg.status]}</StatusChipWithDot></DataSheetCell>
                   <DataSheetCell className="packages-sheet__action">
-                    <div className="packages-sheet__act">
+                    {canEdit ? <div className="packages-sheet__act">
                       <Tooltip tip="More actions">
                         <IconButton
                           className="packages-sheet__more"
@@ -349,13 +377,13 @@ export function PackagesPanel({
                           }}
                         ><IconMore /></IconButton>
                       </Tooltip>
-                    </div>
+                    </div> : null}
                   </DataSheetCell>
                 </DataSheetRow>
               ))}
               <DashboardDataSheetFill columns={7} />
             </DataSheet>
-            {selected.length > 0 ? (
+            {canEdit && selected.length > 0 ? (
               <ListBulkBar label={`${selected.length} package${selected.length === 1 ? "" : "s"} selected`}>
                 <Button variant="brand" size="sm" onClick={() => duplicatePackages(selected)}><IconCopy />Duplicate</Button>
                 <Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button>
@@ -397,6 +425,7 @@ export function PackagesPanel({
             <div className="pt-modal__body">
               <label className="pt-mf"><span className="pt-mf__l">Package name</span><input className="pt-mf__i" autoFocus value={buildDraft.name} onChange={(event) => setBuildDraft((current) => ({ ...current, name: event.target.value }))} placeholder="e.g. Kerala family escape" /></label>
               <label className="pt-mf"><span className="pt-mf__l">Duration and route</span><input className="pt-mf__i" value={buildDraft.detail} onChange={(event) => setBuildDraft((current) => ({ ...current, detail: event.target.value }))} placeholder="e.g. 4N · Kochi–Alleppey" /></label>
+              <label className="pt-mf"><span className="pt-mf__l">Package overview</span><textarea className="pt-mf__i" rows={4} maxLength={600} value={buildDraft.summary} onChange={(event) => setBuildDraft((current) => ({ ...current, summary: event.target.value }))} placeholder="Describe the journey, pace, key experiences and what can remain flexible." /></label>
               <label className="pt-mf"><span className="pt-mf__l">Sell price (optional)</span><input className="pt-mf__i" value={buildDraft.sellPrice} onChange={(event) => setBuildDraft((current) => ({ ...current, sellPrice: event.target.value }))} placeholder="e.g. ₹68,400" /></label>
             </div>
             <footer className="pt-modal__foot">

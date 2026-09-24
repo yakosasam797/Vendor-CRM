@@ -7,6 +7,7 @@ export interface VendorPackage {
   id: string;
   name: string;
   detail: string;
+  summary: string;
   services: string;
   serviceTypes: ServiceCategory[];
   pricedFrom: string;
@@ -39,6 +40,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-1",
     name: "Kerala Backwaters Escape",
     detail: "4N · Kochi–Alleppey",
+    summary: "A relaxed Kerala journey through Fort Kochi, Alleppey and Kumarakom, combining heritage neighbourhoods, private transfers, a backwater houseboat and a lakeside stay. The daily structure is reusable, while suppliers, flight schedules and final timings are confirmed for each booking.",
     services: "Lake Resort 2N · houseboat 1N · transfer",
     serviceTypes: ["Accommodation", "Transport"],
     pricedFrom: "Accom. 2026–27",
@@ -52,6 +54,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-2",
     name: "Cardamom Trail Weekend",
     detail: "2N · Thekkady",
+    summary: "A compact hill-country escape with a plantation stay, guided spice experience and flexible wildlife activity options.",
     services: "Hill Retreat 2N · tour · safari",
     serviceTypes: ["Accommodation", "Activities"],
     pricedFrom: "Accom. 2025–26",
@@ -65,6 +68,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-3",
     name: "Family Kochi Stay",
     detail: "3N · Kochi",
+    summary: "A family-friendly Kochi base with a comfortable resort stay, private arrival transfer and an easy-paced city experience.",
     services: "Lake Resort 3N · city tour · transfer",
     serviceTypes: ["Accommodation", "Activities", "Transport"],
     pricedFrom: "Accom. 2026–27",
@@ -78,6 +82,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-4",
     name: "Spice Belt Day",
     detail: "Day · Munnar foothills",
+    summary: "A flexible day journey through the Munnar foothills with plantation visits, a local lunch and private transport.",
     services: "Plantation tour · lunch · transfers",
     serviceTypes: ["Activities", "Transport"],
     pricedFrom: "Activity 2026",
@@ -91,6 +96,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-5",
     name: "Hill Weekend Circuit",
     detail: "3N · Munnar–Thekkady",
+    summary: "A short highland circuit joining Munnar and Thekkady with scenic drives, two stays and private intercity transfers.",
     services: "Hill 2N · Lake 1N · transfers",
     serviceTypes: ["Accommodation", "Transport"],
     pricedFrom: "Accom. 2025–26",
@@ -104,6 +110,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-6",
     name: "Monsoon Lake Soft Launch",
     detail: "2N · Kochi",
+    summary: "A draft monsoon stay designed around slow lake experiences, flexible indoor time and a guided seasonal walk.",
     services: "Lake Resort 2N · monsoon walk",
     serviceTypes: ["Accommodation", "Activities"],
     pricedFrom: "—",
@@ -117,6 +124,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-7",
     name: "Corporate Offsite Kochi",
     detail: "2N · Kochi",
+    summary: "A practical two-night offsite structure with meeting space, group transfers and room to add facilitated team activities.",
     services: "Lake 2N · meeting room · transfers",
     serviceTypes: ["Accommodation", "Transport"],
     pricedFrom: "Accom. 2026–27",
@@ -130,6 +138,7 @@ export const VENDOR_PACKAGES: VendorPackage[] = [
     id: "pkg-8",
     name: "Honeymoon Backwaters",
     detail: "5N · Alleppey–Kumarakom",
+    summary: "A private backwater itinerary pairing an overnight houseboat experience with a longer lakeside resort stay and curated dining.",
     services: "Houseboat 2N · Lake 3N · dinner",
     serviceTypes: ["Accommodation", "Cruise"],
     pricedFrom: "Accom. 2026–27",

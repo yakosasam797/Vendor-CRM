@@ -5,7 +5,6 @@ import {
   DataSheetCell,
   DataSheetHeader,
   DataSheetRow,
-  IconButton,
   LeadCell,
   StatusChip,
   TabBar,
@@ -33,8 +32,8 @@ import {
   IconCard,
   IconChevronDown,
   IconClose,
+  IconDownload,
   IconHotel,
-  IconNotes,
   IconPencil,
   IconPin,
   IconPlus,
@@ -163,7 +162,6 @@ export function RateCardDetailPage({
   seedCard,
   startEditing = false,
   canEditMarkup = false,
-  onOpenNotes,
   onDraftChange,
 }: {
   cardId: string;
@@ -172,8 +170,6 @@ export function RateCardDetailPage({
   startEditing?: boolean;
   /** Markup is commercially sensitive and can only be changed by an Owner. */
   canEditMarkup?: boolean;
-  /** Opens the global sidebar notes panel for this rate card. */
-  onOpenNotes?: () => void;
   /** Called whenever local draft changes (keeps App draft in sync). */
   onDraftChange?: (card: RateCardDetail) => void;
 }) {
@@ -267,6 +263,37 @@ export function RateCardDetailPage({
 
   const renameCard = (name: string) => {
     updateCard((base) => ({ ...base, name }));
+  };
+
+  const downloadRateCard = () => {
+    const csvCell = (value: string | number | null | undefined) =>
+      `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const currentSeasonIndex = Math.min(seasonIdx, Math.max(0, card.seasons.length - 1));
+    const rows: Array<Array<string | number | null | undefined>> = [
+      ["Rate card", card.name],
+      ["Reference", card.ref],
+      ["Vendor", card.vendor],
+      ["Validity", card.validity],
+      ["Currency", card.currency],
+      ["Season", season?.name ?? ""],
+      [],
+      ["Room / product", "Details", ...card.meals.map((meal) => meal.label)],
+      ...card.rooms.map((room, roomIndex) => [
+        room.name,
+        room.note,
+        ...card.meals.map((_, mealIndex) => card.prices[roomIndex]?.[mealIndex]?.[currentSeasonIndex] ?? ""),
+      ]),
+    ];
+    const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${card.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "rate-card"}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
   const setPrice = (roomIdx: number, mealIdx: number, value: number | null) => {
@@ -493,20 +520,19 @@ export function RateCardDetailPage({
         }
         aside={
           <div className="rc-record-acts">
-            <IconButton
-              label="Rate card notes"
-              onClick={() => onOpenNotes?.()}
-            >
-              <IconNotes />
-            </IconButton>
+            <Button variant="brand" size="sm" onClick={downloadRateCard}>
+              <IconDownload />
+              Download rate card
+            </Button>
             {editing ? (
               <Button variant="primary" size="sm" onClick={() => setEditing(false)}>
-                Done
+                Done editing
               </Button>
             ) : (
-              <IconButton label="Edit rate card" onClick={() => setEditing(true)}>
+              <Button variant="primary" size="sm" onClick={() => setEditing(true)}>
                 <IconPencil />
-              </IconButton>
+                Edit rate card
+              </Button>
             )}
           </div>
         }

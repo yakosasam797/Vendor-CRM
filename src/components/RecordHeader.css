@@ -85,7 +85,9 @@
 .rc-record-acts {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 @media (max-width: 1000px) {
@@ -96,5 +98,20 @@
   .record-header__aside {
     margin-left: 0;
     justify-content: space-between;
+  }
+
+  .rc-record-acts {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .rc-record-acts {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .rc-record-acts .pt-button {
+    justify-content: center;
   }
 }

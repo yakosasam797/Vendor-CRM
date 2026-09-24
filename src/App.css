@@ -143,6 +143,51 @@ button.app-top-search:focus-visible {
   flex: none;
 }
 
+/* Official Paryatech lockup — preserve the shell's existing header footprint. */
+.pt-brand-mark {
+  width: 145px;
+  height: 30px;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.pt-brand-name:empty {
+  display: none;
+}
+
+.app-brand-logo {
+  display: block;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.app-brand-logo--full {
+  width: 145px;
+  height: 30px;
+  object-position: left center;
+}
+
+.app-brand-logo--compact {
+  display: none;
+}
+
+.pt-frame--collapsed .pt-brand-mark {
+  width: 28px;
+  height: 28px;
+}
+
+.pt-frame--collapsed .app-brand-logo--full {
+  display: none;
+}
+
+.pt-frame--collapsed .app-brand-logo--compact {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-position: center;
+}
+
 /* Keep the sidebar credits footer on one compact row when Upgrade has an icon. */
 .pt-credits {
   gap: 7px;
@@ -187,6 +232,20 @@ button.app-top-search:focus-visible {
 
 .pt-frame--collapsed .pt-credits__upgrade-tip {
   display: none;
+}
+
+/* Keep both shell regions scrollable without exposing browser scrollbar chrome. */
+.pt-side__scroll,
+.pt-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.pt-side__scroll::-webkit-scrollbar,
+.pt-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 @media (max-width: 1000px) {

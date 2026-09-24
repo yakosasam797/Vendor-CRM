@@ -571,7 +571,21 @@ export default function App() {
 
   return (
     <AppShell
-      brandName="paryatech"
+      brandName=""
+      brandMark={
+        <>
+          <img
+            className="app-brand-logo app-brand-logo--full"
+            src="/brand/paryatech-lockup.png"
+            alt="Paryatech"
+          />
+          <img
+            className="app-brand-logo app-brand-logo--compact"
+            src="/brand/paryatech-mark.png"
+            alt="Paryatech"
+          />
+        </>
+      }
       brandAction={<IconBrandCaret />}
       listMode={false}
       notes={
@@ -735,7 +749,7 @@ export default function App() {
           onAllSettings={() => setSettingsOpen(true)}
         />
       ) : isHub && hubRoute.area === "account" ? (
-        <AccountHubPage id={hubRoute.id} />
+        <AccountHubPage id={hubRoute.id} onNavigate={openAccountDestination} />
       ) : isHub && hubRoute.area === "notifications" ? (
         <NotificationsPage
           onOpenPreferences={() => openAccountDestination("notification-preferences")}
@@ -811,7 +825,6 @@ export default function App() {
           }
           startEditing={crmRoute.name === "rate-card-new"}
           canEditMarkup={orgRole === "Owner"}
-          onOpenNotes={openNotes}
           onDraftChange={
             crmRoute.name === "rate-card-new"
               ? (next) => setActiveDraft(next)

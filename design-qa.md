@@ -70,6 +70,33 @@ final result: passed
 
 ---
 
+# Vendor and package record-header consistency QA
+
+## Evidence
+
+- Vendor profile reference: `C:\Users\YAKSHITH\.t3\userdata\attachments\54139921-ba3f-4f52-8ad4-aa0cd9b87e5e-a31f1af4-6934-4cb7-915d-5d3814388556.png` (1839 x 973 pixels).
+- Package detail reference: `C:\Users\YAKSHITH\.t3\userdata\attachments\54139921-ba3f-4f52-8ad4-aa0cd9b87e5e-d1b199b4-e9a8-4e31-9fa6-544f057bcff2.png` (1553 x 962 pixels).
+- Browser-rendered vendor record: `C:\Users\YAKSHITH\Vendor-CRM\vendor-header-record-qa.png` (1839 x 973 pixels).
+- Browser-rendered package record: `C:\Users\YAKSHITH\Vendor-CRM\package-header-consistency-qa.png` (1839 x 973 pixels).
+- State: Trailmakers Experiences vendor profile, followed by Packages > Kerala Backwaters Escape.
+
+## Findings
+
+- The package title previously used a larger 21–25 px page-hero scale while the vendor title used the shared 18–22 px record scale.
+- Kerala Backwaters Escape now uses the same record-heading token as Trailmakers Experiences: Onest, 22 px at the reference viewport, weight 700, 33 px line-height, and -0.66 px tracking.
+- Both rectangular headers now use 16 px vertical and 22 px horizontal padding. Package metadata also uses the shared 12.5 px Public Sans metadata scale.
+- The package thumbnail and commercial summary remain package-specific. They make the package card 108.5 px tall versus the vendor card's 97 px, but no longer change the title hierarchy.
+
+## Interaction and browser checks
+
+- Opened Trailmakers Experiences from the vendor directory, selected Packages, and opened Kerala Backwaters Escape.
+- Computed style comparison confirms the two titles match in family, size, weight, line-height, tracking, and card padding.
+- Typecheck and production build pass. Lint completes with only pre-existing warnings in unrelated files.
+
+final result: passed
+
+---
+
 # Linked-vendor row actions QA
 
 ## Evidence
@@ -681,5 +708,46 @@ final result: passed
 ## Comparison history
 
 - Pass 1: the simplified implementation matched the requested information level and preserved live price recalculation. No P0/P1/P2 follow-up fix was required.
+
+final result: passed
+
+---
+
+# Rate-card header action system QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\0cac0ad3-9ed9-4199-bf77-b41cb9b4f8c7-a9f25af0-ec36-46b7-8a9c-f3c1718538fb.png` (1844 x 974 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\.t3\userdata\browser-artifacts\browser-screenshot-localhost-muf632oc-065899b8.png` (1280 x 676 rendered artifact from the 1844 x 974 reference viewport).
+- Combined full-view comparison: `C:\Users\YAKSHITH\Vendor-CRM\rate-card-actions-qa.png` (1280 x 1352 pixels; source normalized above implementation).
+- Browser viewport setting: 1844 x 974 CSS pixels at device scale factor 1.
+- State: Accommodation tariff · 2026–27 rate-card detail, Rate card tab, view mode.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested header-action correction.
+- The ambiguous icon-only actions are replaced with explicit `Download rate card` and `Edit rate card` labels.
+- The actions now follow the module hierarchy: outlined secondary download action followed by the filled primary edit action.
+- The record header, status, metadata, tabs, season controls, and pricing content remain unchanged.
+
+## Required fidelity surfaces
+
+- Typography: both actions use the established small button size, label weight, and icon-to-label spacing from the existing button component.
+- Spacing and layout: actions remain right-aligned in the header with an 8 px gap and wrap safely on narrower layouts.
+- Colors and tokens: download uses the existing outlined brand treatment; edit uses the existing filled primary treatment.
+- Icon fidelity: the platform's existing download and pencil icons are reused; no substitute assets were introduced.
+- Copy and behavior: download exports the selected season as CSV, while edit enters the existing editing state and changes to `Done editing`.
+
+## Interaction and browser checks
+
+- `Edit rate card` enters editing mode and the action changes to `Done editing`.
+- `Done editing` exits editing mode cleanly.
+- `Download rate card` triggers a CSV download for the currently selected season.
+- Typecheck and production build pass. Lint completes with only pre-existing warnings in unrelated files.
+- No new application console errors were observed.
+
+## Comparison history
+
+- Pass 1: button hierarchy, labels, spacing, and interactions matched the requested platform button system. No P0/P1/P2 follow-up fix was required.
 
 final result: passed

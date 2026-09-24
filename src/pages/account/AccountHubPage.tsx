@@ -1,6 +1,13 @@
-import { useState } from "react";
-import { Button } from "@paryatech/design-system";
-import { IconBell, IconDevices, IconShield, IconUser } from "../../icons";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Avatar, Button } from "@paryatech/design-system";
+import {
+  IconBell,
+  IconCheck,
+  IconDevices,
+  IconSettings,
+  IconShield,
+  IconUser,
+} from "../../icons";
 import {
   SettingsComingLater,
   SettingsCrumbs,
@@ -11,64 +18,268 @@ import {
 import "../../components/settings/settings.css";
 import type { AccountDestinationId } from "../../settings/destinations";
 
+type PersonalSection = {
+  id: AccountDestinationId;
+  label: string;
+  Icon: typeof IconUser;
+};
+
+const PERSONAL_SECTIONS: PersonalSection[] = [
+  { id: "profile", label: "Profile", Icon: IconUser },
+  { id: "security", label: "Security and sign-in", Icon: IconShield },
+  { id: "sessions", label: "Devices and sessions", Icon: IconDevices },
+  { id: "preferences", label: "Personal preferences", Icon: IconSettings },
+  { id: "workspaces", label: "Workspace role", Icon: IconUser },
+];
+
 export function AccountHubPage({
   id,
+  onNavigate,
 }: {
   id: AccountDestinationId | "notification-preferences";
+  onNavigate?: (id: AccountDestinationId) => void;
 }) {
   if (id === "notification-preferences") {
     return <NotificationPreferencesPage />;
   }
-  if (id === "profile") return <ProfilePage />;
-  if (id === "security") return <SecurityPage />;
-  if (id === "sessions") return <SessionsPage />;
-  if (id === "preferences") return <PreferencesPage />;
-  if (id === "workspaces") return <WorkspacesPage />;
-  return null;
+
+  return <PersonalAccountPage activeSection={id} onNavigate={onNavigate} />;
 }
 
-function ProfilePage() {
-  const initial = { name: "Vrushabh Jain", email: "vrushabh@paryatech.app", phone: "+91 98470 10001" };
+function PersonalAccountPage({
+  activeSection,
+  onNavigate,
+}: {
+  activeSection: AccountDestinationId;
+  onNavigate?: (id: AccountDestinationId) => void;
+}) {
+  const initial = useMemo(
+    () => ({
+      name: "Vrushabh Jain",
+      email: "vrushabh@paryatech.app",
+      phone: "+91 98470 10001",
+    }),
+    [],
+  );
   const [draft, setDraft] = useState(initial);
   const [saved, setSaved] = useState(initial);
+  const [currentSection, setCurrentSection] = useState(activeSection);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
 
+  useEffect(
+    () => () => {
+      if (photoUrl) URL.revokeObjectURL(photoUrl);
+    },
+    [photoUrl],
+  );
+
+  useEffect(() => {
+    setCurrentSection(activeSection);
+    const frame = window.requestAnimationFrame(() => {
+      const target =
+        activeSection === "profile"
+          ? pageRef.current
+          : pageRef.current?.querySelector<HTMLElement>(`#account-${activeSection}`);
+      target?.scrollIntoView({ block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeSection]);
+
+  const moveToSection = (section: AccountDestinationId) => {
+    setCurrentSection(section);
+    if (onNavigate) {
+      onNavigate(section);
+      return;
+    }
+    pageRef.current
+      ?.querySelector<HTMLElement>(`#account-${section}`)
+      ?.scrollIntoView({ block: "start", behavior: "smooth" });
+  };
+
   return (
-    <div className="settings-page">
-      <SettingsCrumbs area="Account" page="My profile" />
-      <SettingsPageHeader
-        icon={<IconUser size={18} />}
-        title="My profile"
-        description="Personal name, photo and contact details for your account."
-      />
-      <SettingsSectionCard title="Profile">
-        <div className="settings-grid-2">
-          <label className="settings-field">
-            <span className="settings-field__label">Full name</span>
-            <input
-              className="settings-field__input"
-              value={draft.name}
-              onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            />
-          </label>
-          <label className="settings-field">
-            <span className="settings-field__label">Email</span>
-            <input
-              className="settings-field__input"
-              value={draft.email}
-              onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-            />
-          </label>
-          <label className="settings-field">
-            <span className="settings-field__label">Phone</span>
-            <input
-              className="settings-field__input"
-              value={draft.phone}
-              onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
-            />
-          </label>
+    <div ref={pageRef} className="settings-page account-page">
+      <SettingsCrumbs area="Account" page="Account settings" />
+
+      <header className="account-page__header">
+        <div className="account-page__identity">
+          <Avatar tone="pink" size={48}>
+            VJ
+          </Avatar>
+          <div>
+            <h1>Account settings</h1>
+            <p>{saved.name} · {saved.email}</p>
+          </div>
         </div>
-      </SettingsSectionCard>
+        <span className="account-page__role">
+          <IconCheck size={12} /> Owner
+        </span>
+      </header>
+
+      <div className="account-page__shell">
+        <nav className="account-page__rail" aria-label="Account settings sections">
+          {PERSONAL_SECTIONS.map(({ id: sectionId, label, Icon }) => (
+            <button
+              key={sectionId}
+              type="button"
+              className={currentSection === sectionId ? "is-active" : undefined}
+              aria-current={currentSection === sectionId ? "location" : undefined}
+              onClick={() => moveToSection(sectionId)}
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="account-page__content">
+          <section id="account-profile" className="account-page__section" tabIndex={-1}>
+            <SectionHeading
+              title="Profile"
+              description="Your name and contact details across ParyatechOS."
+            />
+            <div className="account-page__profile-row">
+              {photoUrl ? (
+                <img className="account-page__avatar-image" src={photoUrl} alt="Profile" />
+              ) : (
+                <Avatar tone="pink" size={56}>
+                  VJ
+                </Avatar>
+              )}
+              <div>
+                <strong>{draft.name || "Your profile"}</strong>
+                <span>PNG or JPG · maximum 5 MB</span>
+              </div>
+              <input
+                ref={photoInputRef}
+                className="account-page__photo-input"
+                type="file"
+                accept="image/png,image/jpeg"
+                aria-label="Choose profile photo"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  if (!file.type.match(/^image\/(png|jpeg)$/) || file.size > 5 * 1024 * 1024) {
+                    window.alert("Choose a PNG or JPG smaller than 5 MB.");
+                    event.target.value = "";
+                    return;
+                  }
+                  setPhotoUrl(URL.createObjectURL(file));
+                }}
+              />
+              <Button variant="brand" size="sm" onClick={() => photoInputRef.current?.click()}>
+                Change photo
+              </Button>
+            </div>
+            <div className="settings-grid-2">
+              <label className="settings-field">
+                <span className="settings-field__label">Full name</span>
+                <input
+                  className="settings-field__input"
+                  value={draft.name}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, name: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="settings-field">
+                <span className="settings-field__label">Email</span>
+                <input
+                  className="settings-field__input"
+                  type="email"
+                  value={draft.email}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, email: event.target.value }))
+                  }
+                />
+              </label>
+              <label className="settings-field">
+                <span className="settings-field__label">Phone</span>
+                <input
+                  className="settings-field__input"
+                  type="tel"
+                  value={draft.phone}
+                  onChange={(event) =>
+                    setDraft((current) => ({ ...current, phone: event.target.value }))
+                  }
+                />
+              </label>
+            </div>
+          </section>
+
+          <section id="account-security" className="account-page__section" tabIndex={-1}>
+            <SectionHeading
+              title="Security and sign-in"
+              description="Password and two-factor authentication for this account."
+            />
+            <AccountSettingRow
+              title="Password"
+              detail="Last changed 84 days ago"
+              action={<Button variant="brand" size="sm">Change password</Button>}
+            />
+            <AccountSettingRow
+              title="Two-factor authentication"
+              detail="Not enabled"
+              action={<Button variant="primary" size="sm">Enable 2FA</Button>}
+            />
+          </section>
+
+          <section id="account-sessions" className="account-page__section" tabIndex={-1}>
+            <SectionHeading
+              title="Devices and sessions"
+              description="Review where your account is currently signed in."
+            />
+            <AccountSettingRow
+              title="Windows · Chrome"
+              detail="Kochi, India · Active now"
+              status="This device"
+            />
+            <AccountSettingRow
+              title="iPhone · Safari"
+              detail="Kochi, India · 2 days ago"
+              action={<Button variant="brand" size="sm">Sign out</Button>}
+            />
+          </section>
+
+          <section id="account-preferences" className="account-page__section" tabIndex={-1}>
+            <SectionHeading
+              title="Personal preferences"
+              description="Regional and display defaults used for your account."
+            />
+            <div className="settings-grid-2">
+              <label className="settings-field">
+                <span className="settings-field__label">Language</span>
+                <select className="settings-field__select" defaultValue="en-IN">
+                  <option value="en-IN">English (India)</option>
+                  <option value="en-GB">English (UK)</option>
+                </select>
+              </label>
+              <label className="settings-field">
+                <span className="settings-field__label">Time zone</span>
+                <select className="settings-field__select" defaultValue="Asia/Kolkata">
+                  <option value="Asia/Kolkata">Asia/Kolkata</option>
+                  <option value="UTC">UTC</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section id="account-workspaces" className="account-page__section" tabIndex={-1}>
+            <SectionHeading
+              title="Workspace role and memberships"
+              description="Workspaces you belong to and the access assigned to you."
+            />
+            <AccountSettingRow
+              title="Paryatech"
+              detail="Primary workspace"
+              status="Owner"
+            />
+          </section>
+        </div>
+      </div>
+
       <UnsavedChangesBar
         dirty={dirty}
         onDiscard={() => setDraft(saved)}
@@ -78,97 +289,33 @@ function ProfilePage() {
   );
 }
 
-function SecurityPage() {
+function SectionHeading({ title, description }: { title: string; description: string }) {
   return (
-    <div className="settings-page">
-      <SettingsCrumbs area="Account" page="Security and sign-in" />
-      <SettingsPageHeader
-        icon={<IconShield size={18} />}
-        title="Security and sign-in"
-        description="Password and two-factor authentication for your personal account."
-      />
-      <SettingsSectionCard title="Password" action={<Button variant="brand" size="sm">Change password</Button>}>
-        <p className="settings-section__desc" style={{ margin: 0 }}>
-          Last changed 84 days ago.
-        </p>
-      </SettingsSectionCard>
-      <SettingsSectionCard title="Two-factor authentication" action={<Button variant="primary" size="sm">Enable 2FA</Button>}>
-        <p className="settings-section__desc" style={{ margin: 0 }}>
-          Not enabled.
-        </p>
-      </SettingsSectionCard>
+    <div className="account-page__section-head">
+      <h2>{title}</h2>
+      <p>{description}</p>
     </div>
   );
 }
 
-function SessionsPage() {
+function AccountSettingRow({
+  title,
+  detail,
+  status,
+  action,
+}: {
+  title: string;
+  detail: string;
+  status?: string;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="settings-page">
-      <SettingsCrumbs area="Account" page="Devices and sessions" />
-      <SettingsPageHeader
-        icon={<IconDevices size={18} />}
-        title="Devices and sessions"
-        description="Review signed-in devices and end sessions you no longer recognize."
-      />
-      <SettingsSectionCard title="This device">
-        <p className="settings-section__desc" style={{ margin: 0 }}>
-          Windows · Chrome · Active now
-        </p>
-      </SettingsSectionCard>
-      <SettingsSectionCard title="Other sessions" action={<Button variant="brand" size="sm">Sign out others</Button>}>
-        <p className="settings-section__desc" style={{ margin: 0 }}>
-          iPhone · Safari · 2 days ago
-        </p>
-      </SettingsSectionCard>
-    </div>
-  );
-}
-
-function PreferencesPage() {
-  return (
-    <div className="settings-page">
-      <SettingsCrumbs area="Account" page="Personal preferences" />
-      <SettingsPageHeader
-        icon={<IconUser size={18} />}
-        title="Personal preferences"
-        description="Language, time zone and display preferences for your account."
-      />
-      <SettingsSectionCard title="Locale">
-        <div className="settings-grid-2">
-          <label className="settings-field">
-            <span className="settings-field__label">Language</span>
-            <select className="settings-field__select" defaultValue="en-IN">
-              <option value="en-IN">English (India)</option>
-              <option value="en-GB">English (UK)</option>
-            </select>
-          </label>
-          <label className="settings-field">
-            <span className="settings-field__label">Time zone</span>
-            <select className="settings-field__select" defaultValue="Asia/Kolkata">
-              <option value="Asia/Kolkata">Asia/Kolkata</option>
-              <option value="UTC">UTC</option>
-            </select>
-          </label>
-        </div>
-      </SettingsSectionCard>
-    </div>
-  );
-}
-
-function WorkspacesPage() {
-  return (
-    <div className="settings-page">
-      <SettingsCrumbs area="Account" page="Workspace role and memberships" />
-      <SettingsPageHeader
-        icon={<IconUser size={18} />}
-        title="Workspace role and memberships"
-        description="Workspaces you belong to and your role in each."
-      />
-      <SettingsSectionCard title="Current workspace">
-        <p className="settings-section__desc" style={{ margin: 0 }}>
-          Paryatech · Owner
-        </p>
-      </SettingsSectionCard>
+    <div className="account-page__setting-row">
+      <div>
+        <strong>{title}</strong>
+        <span>{detail}</span>
+      </div>
+      {status ? <span className="account-page__status">{status}</span> : action}
     </div>
   );
 }

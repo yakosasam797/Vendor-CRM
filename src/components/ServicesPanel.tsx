@@ -56,6 +56,7 @@ import {
 import { AnchoredImport } from "./AnchoredImport";
 import { CreateVendorServicePage } from "./CreateVendorServicePage";
 import { ServiceTestRate } from "./ServiceTestRate";
+import { ServicePolicies } from "./ServicePolicies";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTypeLabel } from "./ServiceTypeLabel";
@@ -290,7 +291,7 @@ function ServiceMediaImage({ item }: { item: ServiceMedia }) {
   );
 }
 
-type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate";
+type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
 
 function serviceConnectionTone(status: VendorServiceConnection["status"]): StatusTone {
   if (status === "Active") return "done";
@@ -374,6 +375,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
     { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
     { id: "vendors", label: "Vendors", count: linkedVendors.length },
     { id: "test-rate", label: "Test rate" },
+    { id: "policies", label: "Policies" },
   ];
   const serviceSummary: SummaryField[] = [
     {
@@ -829,6 +831,8 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
             )}
           </section>
         </div>
+      ) : tab === "policies" ? (
+        <ServicePolicies serviceName={service.name} category={service.type} />
       ) : null}
     </div>
     {linkedVendorMenu ? createPortal(
