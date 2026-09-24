@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AppShell,
   Avatar,
+  Button,
   CreditsMeter,
   IconButton,
   NotesStrip,
+  Tooltip,
 } from "@paryatech/design-system";
 import { AccountLauncher } from "./components/account/AccountLauncher";
 import { NotificationPanel } from "./components/notifications/NotificationPanel";
@@ -46,6 +48,7 @@ import {
   IconHelp,
   IconNotes,
   IconSearch,
+  IconSparkles,
   IconSettings,
 } from "./icons";
 import "./App.css";
@@ -583,7 +586,21 @@ export default function App() {
         />
       }
       navGroups={navGroups}
-      sidebarFooter={<CreditsMeter remaining={720} total={1000} />}
+      sidebarFooter={
+        <CreditsMeter
+          remaining={720}
+          total={1000}
+          tip="720 of 1,000 credits remaining"
+          upgrade={
+            <Tooltip tip="View plans and increase your credit limit" className="pt-credits__upgrade-tip">
+              <Button variant="primary" size="sm" className="pt-credits__up">
+                <IconSparkles size={14} />
+                <span>Upgrade</span>
+              </Button>
+            </Tooltip>
+          }
+        />
+      }
       leading={
         isHub ? (
           <IconButton label="Back to workspace" onClick={leaveHub}>
@@ -793,6 +810,7 @@ export default function App() {
             crmRoute.name === "rate-card-new" ? (activeDraft ?? undefined) : undefined
           }
           startEditing={crmRoute.name === "rate-card-new"}
+          canEditMarkup={orgRole === "Owner"}
           onOpenNotes={openNotes}
           onDraftChange={
             crmRoute.name === "rate-card-new"

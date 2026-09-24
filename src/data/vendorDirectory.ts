@@ -177,6 +177,8 @@ export const VENDOR_SERVICE_CONNECTIONS: VendorServiceConnection[] = [
   { id: "visa-atlas", vendorId: "atlas-visa", serviceId: "uae-visa", supplierType: "Direct supplier", productsCovered: "30 · 60 · 90 days", rateCardId: "rc-visa-uae", rateCardName: "Visa services tariff · UAE", validity: "01 Apr–30 Sep 26", status: "Active" },
   { id: "visa-horizon", vendorId: "horizon", serviceId: "uae-visa", supplierType: "DMC", productsCovered: "30 · 60 days", rateCardId: "rc-visa-uae", rateCardName: "UAE visa handling", validity: "01 Apr–30 Sep 26", status: "Expiring soon" },
   { id: "flights-trailmakers", vendorId: "trailmakers", serviceId: "kerala-flights", supplierType: "Wholesaler", productsCovered: "Domestic · international", rateCardId: "rc-air-2026", rateCardName: "Air ticketing fees 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
+  { id: "flights-wanderlust", vendorId: "wanderlust", serviceId: "kerala-flights", supplierType: "Direct supplier", productsCovered: "Domestic · regional", rateCardId: "rc-air-2026", rateCardName: "Flight desk contract 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
+  { id: "flights-horizon", vendorId: "horizon", serviceId: "kerala-flights", supplierType: "DMC", productsCovered: "Domestic · international", rateCardId: "rc-air-2026", rateCardName: "Air consolidation rates 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
 ];
 
 export function directoryCategoryForServiceType(type: ServiceType): DirectoryCategory | null {
@@ -188,4 +190,3 @@ export function directoryCategoryForServiceType(type: ServiceType): DirectoryCat
 export function serviceByDirectoryId(id: string): DirectoryService | undefined {
   return DIRECTORY_SERVICES.find((service) => service.id === id);
 }
-

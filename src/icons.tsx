@@ -485,6 +485,16 @@ export function IconMore({ size = 16 }: IconProps) {
   );
 }
 
+export function IconSparkles({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3.5c.55 3.1 2.35 4.9 5.5 5.5-3.15.6-4.95 2.4-5.5 5.5-.55-3.1-2.35-4.9-5.5-5.5C9.65 8.4 11.45 6.6 12 3.5Z" />
+      <path d="M18.5 14.5c.28 1.55 1.2 2.47 2.75 2.75-1.55.28-2.47 1.2-2.75 2.75-.28-1.55-1.2-2.47-2.75-2.75 1.55-.28 2.47-1.2 2.75-2.75Z" />
+      <path d="M5 14.5c.2 1.08.82 1.7 1.9 1.9-1.08.2-1.7.82-1.9 1.9-.2-1.08-.82-1.7-1.9-1.9 1.08-.2 1.7-.82 1.9-1.9Z" />
+    </svg>
+  );
+}
+
 export function IconSearch({ size = 17 }: IconProps) {
   return (
     <Svg size={size} strokeWidth="1.9">

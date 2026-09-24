@@ -531,6 +531,7 @@ export function VendorRateCardsPage({
           }}
           onNavigationContextChange={onNavigationContextChange}
           onOpenRateCard={onOpenCard}
+          onOpenVendor={onOpenVendor}
         />
       ) : tab === "packages" ? (
         <PackagesPanel

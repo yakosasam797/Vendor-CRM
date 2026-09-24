@@ -70,6 +70,158 @@ final result: passed
 
 ---
 
+# Linked-vendor row actions QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-244dcc99-626e-4717-b606-6ab6b0356a29.png` (1544 x 552 pixels; focused source crop).
+- Browser-rendered global-service implementation: `C:\Users\YAKSHITH\Vendor-CRM\qa-linked-vendors.png` (1536 x 960 pixels).
+- Browser-rendered vendor-scoped service implementation: `C:\Users\YAKSHITH\Vendor-CRM\qa-linked-vendors-vendor-scope.png` (1536 x 960 pixels).
+- Browser viewport: 1536 x 960 CSS pixels at device scale factor 1.
+- State: Services directory or vendor Services tab → service detail → Vendors tab.
+- Density normalization: all captures are 1x. The source is a focused crop and contains a different service dataset, so comparison was limited to the linked-vendor table structure and action behavior.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested table action correction.
+- The persistent View buttons are removed from both linked-vendor table implementations.
+- Every linked-vendor row remains keyboard-focusable and opens its vendor record when the non-control row surface is activated.
+- Each Action cell now uses the same compact three-dot control as the other CRM data tables.
+
+## Required fidelity surfaces
+
+- Typography: existing table heading, body, metadata, and status-chip typography is unchanged.
+- Spacing and layout: action controls are centered in the fixed action column; measured table scroll width and client width are both 1254 px, with no unintended horizontal overflow.
+- Colors and tokens: the existing neutral icon-button, border, surface, hover, and focus tokens are reused.
+- Image and asset fidelity: existing vendor thumbnails and the product's `IconMore` asset are retained; no placeholder asset was introduced.
+- Copy and content: the visible View label is removed. The contextual menu exposes only `Open vendor` for now, leaving room for future row actions.
+
+## Interaction and browser checks
+
+- Global service detail: zero View buttons, three three-dot actions, the menu opens, and clicking a row navigates to Example Hospitality.
+- Vendor-scoped service detail: zero View buttons, three three-dot actions, the menu opens and closes with Escape.
+- Checkbox, rate-card link, and action-button clicks remain isolated from row navigation.
+- No browser console errors occurred in either tested route.
+- Production build passes.
+
+## Full-view and focused comparison
+
+- The full implementation captures show the linked-vendor tables in context and confirm alignment with the surrounding summary and pagination.
+- The source crop and implementation captures were opened together for focused comparison; action-cell content is clearly legible, so an additional crop was not needed.
+
+## Comparison history
+
+- Pass 1: replaced the remaining View button with the shared three-dot action and verified row navigation, menu behavior, alignment, and overflow. No P0/P1/P2 follow-up fix was required.
+
+final result: passed
+
+---
+
+# Standalone directory table height and pagination QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-090692ab-64a9-4ea1-a8a1-d125f66a5150.png` (1533 x 985 pixels), with the Booking reference at `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-c9bd9978-5f58-4116-841c-37dd788def40.png` (1533 x 985 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\.t3\userdata\browser-artifacts\browser-screenshot-localhost-mue5k6ym-8dead1ca.png` (1280 x 822 pixels).
+- Combined full-view comparison: `C:\Users\YAKSHITH\.t3\userdata\browser-artifacts\browser-screenshot-localhost-mue5oeb9-e121fb38.png` (1280 x 720 pixels).
+- Browser viewport: 1533 x 985 CSS pixels. The collaborative preview normalized the saved implementation capture to 1280 x 822; the comparison page scales both full views proportionally.
+- State: CRM > Services > Accommodation with five rows; secondary validation used Transport with one row and Vendors with twelve rows.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested table-only layout rule.
+- The standalone directory DataSheet now owns the remaining workspace height, continues its column dividers through unused space, and places pagination against the bottom boundary like Bookings.
+- When real data exceeds the available height, the filler collapses to zero and the table continues normally instead of forcing pagination over the rows.
+
+## Required fidelity surfaces
+
+- Typography: existing directory titles, table labels, row copy, status chips, and monospaced pagination copy are unchanged.
+- Spacing and layout: the data rows keep their existing 61 px rhythm; only the empty table canvas expands. Pagination ends at 974 CSS pixels while the workspace ends at 975 CSS pixels.
+- Colors and tokens: the existing surface, border, status, active-tab, and pagination tokens are preserved.
+- Image and asset fidelity: all service thumbnails and product icons remain the existing source assets; no replacement or generated imagery was introduced.
+- Copy and content: category names, service details, row counts, and range labels are unchanged.
+
+## Interaction and browser checks
+
+- Accommodation: five data rows, 280 px flexible filler, pagination anchored to the bottom.
+- Transport: one data row, 524 px flexible filler, pagination anchored to the bottom.
+- Vendors: twelve data rows, filler collapses to 0 px so longer content flows naturally.
+- The filler is `aria-hidden` and adds no false record to the accessibility tree.
+- No horizontal viewport overflow was detected.
+- Category switching and row actions remain interactive.
+- Browser console contained only the collaborative Electron sandbox bootstrap warning; no application runtime errors occurred.
+- Typecheck, lint, and production build pass. Lint reports only pre-existing warnings in unrelated components.
+
+## Full-view and focused comparison
+
+- The combined full view makes the corrected vertical relationship clear: the source pagination floats immediately below the fifth row, while the implementation preserves the same content and extends the table grid to the bottom pagination boundary.
+- A separate focused crop was not required because the row-to-footer relationship, continuous column borders, and pagination placement are all legible in the combined full view.
+
+## Comparison history
+
+- Pass 1: reused the existing dashboard table-fill component for both directory perspectives. Browser geometry confirmed the sparse and dense states without any remaining P0/P1/P2 issues.
+
+final result: passed
+
+---
+
+# Standardized activity log QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-61168b75-81b4-4e6d-a7c0-0f8a8b4b341a.png` (1516 x 861 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\Vendor-CRM\activity-standardized-implementation.png` (1536 x 1000 pixels).
+- Combined comparison evidence: `C:\Users\YAKSHITH\Vendor-CRM\activity-standardized-comparison.png` (1536 x 1933 pixels).
+- Browser viewport: 1536 x 1000 CSS pixels at device scale factor 1.
+- State: Trailmakers Experiences vendor record with Activity selected and six events visible.
+- Density normalization: both artifacts are 1x captures. The source is a content-region screenshot, while the implementation includes the complete application shell; the activity table itself is shown at the same desktop density.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested activity-log structure.
+- The column order is now Date, Event, Member, with the responsible member consistently last.
+- The former Module column and All modules control are removed. Event location is retained as a short secondary line inside Event, so context is visible without a redundant table section.
+- Long sentences are replaced with standardized action labels such as “Coverage reviewed,” “Base location confirmed,” and “Contact routing verified.”
+
+## Required fidelity surfaces
+
+- Typography: primary event labels use the existing body-emphasis treatment; event context, time, and member role use the existing secondary text scale.
+- Spacing and layout: the four-column grid gives Event the largest track, keeps date compact, and gives Member a stable final column. Row density and surrounding table rhythm remain consistent with the other vendor tabs.
+- Colors and tokens: text, dividers, avatar tones, icons, selection controls, and active navigation retain existing product tokens.
+- Image and asset fidelity: no raster assets were required. Existing design-system module icons, calendar/clock icons, avatars, and checkboxes are reused.
+- Copy and content: each event is concise and standardized, while its originating area appears directly below it as contextual metadata.
+
+## Interaction and browser checks
+
+- Search by embedded context works: searching “Services” returns the two service events even though there is no separate Module column.
+- Six activity records render in the expected order.
+- The Activity tab, search field, row selection controls, and pagination remain present.
+- The page has no horizontal viewport overflow.
+- Browser console errors: none.
+- Typecheck, lint, and production build pass. Lint reports only pre-existing warnings in unrelated components.
+
+## Full-view and focused comparison
+
+- The combined comparison clearly shows the requested structural change from five data columns to the standardized Date → Event → Member sequence.
+- A separate focused crop was not needed because all dense table text, icons, column boundaries, and row states remain legible at full resolution in the combined 1536 px comparison.
+
+## Comparison history
+
+- Pass 1: the updated implementation removed the standalone Module treatment, moved member attribution to the last column, and placed concise module context under every event. No P0/P1/P2 follow-up fix was required.
+
+## Implementation checklist
+
+- [x] Put date/time first.
+- [x] Put the concise event next and show where it happened.
+- [x] Remove the Module column and module filter.
+- [x] Put the responsible member last.
+- [x] Reuse the same ActivityPanel structure across vendor and rate-card activity records.
+- [x] Keep context searchable.
+
+final result: passed
+
+---
+
 # Package itinerary and block-picker QA
 
 - Source visual truth:
@@ -334,5 +486,200 @@ final result: passed
 - [x] Remove verbose visible image-count labels.
 - [x] Preserve the full accessible count and media-panel interaction.
 - [x] Preserve table density and responsive overflow behavior.
+
+final result: passed
+
+---
+
+# Multi-vendor Test price QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-fbaa9234-d036-4b47-9d34-3212fcd2d333.png` (1533 x 976 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\Vendor-CRM\test-price-implementation.png` (1536 x 1000 pixels).
+- Combined comparison: `C:\Users\YAKSHITH\Vendor-CRM\test-price-comparison.png` (1536 x 1982 pixels).
+- Browser viewport: 1536 x 1000 CSS pixels at device scale factor 1.
+- State: Trailmakers Experiences > Kerala Flight Ticketing > Test price.
+- Density normalization: source and implementation are 1x desktop captures; the source is normalized to the implementation width in the combined evidence.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested refinement.
+- Test price now compares three vendors linked to the same service, ordered from lowest to highest total.
+- The redundant header band and its service ID, `Stay inputs`, supporting sentence, `Live comparison`, linked-vendor summary, and global Best price title are removed.
+- The lowest quote is selected by default and retains the compact Best status within the comparison list.
+
+## Required fidelity surfaces
+
+- Typography: existing input labels, vendor names, supplier metadata, prices, nightly breakdown, and totals retain the product type tokens and hierarchy.
+- Spacing and layout: the two-column proportion is unchanged; removing the 100 px header band brings both the input form and vendor comparison directly below the active tab.
+- Colors and tokens: selected quote, Best status, borders, avatars, controls, and totals continue using the existing surface, accent, pink, and success tokens.
+- Image and asset fidelity: the existing service image and design-system icons are preserved; no new image assets were required.
+- Copy and content: removed all specifically called-out redundant copy and added distinct vendor names, supplier types, rate-card names, and totals for comparison.
+
+## Interaction and browser checks
+
+- Three quote rows render: Wanderlust Trails, Trailmakers Experiences, and Horizon DMC Partners.
+- Vendor totals are distinct and ordered: INR 23,820, INR 25,200, and INR 25,560.
+- Selecting another vendor updates the detailed breakdown and leaves exactly one selected row.
+- Open rate card remains available for the selected vendor.
+- All eight input controls remain present and the page has no horizontal overflow.
+- Browser console errors: none.
+- Production build passes. Lint completes with only pre-existing warnings in unrelated files.
+
+## Comparison history
+
+- Pass 1: the new vendor records existed, but the service detail page still filtered connections to the current vendor, leaving one quote visible.
+- Fix: changed the Test price connection source to include every vendor linked to the same directory service.
+- Pass 2 evidence: `test-price-implementation.png` confirms three selectable quotes, redundant copy removed, and a complete selected-vendor breakdown.
+
+## Implementation checklist
+
+- [x] Compare multiple vendors for one service.
+- [x] Sort vendors by total price and identify the best quote.
+- [x] Remove the redundant header titles and summary copy.
+- [x] Keep the left-side inputs and two-column width balance.
+- [x] Preserve vendor switching and rate-card access.
+
+final result: passed
+
+---
+
+# Service category navigation QA
+
+## Evidence
+
+- Current directory source: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-49b96cda-6420-4fc5-b626-06b3a1e8f79d.png` (1522 x 952 pixels).
+- Information-architecture reference: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-2d190242-a9c4-42c5-acfd-8c4c91fcfa5f.jpg` (736 x 559 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\Vendor-CRM\service-categories-implementation.png` (1536 x 1000 pixels).
+- Filtered-state implementation: `C:\Users\YAKSHITH\Vendor-CRM\service-categories-filtered.png` (1536 x 1000 pixels).
+- Combined comparison: `C:\Users\YAKSHITH\Vendor-CRM\service-categories-comparison.png` (1536 x 2520 pixels).
+- Browser viewport: 1536 x 1000 CSS pixels at device scale factor 1.
+- State: CRM directory with Services selected; All services and Accommodation category states.
+- Density normalization: all product captures are 1x; the current directory screenshot is normalized to implementation width. The external design is used only as a navigation-hierarchy cue, not a visual styling target.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested service-type navigation.
+- Services now exposes a persistent second-level tab row above search with All services, Accommodation, Transport, Activities, Visa, and Flights.
+- Every category includes an existing product icon and live service count, making hotel, transport, activity, visa, and flight inventory directly scannable.
+- The selected category uses a restrained teal underline while the primary Services tab retains the pink module underline, preserving hierarchy without copying the external reference's hover treatment.
+
+## Required fidelity surfaces
+
+- Typography: category labels use the existing 12.5 px semibold UI scale; counts use the mono token already used throughout the directory.
+- Spacing and layout: the 40 px secondary navigation sits between the primary tabs and toolbar, with horizontal scrolling on narrow screens and no page-level overflow.
+- Colors and tokens: active, inactive, count, border, focus, and background states use existing accent, ink, line, and surface tokens.
+- Image and asset fidelity: no new raster assets were required; existing service-type icon components are reused.
+- Copy and content: the page title and search placeholder both change to Services context, and all six service scopes are directly named.
+
+## Interaction and browser checks
+
+- All services displays 11 records and is selected by default.
+- Accommodation displays five records, all with Accommodation as the service type.
+- Returning to All services restores all 11 records.
+- Category counts render as 11, 5, 1, 3, 1, and 1 for the current dataset.
+- The service-category controls expose tab roles and selected state; keyboard focus styling is present.
+- Service categories are removed from the Services filter popover to avoid duplicate controls; supplier filtering remains available.
+- No horizontal viewport overflow and no browser console errors.
+- Production build passes. Lint completes with only pre-existing warnings in unrelated files.
+
+## Comparison history
+
+- Pass 1 confirmed the requested second navigation row, direct category filtering, responsive overflow treatment, correct counts, and clear primary-versus-secondary hierarchy. No P0/P1/P2 follow-up fix was required.
+
+## Implementation checklist
+
+- [x] Add persistent service-type navigation when Services is active.
+- [x] Position it above search and the data table.
+- [x] Use CRM-native underline styling rather than copied hover cards.
+- [x] Add live category counts and service icons.
+- [x] Keep category selection, supplier filters, search, and location filtering logically separate.
+
+final result: passed
+
+---
+
+# Upgrade button alignment QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-eed1b503-55a3-4036-857c-89e9c0dfdcb9.png` (401 x 519 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\Vendor-CRM\upgrade-button-aligned-implementation.png` (272 x 138 pixels).
+- Combined focused comparison: `C:\Users\YAKSHITH\Vendor-CRM\upgrade-button-alignment-comparison.png` (700 x 195 pixels).
+- Browser viewport: 1536 x 1000 CSS pixels at device scale factor 1.
+- State: expanded desktop sidebar footer with usage meter, Upgrade CTA, and Collapse control visible.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain.
+- The decorative icon and Upgrade label are now separate, explicit flex children rather than an SVG beside an anonymous text node.
+- Browser geometry confirms the button, icon, and label all share the exact same vertical center at 822 CSS pixels.
+
+## Required fidelity surfaces
+
+- Typography: the existing compact button font, weight, and line height are preserved.
+- Spacing and layout: the icon occupies a fixed 14 x 14 alignment box, the label has an explicit line box, and the existing 5 px gap remains.
+- Colors and tokens: the teal primary button and white foreground remain unchanged.
+- Image and asset fidelity: the existing product icon is retained at 13 x 13 pixels; no substitute asset or placeholder was introduced.
+- Copy and content: the Upgrade label is unchanged and remains on one line.
+
+## Interaction and browser checks
+
+- Upgrade button renders at 90.375 x 32 CSS pixels.
+- Icon center Y: 822; label center Y: 822; button center Y: 822.
+- No overlap, wrapping, or vertical displacement is visible in the focused capture.
+- Typecheck, lint, and production build pass. Lint reports only pre-existing warnings in unrelated components.
+
+## Comparison history
+
+- Pass 1: explicit icon and label wrappers corrected the optical and line-box alignment. No P0/P1/P2 follow-up fix was required.
+
+final result: passed
+
+---
+
+# Simplified service test-price QA
+
+## Evidence
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-695342bd-9d71-485a-889f-4341cfa87460.png` (1559 x 975 pixels).
+- Browser-rendered implementation: `C:\Users\YAKSHITH\Vendor-CRM\test-price-simple-list-implementation.png` (1536 x 1000 pixels).
+- Combined comparison: `C:\Users\YAKSHITH\Vendor-CRM\test-price-simple-list-comparison.png` (1559 x 2047 pixels).
+- Browser viewport: 1536 x 1000 CSS pixels at device scale factor 1.
+- State: Kerala Flight Ticketing service detail, Test price selected, three nights, default room/meal/occupancy inputs.
+- Density normalization: both source and implementation are 1x desktop captures; the source width differs by 23 pixels, which does not materially alter the two-column structure.
+
+## Findings
+
+- No actionable P0, P1, or P2 differences remain for the requested simplification.
+- The Test service tab and its row-menu entry are removed.
+- Test price retains the complete input structure on the left and shows only vendor identity, rate-card context, and calculated price on the right.
+- Best ranking, selected-row styling, rate-card action, nightly table, and summary breakdown are removed.
+
+## Required fidelity surfaces
+
+- Typography: existing input labels, vendor names, secondary supplier details, and monospaced prices retain the product type hierarchy.
+- Spacing and layout: the original two-column split remains; the right side now uses three evenly spaced 65 px quote rows and intentionally leaves the remaining canvas quiet.
+- Colors and tokens: inputs, dividers, avatars, text, and active-tab styling continue to use the existing design-system tokens.
+- Image and asset fidelity: the supplied service image and existing vendor initials avatars remain unchanged; no new assets were required.
+- Copy and content: the service tabs now read Overview, Test price, and Rate cards. The results contain no Best, breakdown, or Open rate card copy.
+
+## Interaction and browser checks
+
+- Three vendor prices render for Trailmakers Experiences, Wanderlust Trails, and Horizon DMC Partners.
+- Changing Nights from 3 to 4 recalculates all three totals, confirming the simplified rows remain live results rather than static text.
+- No Best label, breakdown table, summary block, selected quote state, or Open rate card action is present.
+- No horizontal viewport overflow and no browser console errors.
+- Typecheck, lint, and production build pass. Lint reports only pre-existing warnings in unrelated components.
+
+## Full-view and focused comparison
+
+- The full-view comparison clearly shows the removed tab and the reduction from a selected quote plus breakdown to a direct three-row price list.
+- A focused crop was not required because the relevant tabs, inputs, vendor names, prices, and removed regions are all legible at full resolution.
+
+## Comparison history
+
+- Pass 1: the simplified implementation matched the requested information level and preserved live price recalculation. No P0/P1/P2 follow-up fix was required.
 
 final result: passed

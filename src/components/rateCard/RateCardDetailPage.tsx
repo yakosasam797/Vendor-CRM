@@ -162,6 +162,7 @@ export function RateCardDetailPage({
   cardId,
   seedCard,
   startEditing = false,
+  canEditMarkup = false,
   onOpenNotes,
   onDraftChange,
 }: {
@@ -169,6 +170,8 @@ export function RateCardDetailPage({
   /** Prefers this over the seed catalog — used for newly created drafts. */
   seedCard?: RateCardDetail;
   startEditing?: boolean;
+  /** Markup is commercially sensitive and can only be changed by an Owner. */
+  canEditMarkup?: boolean;
   /** Opens the global sidebar notes panel for this rate card. */
   onOpenNotes?: () => void;
   /** Called whenever local draft changes (keeps App draft in sync). */
@@ -201,8 +204,8 @@ export function RateCardDetailPage({
   }, []);
 
   useEffect(() => {
-    if (!editing && markupEditing) setMarkupEditing(false);
-  }, [editing, markupEditing]);
+    if (!canEditMarkup && markupEditing) setMarkupEditing(false);
+  }, [canEditMarkup, markupEditing]);
 
   useEffect(() => {
     if (markupEditing) markupInputRef.current?.focus();
@@ -239,7 +242,7 @@ export function RateCardDetailPage({
   const quoteResult = runQuote(card, quote);
 
   const beginMarkupEdit = () => {
-    if (!editing) return;
+    if (!canEditMarkup) return;
     setMarkupDraft(String(card.markupPercent));
     setMarkupEditing(true);
   };
@@ -250,6 +253,7 @@ export function RateCardDetailPage({
   };
 
   const saveMarkup = () => {
+    if (!canEditMarkup) return;
     const next = Number(markupDraft);
     if (Number.isNaN(next)) {
       cancelMarkupEdit();
@@ -602,74 +606,6 @@ export function RateCardDetailPage({
             </div>
           </div>
 
-          <section className="rc-markup" aria-labelledby="rc-markup-title">
-            <h2 id="rc-markup-title" className="rc-markup__title">
-              Markup
-            </h2>
-            <div className="rc-markup__aside">
-              {markupEditing ? (
-                <>
-                  <div className="rc-markup__field">
-                    <label className="rc-markup__label" htmlFor="rc-markup-pct">
-                      Markup
-                    </label>
-                    <div className="rc-markup__control">
-                      <input
-                        ref={markupInputRef}
-                        id="rc-markup-pct"
-                        className="rc-markup__input"
-                        type="number"
-                        min={0}
-                        max={100}
-                        step={0.5}
-                        inputMode="decimal"
-                        value={markupDraft}
-                        onChange={(e) => setMarkupDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            saveMarkup();
-                          }
-                          if (e.key === "Escape") {
-                            e.preventDefault();
-                            cancelMarkupEdit();
-                          }
-                        }}
-                      />
-                      <span className="rc-markup__suffix" aria-hidden="true">
-                        %
-                      </span>
-                    </div>
-                  </div>
-                  <div className="rc-markup__actions">
-                    <Button variant="brand" size="sm" onClick={cancelMarkupEdit}>
-                      Cancel
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={saveMarkup}>
-                      Save
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="rc-markup__value" aria-live="polite">
-                    <span className="rc-markup__value-num pt-mono">{card.markupPercent}</span>
-                    <span className="rc-markup__value-unit">%</span>
-                  </div>
-                  <Button
-                    variant="brand"
-                    size="sm"
-                    disabled={!editing}
-                    onClick={beginMarkupEdit}
-                  >
-                    <IconPencil />
-                    Edit
-                  </Button>
-                </>
-              )}
-            </div>
-          </section>
-
           <Section
             title={catLabel(card, "accommodation", "Stay / product pricing")}
             action={
@@ -1000,6 +936,69 @@ export function RateCardDetailPage({
               )}
             </DataSheet>
           </Section>
+
+          <section className="rc-markup" aria-labelledby="rc-markup-title">
+            <div className="rc-markup__copy">
+              <h2 id="rc-markup-title" className="rc-markup__title">Markup</h2>
+              <p className="rc-markup__desc">
+                Percentage added to contracted rates when calculating the selling price.
+                {!canEditMarkup ? " Only owners can edit this value." : ""}
+              </p>
+            </div>
+            <div className="rc-markup__aside">
+              {markupEditing ? (
+                <>
+                  <div className="rc-markup__field">
+                    <label className="rc-markup__label" htmlFor="rc-markup-pct">
+                      Percentage
+                    </label>
+                    <div className="rc-markup__control">
+                      <input
+                        ref={markupInputRef}
+                        id="rc-markup-pct"
+                        className="rc-markup__input"
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        inputMode="decimal"
+                        value={markupDraft}
+                        onChange={(e) => setMarkupDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveMarkup();
+                          }
+                          if (e.key === "Escape") {
+                            e.preventDefault();
+                            cancelMarkupEdit();
+                          }
+                        }}
+                      />
+                      <span className="rc-markup__suffix" aria-hidden="true">%</span>
+                    </div>
+                  </div>
+                  <div className="rc-markup__actions">
+                    <Button variant="brand" size="sm" onClick={cancelMarkupEdit}>Cancel</Button>
+                    <Button variant="primary" size="sm" onClick={saveMarkup}>Save</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="rc-markup__value" aria-live="polite">
+                    <span className="rc-markup__value-num pt-mono">{card.markupPercent}</span>
+                    <span className="rc-markup__value-unit">%</span>
+                  </div>
+                  {canEditMarkup ? (
+                    <Button variant="brand" size="sm" onClick={beginMarkupEdit}>
+                      <IconPencil />
+                      Edit
+                    </Button>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </section>
         </div>
       ) : null}
 

@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Avatar,
   Button,
@@ -85,7 +85,7 @@ function formatTaskDue(dateValue: string, timeValue: string) {
   return `${dateLabel} ${timeLabel}`;
 }
 
-function AddTaskModal({
+function AddTaskPopover({
   onClose,
   onCreate,
 }: {
@@ -93,18 +93,23 @@ function AddTaskModal({
   onCreate: (task: VendorTask) => void;
 }) {
   const titleId = useId();
+  const popoverRef = useRef<HTMLFormElement>(null);
   const [draft, setDraft] = useState<TaskDraft>(EMPTY_TASK_DRAFT);
   const [showError, setShowError] = useState(false);
+  const selectedAssignee = TASK_ASSIGNEES.find((person) => person.name === draft.assignee) ?? TASK_ASSIGNEES[0];
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!popoverRef.current?.contains(event.target as Node)) onClose();
+    };
     window.addEventListener("keydown", onKeyDown);
-    document.body.classList.add("modal-open");
+    window.addEventListener("pointerdown", onPointerDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.classList.remove("modal-open");
+      window.removeEventListener("pointerdown", onPointerDown);
     };
   }, [onClose]);
 
@@ -137,19 +142,15 @@ function AddTaskModal({
   };
 
   return (
-    <div
-      className="pt-modal-overlay open task-create-backdrop"
-      role="presentation"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
       <form
-        className="pt-modal task-create-modal"
+        ref={popoverRef}
+        id="task-create-popover"
+        className="task-create-popover"
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-labelledby={titleId}
         onSubmit={submit}
+        onPointerDown={(event) => event.stopPropagation()}
       >
         <div className="pt-modal__head">
           <div className="pt-modal__head-copy">
@@ -206,9 +207,14 @@ function AddTaskModal({
 
           <div className="pt-mf">
             <label className="pt-mf__l" htmlFor="task-assignee">Assignee</label>
-            <select id="task-assignee" className="pt-mf__i" value={draft.assignee} onChange={(event) => setField("assignee", event.target.value)}>
-              {TASK_ASSIGNEES.map((person) => <option key={person.name}>{person.name}</option>)}
-            </select>
+            <div className="task-create-modal__assignee">
+              <Avatar tone={selectedAssignee.tone} size={32} aria-hidden="true">
+                {selectedAssignee.initials}
+              </Avatar>
+              <select id="task-assignee" value={draft.assignee} onChange={(event) => setField("assignee", event.target.value)}>
+                {TASK_ASSIGNEES.map((person) => <option key={person.name}>{person.name} · {person.role}</option>)}
+              </select>
+            </div>
           </div>
 
           <div className="pt-mf">
@@ -233,7 +239,6 @@ function AddTaskModal({
           <Button variant="primary" size="sm" type="submit">Create task</Button>
         </div>
       </form>
-    </div>
   );
 }
 
@@ -469,10 +474,21 @@ export function TasksPanel({
             }}
           />
           {canAddTask ? (
-            <Button variant="primary" size="sm" onClick={() => setCreateOpen(true)}>
-              <IconPlus />
-              Add task
-            </Button>
+            <div className="tasks-panel__create" onPointerDown={(event) => event.stopPropagation()}>
+              <Button
+                variant="primary"
+                size="sm"
+                aria-expanded={createOpen}
+                aria-controls="task-create-popover"
+                onClick={() => setCreateOpen((open) => !open)}
+              >
+                <IconPlus />
+                Add task
+              </Button>
+              {createOpen ? (
+                <AddTaskPopover onClose={() => setCreateOpen(false)} onCreate={createTask} />
+              ) : null}
+            </div>
           ) : null}
         </div>
         <TaskSheet
@@ -514,10 +530,6 @@ export function TasksPanel({
           onOpenTask={setActiveTask}
         />
       </section>
-
-      {createOpen && canAddTask ? (
-        <AddTaskModal onClose={() => setCreateOpen(false)} onCreate={createTask} />
-      ) : null}
 
       {activeTask ? (
         <div

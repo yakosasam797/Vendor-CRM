@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import {
   Button,
   Checkbox,
@@ -31,25 +31,32 @@ import {
 import { visibleVendorsForRole, type Vendor } from "../data/vendors";
 import { can, type OrgRole } from "../permissions";
 import type { PageNavigationChange } from "../pageNavigation";
+import { BED_LABEL, formatMoney, getDetailCard } from "../rateCard/cards";
+import type { RateCardDetail } from "../rateCard/types";
 import {
+  IconBed,
   IconBuilding,
   IconCard,
   IconCheck,
+  IconChevronDown,
   IconFilter,
   IconImage,
   IconImport,
   IconMore,
+  IconPackages,
   IconPencil,
   IconPin,
   IconPlus,
+  IconUser,
   IconWarn,
 } from "../icons";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { VendorFormModal } from "./VendorFormModal";
 import { AnchoredImport } from "./AnchoredImport";
+import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTestRate } from "./ServiceTestRate";
-import { ServiceTypeLabel, ServiceTypeList } from "./ServiceTypeLabel";
+import { ServiceTypeIcon, ServiceTypeLabel, ServiceTypeList } from "./ServiceTypeLabel";
 import "./VendorsListPage.css";
 
 type Perspective = "vendors" | "services";
@@ -112,6 +119,345 @@ function DirectoryEntity({ vendor, imageUrl, imageAlt, title, subtitle, match, o
         {match ? <span className="directory-entity__match">{match}</span> : null}
       </span>
     </button>
+  );
+}
+
+function rateCardStatusTone(card: RateCardDetail): "done" | "progress" | "blocked" | "open" {
+  if (card.tone === "success") return "done";
+  if (card.tone === "warning") return "progress";
+  if (card.tone === "danger") return "blocked";
+  return "open";
+}
+
+type ServiceRateSelectOption = {
+  value: string;
+  title: string;
+};
+
+function ServiceRateSelect({
+  label,
+  value,
+  options,
+  onChange,
+  className = "",
+}: {
+  label: string;
+  value: string;
+  options: ServiceRateSelectOption[];
+  onChange: (value: string) => void;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div className={`service-rate-select${open ? " is-open" : ""} ${className}`.trim()} ref={menuRef}>
+      <span className="service-rate-select__label">{label}</span>
+      <button
+        type="button"
+        className="service-rate-select__trigger"
+        aria-label={`${label}: ${selected?.title ?? "Choose"}`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+      >
+        <span className="service-rate-select__copy">
+          <strong>{selected?.title ?? "Choose"}</strong>
+        </span>
+        <IconChevronDown size={15} />
+      </button>
+      {open ? (
+        <div className="service-rate-select__menu" role="listbox" aria-label={label}>
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              className={option.value === value ? "is-selected" : undefined}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              <span className="service-rate-select__copy">
+                <strong>{option.title}</strong>
+              </span>
+              {option.value === value ? <IconCheck size={14} /> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function ServiceRateDetails({
+  connections,
+  vendors,
+  onOpenRateCard,
+}: {
+  connections: VendorServiceConnection[];
+  vendors: Vendor[];
+  onOpenRateCard: (vendorId: string, rateCardId: string) => void;
+}) {
+  const [connectionId, setConnectionId] = useState(connections[0]?.id ?? "");
+  const [seasonIndex, setSeasonIndex] = useState(0);
+  const connection = connections.find((item) => item.id === connectionId) ?? connections[0];
+  const card = connection ? getDetailCard(connection.rateCardId) : undefined;
+  const safeSeasonIndex = card
+    ? Math.min(seasonIndex, Math.max(0, card.seasons.length - 1))
+    : 0;
+  const rateCardOptions = connections.map((item) => {
+    const itemVendor = vendors.find((candidate) => candidate.id === item.vendorId);
+    return {
+      value: item.id,
+      title: itemVendor?.name ?? item.vendorId,
+    };
+  });
+  const seasonOptions = card?.seasons.map((item, index) => ({
+    value: String(index),
+    title: `${item.name} · ${item.dates}`,
+  })) ?? [];
+
+  const guestRules = useMemo(() => {
+    if (!card) return [];
+    const grouped = new Map<string, {
+      guest: string;
+      age: string;
+      bed: string;
+      meal: string;
+      amount: number | null;
+      max: number;
+      rooms: Set<string>;
+    }>();
+    card.guests.forEach(([roomId, guest, age, bed, meal, amount, max]) => {
+      const key = [guest, age, bed, meal, amount ?? "missing", max].join("|");
+      const current = grouped.get(key);
+      if (current) current.rooms.add(roomId);
+      else grouped.set(key, { guest, age, bed, meal, amount, max, rooms: new Set([roomId]) });
+    });
+    return Array.from(grouped.values());
+  }, [card]);
+
+  if (!connection) {
+    return (
+      <EmptyState
+        title="No rate details available"
+        description="Link a vendor rate card to show pricing, guest rules, services, and activities here."
+      />
+    );
+  }
+
+  if (!card) {
+    return (
+      <section className="service-rate-details service-rate-details--empty">
+        <div>
+          <h2>{connection.rateCardName}</h2>
+          <p>The rate card is linked, but its detailed pricing structure is not available in this workspace.</p>
+        </div>
+        <Button variant="brand" size="sm" onClick={() => onOpenRateCard(connection.vendorId, connection.rateCardId)}>
+          Open rate card
+        </Button>
+      </section>
+    );
+  }
+
+  return (
+    <div className="service-rate-details">
+      <div className="service-rate-details__record">
+        <div className="service-rate-details__record-copy">
+          <span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span>
+          <div>
+            <div className="service-rate-details__record-title">
+              <strong>{connection.rateCardName}</strong>
+              <StatusChipWithDot tone={rateCardStatusTone(card)}>{card.state}</StatusChipWithDot>
+            </div>
+          </div>
+        </div>
+        <div className="service-rate-details__record-actions">
+          <ServiceRateSelect
+            className="service-rate-details__source"
+            label="Rate card"
+            value={connection.id}
+            options={rateCardOptions}
+            onChange={(value) => {
+              setConnectionId(value);
+              setSeasonIndex(0);
+            }}
+          />
+          <Button variant="brand" size="sm" onClick={() => onOpenRateCard(connection.vendorId, connection.rateCardId)}>
+            Open rate card
+          </Button>
+        </div>
+      </div>
+
+      <section className="service-rate-block" aria-labelledby="service-rate-pricing-title">
+        <div className="service-rate-block__head">
+          <h3 id="service-rate-pricing-title">{card.catLabels?.accommodation ?? "Stay / product pricing"}</h3>
+          <ServiceRateSelect
+            className="service-rate-details__season"
+            label="Price set"
+            value={String(safeSeasonIndex)}
+            options={seasonOptions}
+            onChange={(value) => setSeasonIndex(Number(value))}
+          />
+        </div>
+        <div className="service-rate-rooms">
+          <div className="service-rate-pricing-head" aria-hidden="true">
+            <span>Room / product</span>
+            <div
+              className="service-rate-pricing-head__plans"
+              style={{ "--service-plan-count": Math.max(1, card.meals.length) } as CSSProperties}
+            >
+              {card.meals.map((meal) => <span key={meal.code}>{meal.label}</span>)}
+            </div>
+          </div>
+          {card.rooms.map((room, roomIndex) => (
+            <article className="service-rate-room" key={room.id}>
+              <div className="service-rate-room__identity">
+                <span className="service-rate-room__icon" aria-hidden="true"><IconBed size={15} /></span>
+                <div>
+                  <h4>{room.name}</h4>
+                  <p>{room.note}</p>
+                  <span>Includes {room.baseOccupancy} · maximum {room.maxOccupancy} · {room.maxBeds} extra bed</span>
+                </div>
+              </div>
+              <div
+                className="service-rate-room__plans"
+                style={{ "--service-plan-count": Math.max(1, card.meals.length) } as CSSProperties}
+              >
+                {card.meals.map((meal, mealIndex) => {
+                  const amount = card.prices[roomIndex]?.[mealIndex]?.[safeSeasonIndex] ?? null;
+                  const weekend = card.weekendExtra?.[roomIndex]?.[safeSeasonIndex] ?? null;
+                  return (
+                    <div className="service-rate-room__plan" data-label={meal.label} key={meal.code}>
+                      <strong className="pt-mono">{formatMoney(amount, card.currency)}</strong>
+                      {weekend != null ? <small>+{formatMoney(weekend, card.currency)} Fri–Sat</small> : <small>{card.mealBasis}</small>}
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {guestRules.length ? (
+        <section className="service-rate-block" aria-labelledby="service-rate-guests-title">
+          <div className="service-rate-block__head">
+            <h3 id="service-rate-guests-title">{card.catLabels?.guests ?? "Extra guest and bed charges"}</h3>
+          </div>
+          <div className="service-rate-guest-list" role="table" aria-label="Guest and bed charges">
+            <div className="service-rate-guest service-rate-guest--head" role="row">
+              <span>Guest</span><span>Age</span><span>Bed</span><span>Charge</span><span>Maximum</span>
+            </div>
+            {guestRules.map((rule) => (
+              <div className="service-rate-guest" role="row" key={`${rule.guest}-${rule.age}-${rule.bed}`}>
+                <strong><IconUser size={14} />{rule.guest}</strong>
+                <span>{rule.age}</span>
+                <span><IconBed size={14} />{BED_LABEL[rule.bed] ?? rule.bed}</span>
+                <span className="pt-mono">{rule.amount === 0 ? "Included" : formatMoney(rule.amount, card.currency)}</span>
+                <span>{rule.max} · {rule.rooms.size === card.rooms.length ? "all rooms" : `${rule.rooms.size} rooms`}</span>
+              </div>
+            ))}
+          </div>
+          {card.guestNote ? <p className="service-rate-guest-note">{card.guestNote}</p> : null}
+        </section>
+      ) : null}
+
+      <div className="service-rate-details__columns">
+        <section className="service-rate-compact" aria-labelledby="service-rate-services-title">
+          <div className="service-rate-compact__head">
+            <h3 id="service-rate-services-title">{card.catLabels?.services ?? "Services"}</h3>
+            <span>{card.services.length} items</span>
+          </div>
+          <div className="service-rate-compact__list">
+            {card.services.length ? card.services.map((item) => (
+              <div key={`${item.name}-${item.applies}`}>
+                <div><strong>{item.name}</strong><span>{item.note}</span></div>
+                <div><span>{item.applies} · {item.basis}</span><strong className="pt-mono">{item.amount === 0 ? "Included" : formatMoney(item.amount, card.currency)}</strong></div>
+              </div>
+            )) : <p className="service-rate-compact__empty">No services on this rate card.</p>}
+          </div>
+        </section>
+
+        <section className="service-rate-compact" aria-labelledby="service-rate-activities-title">
+          <div className="service-rate-compact__head">
+            <h3 id="service-rate-activities-title">{card.catLabels?.activities ?? "Activities"}</h3>
+            <span>{card.activities.length} items</span>
+          </div>
+          <div className="service-rate-compact__list">
+            {card.activities.length ? card.activities.map((item) => (
+              <div key={`${item.name}-${item.group}`}>
+                <div><strong>{item.name}</strong><span>{item.note}</span></div>
+                <div><span>{item.group} · {item.basis}</span><strong className="pt-mono">{formatMoney(item.amount, card.currency)}</strong></div>
+              </div>
+            )) : <p className="service-rate-compact__empty">No activities on this rate card.</p>}
+          </div>
+        </section>
+      </div>
+
+      {card.supplements.length ? (
+        <section className="service-rate-block" aria-labelledby="service-rate-supplements-title">
+          <div className="service-rate-block__head">
+            <h3 id="service-rate-supplements-title">{card.catLabels?.special ?? "Supplements"}</h3>
+          </div>
+          <div className="service-rate-supplements">
+            {card.supplements.map((item) => (
+              <div key={`${item.name}-${item.applies}`}>
+                <div><strong>{item.name}</strong><span>{item.applies}</span></div>
+                <div><span>{item.basis} · {item.unit}</span><strong className="pt-mono">{formatMoney(item.amount, card.currency)}</strong></div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <details className="service-rate-disclosure">
+        <summary>
+          <strong>Stay rules, cancellation and policies</strong>
+          <IconChevronDown size={16} />
+        </summary>
+        <div className="service-rate-disclosure__body">
+          <section>
+            <h3>Stay rules</h3>
+            {card.rules.map(([name, applies, value, behavior]) => <div key={`${name}-${applies}`}><span><strong>{name}</strong><small>{applies}</small></span><span>{value} · {behavior}</span></div>)}
+          </section>
+          <section>
+            <h3>Cancellation</h3>
+            {card.cancel.map((item) => <div key={item.window}><span><strong>{item.window}</strong><small>{item.basis}</small></span><span>{item.charge}</span></div>)}
+          </section>
+          <section className="service-rate-disclosure__policies">
+            <h3>Policies</h3>
+            {card.policies.map((item) => <div key={item.id}><span><strong>{item.title}</strong><small>{item.category}</small></span><span>{item.summary}</span></div>)}
+          </section>
+        </div>
+      </details>
+    </div>
   );
 }
 
@@ -213,6 +559,7 @@ function ServiceDirectoryDetail({
       : "indeterminate";
   const tabs: TabItem[] = [
     { id: "overview", label: "Overview" },
+    { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
     { id: "vendors", label: "Vendors", count: connections.length },
     { id: "test-rate", label: "Test rate" },
   ];
@@ -323,12 +670,17 @@ function ServiceDirectoryDetail({
             </div>
           </div>
         </div>
+      ) : tab === "rate-details" ? (
+        <ServiceRateDetails
+          connections={connections}
+          vendors={vendors}
+          onOpenRateCard={onOpenRateCard}
+        />
       ) : tab === "test-rate" ? (
         <ServiceTestRate
           service={service}
           connections={connections}
           vendors={vendors}
-          onOpenRateCard={onOpenRateCard}
         />
       ) : (
         <div className="service-vendors-overview">
@@ -451,6 +803,7 @@ export function VendorsListPage({
 }) {
   const [perspective, setPerspective] = useState<Perspective>("vendors");
   const [openServiceId, setOpenServiceId] = useState<string | null>(null);
+  const [serviceCategory, setServiceCategory] = useState<"all" | DirectoryCategory>("all");
   const [categoryFilters, setCategoryFilters] = useState<DirectoryCategory[]>([]);
   const [query, setQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
@@ -494,6 +847,14 @@ export function VendorsListPage({
     { id: "services", label: "Services", count: availableServices.length },
   ], [availableServices.length, scoped.length]);
 
+  const serviceCategoryTabs = useMemo(() => DIRECTORY_CATEGORIES.map((category) => ({
+    id: category,
+    label: category === "all" ? "All services" : category,
+    count: category === "all"
+      ? availableServices.length
+      : availableServices.filter((service) => service.category === category).length,
+  })), [availableServices]);
+
   const vendorRows = useMemo<VendorDirectoryRow[]>(() => {
     const q = query.trim().toLowerCase();
     const loc = locationQuery.trim().toLowerCase();
@@ -514,7 +875,7 @@ export function VendorsListPage({
     const q = query.trim().toLowerCase();
     const loc = locationQuery.trim().toLowerCase();
     return availableServices.flatMap((service) => {
-      if (categoryFilters.length > 0 && !categoryFilters.includes(service.category)) return [];
+      if (serviceCategory !== "all" && service.category !== serviceCategory) return [];
       if (loc && !service.location.toLowerCase().includes(loc)) return [];
       const connections = activeConnections.filter((connection) => connection.serviceId === service.id);
       const relatedVendors = connections.map((connection) => scoped.find((vendor) => vendor.id === connection.vendorId)).filter((vendor): vendor is Vendor => Boolean(vendor));
@@ -523,7 +884,7 @@ export function VendorsListPage({
       if (q && !directMatch && !vendorMatch) return [];
       return [{ service, connections, providedBy: !directMatch && vendorMatch ? vendorMatch.name : undefined }];
     });
-  }, [activeConnections, availableServices, categoryFilters, locationQuery, query, scoped]);
+  }, [activeConnections, availableServices, locationQuery, query, scoped, serviceCategory]);
 
   const rows = perspective === "vendors" ? vendorRows : serviceRows;
   const rowIds = rows.map((row) => perspective === "vendors" ? (row as VendorDirectoryRow).vendor.id : (row as ServiceDirectoryRow).service.id);
@@ -546,7 +907,17 @@ export function VendorsListPage({
   const toggleRow = (id: string, state: CheckboxState) => setSelected((current) => state === "on" ? current.includes(id) ? current : [...current, id] : current.filter((item) => item !== id));
   const toggleSupplierType = (type: SupplierType) => { setSupplierTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]); resetRows(); };
   const toggleCategory = (type: DirectoryCategory) => { setCategoryFilters((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]); resetRows(); };
-  const setBrowseBy = (id: string) => { setPerspective(id as Perspective); resetRows(); };
+  const setBrowseBy = (id: string) => {
+    const next = id as Perspective;
+    setPerspective(next);
+    if (next === "services") setCategoryFilters([]);
+    resetRows();
+  };
+  const selectServiceCategory = (category: "all" | DirectoryCategory) => {
+    setServiceCategory(category);
+    resetRows();
+  };
+  const activeFilterCount = supplierTypes.length + (perspective === "vendors" ? categoryFilters.length : 0);
 
   if (activeService) {
     return (
@@ -576,18 +947,41 @@ export function VendorsListPage({
 
       <div className="directory-view-tabs"><TabBar items={viewTabs} value={perspective} onValueChange={setBrowseBy} aria-label="Vendor directory view" /></div>
 
+      {perspective === "services" ? (
+        <div className="service-category-tabs" role="tablist" aria-label="Service categories">
+          {serviceCategoryTabs.map((category) => (
+            <button
+              key={category.id}
+              type="button"
+              role="tab"
+              aria-selected={serviceCategory === category.id}
+              className={serviceCategory === category.id ? "is-active" : undefined}
+              onClick={() => selectServiceCategory(category.id)}
+            >
+              <span className="service-category-tabs__icon" aria-hidden="true">
+                {category.id === "all" ? <IconPackages size={14} /> : <ServiceTypeIcon type={category.id} size={14} />}
+              </span>
+              <span>{category.label}</span>
+              <span className="service-category-tabs__count">{category.count}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       <div className="vendors-page__toolbar">
-        <SearchField fullWidth className="vendors-page__search" value={query} onChange={(event) => { setQuery(event.target.value); resetRows(); }} placeholder="Search vendors or services" aria-label="Search vendors or services" />
+        <SearchField fullWidth className="vendors-page__search" value={query} onChange={(event) => { setQuery(event.target.value); resetRows(); }} placeholder={perspective === "vendors" ? "Search vendors" : "Search services"} aria-label={perspective === "vendors" ? "Search vendors" : "Search services"} />
         <label className="vendors-page__location"><span className="visually-hidden">Search by location</span><span className="vendors-page__location-icon" aria-hidden="true"><IconPin size={16} /></span><input type="search" value={locationQuery} onChange={(event) => { setLocationQuery(event.target.value); resetRows(); }} placeholder="Location" aria-label="Search by location" /></label>
         <div className="directory-filters" ref={filterRef}>
-          <Button variant="brand" size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}><IconFilter />Filters{supplierTypes.length + categoryFilters.length > 0 ? ` ${supplierTypes.length + categoryFilters.length}` : ""}</Button>
+          <Button variant="brand" size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}><IconFilter />Filters{activeFilterCount > 0 ? ` ${activeFilterCount}` : ""}</Button>
           {filtersOpen ? (
             <div className="directory-filters__menu" role="dialog" aria-label="Directory filters">
-              <div className="directory-filters__head"><div><strong>Filters</strong><span>Narrow this directory</span></div>{supplierTypes.length + categoryFilters.length > 0 ? <button type="button" onClick={() => { setSupplierTypes([]); setCategoryFilters([]); resetRows(); }}>Clear all</button> : null}</div>
-              <fieldset className="directory-filters__group">
-                <legend>Service category</legend>
-                {DIRECTORY_CATEGORIES.filter((item): item is DirectoryCategory => item !== "all").map((type) => <label key={type} className="directory-filters__option"><Checkbox state={categoryFilters.includes(type) ? "on" : "off"} onCheckedChange={() => toggleCategory(type)} label={type} /><span>{type}</span></label>)}
-              </fieldset>
+              <div className="directory-filters__head"><div><strong>Filters</strong><span>Narrow this directory</span></div>{activeFilterCount > 0 ? <button type="button" onClick={() => { setSupplierTypes([]); setCategoryFilters([]); resetRows(); }}>Clear all</button> : null}</div>
+              {perspective === "vendors" ? (
+                <fieldset className="directory-filters__group">
+                  <legend>Service category</legend>
+                  {DIRECTORY_CATEGORIES.filter((item): item is DirectoryCategory => item !== "all").map((type) => <label key={type} className="directory-filters__option"><Checkbox state={categoryFilters.includes(type) ? "on" : "off"} onCheckedChange={() => toggleCategory(type)} label={type} /><span>{type}</span></label>)}
+                </fieldset>
+              ) : null}
               <fieldset className="directory-filters__group">
                 <legend>Supplier type</legend>
                 {SUPPLIER_TYPES.map((type) => <label key={type} className="directory-filters__option"><Checkbox state={supplierTypes.includes(type) ? "on" : "off"} onCheckedChange={() => toggleSupplierType(type)} label={type} /><span>{type}</span></label>)}
@@ -597,7 +991,7 @@ export function VendorsListPage({
         </div>
       </div>
 
-      <div className="vendors-page__sheet">
+      <div className="vendors-page__sheet dashboard-table-end">
         {rows.length === 0 ? (
           <EmptyState title={`No ${perspective} match these filters`} description={orgRole === "Member" ? "Members only see assigned vendor relationships." : "Try another vendor, service, category, location, or supplier type."} />
         ) : (
@@ -644,6 +1038,7 @@ export function VendorsListPage({
                     <DataSheetCell>{canEdit ? <div className="vendors-sheet__more" ref={menuId === row.vendor.id ? menuRef : undefined}><IconButton label={`More actions for ${row.vendor.name}`} aria-expanded={menuId === row.vendor.id} aria-haspopup="menu" onClick={() => setMenuId((current) => current === row.vendor.id ? null : row.vendor.id)}><IconMore /></IconButton>{menuId === row.vendor.id ? <div className="vendors-sheet__menu" role="menu"><button type="button" role="menuitem" onClick={() => { setEditId(row.vendor.id); setModal("edit"); setMenuId(null); }}>Edit vendor</button></div> : null}</div> : null}</DataSheetCell>
                   </DataSheetRow>
                 ))}
+                <DashboardDataSheetFill columns={7} />
               </DataSheet>
             ) : (
               <DataSheet className="vendors-sheet vendors-sheet--services" aria-label="Services">
@@ -708,6 +1103,7 @@ export function VendorsListPage({
                     </DataSheetCell>
                   </DataSheetRow>
                 ))}
+                <DashboardDataSheetFill columns={7} />
               </DataSheet>
             )}
             {selected.length > 0 ? <ListBulkBar label={`${selected.length} ${perspective === "vendors" ? "vendor" : "service"}${selected.length === 1 ? "" : "s"} selected`}><Button variant="brand" size="sm"><IconImport />Export</Button><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></ListBulkBar> : null}

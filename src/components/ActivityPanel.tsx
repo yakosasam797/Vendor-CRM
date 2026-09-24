@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Avatar,
   Button,
@@ -7,7 +7,6 @@ import {
   DataSheetCell,
   DataSheetHeader,
   DataSheetRow,
-  LeadCell,
   Pagination,
   SearchField,
   StackCell,
@@ -20,8 +19,6 @@ import {
   IconBriefcase,
   IconCalendar,
   IconCard,
-  IconCheck,
-  IconChevronDown,
   IconClock,
   IconFile,
   IconFinance,
@@ -44,6 +41,7 @@ export type ActivityRow = {
   avatarTone: "pink" | "default" | "warn" | "channel";
   event: string;
   module: string;
+  context?: string;
 };
 
 function ActivityModuleIcon({ module, size = 15 }: { module: string; size?: number }) {
@@ -65,7 +63,7 @@ function ActivityModuleIcon({ module, size = 15 }: { module: string; size?: numb
 
 export function ActivityPanel({
   rows,
-  searchPlaceholder = "Search event, member or module",
+  searchPlaceholder = "Search activity",
   ariaLabel = "Activity",
 }: {
   rows: ActivityRow[];
@@ -73,47 +71,21 @@ export function ActivityPanel({
   ariaLabel?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [module, setModule] = useState<string>("All modules");
-  const [filterOpen, setFilterOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const filterRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!filterOpen) return;
-
-    const closeOnOutsideClick = (event: PointerEvent) => {
-      if (!filterRef.current?.contains(event.target as Node)) setFilterOpen(false);
-    };
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setFilterOpen(false);
-    };
-
-    document.addEventListener("pointerdown", closeOnOutsideClick);
-    document.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOnOutsideClick);
-      document.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [filterOpen]);
-
-  const modules = useMemo(() => {
-    const set = new Set(rows.map((r) => r.module));
-    return ["All modules", ...[...set].sort()];
-  }, [rows]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
-      if (module !== "All modules" && r.module !== module) return false;
       if (!q) return true;
       return (
         r.event.toLowerCase().includes(q) ||
         r.member.toLowerCase().includes(q) ||
-        r.module.toLowerCase().includes(q)
+        r.module.toLowerCase().includes(q) ||
+        r.context?.toLowerCase().includes(q)
       );
     });
-  }, [rows, query, module]);
+  }, [rows, query]);
 
   const headerState: CheckboxState =
     selected.length === 0
@@ -136,45 +108,6 @@ export function ActivityPanel({
           placeholder={searchPlaceholder}
           aria-label={searchPlaceholder}
         />
-        <div className={`act-filter${filterOpen ? " is-open" : ""}`} ref={filterRef}>
-          <button
-            type="button"
-            className="act-filter__trigger"
-            aria-label={`Filter by module: ${module}`}
-            aria-haspopup="menu"
-            aria-expanded={filterOpen}
-            onClick={() => setFilterOpen((open) => !open)}
-          >
-            <ActivityModuleIcon module={module} />
-            <span>{module}</span>
-            <IconChevronDown size={14} />
-          </button>
-          {filterOpen ? (
-            <div className="act-filter__menu" role="menu" aria-label="Filter activity by module">
-              {modules.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={module === item}
-                  className={module === item ? "is-selected" : undefined}
-                  onClick={() => {
-                    setModule(item);
-                    setPage(1);
-                    setSelected([]);
-                    setFilterOpen(false);
-                  }}
-                >
-                  <span className="act-filter__option-label">
-                    <ActivityModuleIcon module={item} />
-                    <span>{item}</span>
-                  </span>
-                  {module === item ? <IconCheck size={14} /> : null}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
       </div>
 
       <div className="act-sheet-wrap dashboard-table-end">
@@ -190,10 +123,9 @@ export function ActivityPanel({
                 }}
               />
             </DataSheetCell>
-            <DataSheetCell>When</DataSheetCell>
-            <DataSheetCell>Member</DataSheetCell>
+            <DataSheetCell>Date</DataSheetCell>
             <DataSheetCell>Event</DataSheetCell>
-            <DataSheetCell>Module</DataSheetCell>
+            <DataSheetCell>Member</DataSheetCell>
           </DataSheetHeader>
 
           {filtered.length === 0 ? (
@@ -225,6 +157,17 @@ export function ActivityPanel({
                   </StackCell>
                 </DataSheetCell>
                 <DataSheetCell>
+                  <div className="act-event">
+                    <span className="act-event__title" title={r.event}>
+                      {r.event}
+                    </span>
+                    <span className="act-event__context">
+                      <ActivityModuleIcon module={r.module} size={13} />
+                      {r.context ?? r.module}
+                    </span>
+                  </div>
+                </DataSheetCell>
+                <DataSheetCell>
                   <div className="act-member">
                     <Avatar tone={r.avatarTone === "pink" ? "pink" : "default"} size={28}>
                       {r.initials}
@@ -235,22 +178,10 @@ export function ActivityPanel({
                     </div>
                   </div>
                 </DataSheetCell>
-                <DataSheetCell>
-                  <span className="act-event" title={r.event}>
-                    {r.event}
-                  </span>
-                </DataSheetCell>
-                <DataSheetCell>
-                  <LeadCell
-                    align="start"
-                    icon={<ActivityModuleIcon module={r.module} />}
-                    title={<span className="act-module-label">{r.module}</span>}
-                  />
-                </DataSheetCell>
               </DataSheetRow>
             ))
           )}
-          <DashboardDataSheetFill columns={5} />
+          <DashboardDataSheetFill columns={4} />
         </DataSheet>
 
         {selected.length > 0 ? (

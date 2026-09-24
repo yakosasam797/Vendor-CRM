@@ -1021,10 +1021,7 @@
   }
 }
 
-/*
-  Vendor-scoped service record. It mirrors the service directory detail but
-  intentionally omits the aggregate KPI matrix in this one-vendor context.
-*/
+/* Vendor-scoped service record uses the same information system as the directory detail. */
 .svc-vendor-detail {
   padding-bottom: 32px;
 }
@@ -1035,11 +1032,6 @@
 
 .svc-vendor-detail .service-directory-detail__tabs {
   margin-bottom: 28px;
-}
-
-.svc-vendor-overview {
-  gap: 0;
-  padding-bottom: 0;
 }
 
 .svc-vendor-detail .service-detail-panels {
@@ -1116,109 +1108,6 @@
   padding: 24px var(--page-pad, 20px);
 }
 
-.svc-test-service {
-  margin: 0 calc(var(--page-pad, 16px) * -1);
-  padding-bottom: 32px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.svc-test-service__summary {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 24px;
-  min-height: 104px;
-  box-sizing: border-box;
-  padding: 18px var(--page-pad, 20px);
-  border-bottom: 1px solid var(--line);
-  background: var(--side, #fcfbfa);
-}
-
-.svc-test-service__summary h2 {
-  margin: 0;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.svc-test-service__summary > div > p:last-child {
-  max-width: 680px;
-  margin: 5px 0 0;
-  color: var(--ink-2);
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-
-.svc-test-service__eyebrow {
-  margin: 0 0 6px;
-  color: var(--accent-ink, var(--accent));
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.svc-test-service__checks {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.svc-test-service__check {
-  display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 88px;
-  padding: 14px var(--page-pad, 20px);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.svc-test-service__check:nth-child(2n) {
-  border-right: 0;
-}
-
-.svc-test-service__check:nth-last-child(-n + 2) {
-  border-bottom: 0;
-}
-
-.svc-test-service__icon {
-  display: grid;
-  width: 32px;
-  height: 32px;
-  place-items: center;
-  border: 1px solid var(--warn-line);
-  border-radius: var(--radius-md);
-  background: var(--warn-bg);
-  color: var(--warn);
-}
-
-.svc-test-service__icon.is-passed {
-  border-color: var(--ok-line);
-  background: var(--ok-bg);
-  color: var(--ok);
-}
-
-.svc-test-service__check h3 {
-  margin: 0;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 13.5px;
-  font-weight: 650;
-}
-
-.svc-test-service__check p {
-  margin: 3px 0 0;
-  color: var(--ink-2);
-  font-size: 12px;
-  line-height: 1.45;
-}
-
 @media (max-width: 620px) {
   .svc-vendor-detail .service-directory-detail__identity {
     align-items: flex-start;
@@ -1232,24 +1121,5 @@
   .svc-vendor-detail__image-placeholder {
     width: 56px;
     height: 56px;
-  }
-
-  .svc-test-service__summary {
-    flex-direction: column;
-  }
-
-  .svc-test-service__checks {
-    grid-template-columns: 1fr;
-  }
-
-  .svc-test-service__check,
-  .svc-test-service__check:nth-child(2n),
-  .svc-test-service__check:nth-last-child(-n + 2) {
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .svc-test-service__check:last-child {
-    border-bottom: 0;
   }
 }

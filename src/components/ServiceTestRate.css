@@ -17,45 +17,6 @@
   border-right: 1px solid var(--line);
 }
 
-.service-test-rate__input-head,
-.service-test-rate__results-head {
-  min-height: 100px;
-  box-sizing: border-box;
-  padding: 18px var(--page-pad, 20px);
-  border-bottom: 1px solid var(--line);
-  background: var(--side, #fcfbfa);
-}
-
-.service-test-rate__input-head h2,
-.service-test-rate__results-head h2 {
-  margin: 0;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.service-test-rate__input-head > div > p:last-child,
-.service-test-rate__results-head > div > p:last-child {
-  max-width: 580px;
-  margin: 5px 0 0;
-  color: var(--ink-2);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.service-test-rate__eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 0 6px;
-  color: var(--accent-ink, var(--accent));
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 600;
-}
-
 .service-test-rate__fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -75,8 +36,7 @@
 }
 
 .service-test-rate__field > span:first-child,
-.service-test-rate__traveller-head > div > span,
-.service-test-rate__best > span {
+.service-test-rate__traveller-head > div > span {
   color: var(--ink-2);
   font-size: 10.5px;
   font-weight: 650;
@@ -228,36 +188,14 @@
   color: var(--ok, var(--accent));
 }
 
-.service-test-rate__results-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 22px;
-}
-
-.service-test-rate__best {
-  flex: none;
-  text-align: right;
-}
-
-.service-test-rate__best strong {
-  display: block;
-  margin-top: 6px;
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 25px;
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-
 .service-test-rate__quote-picker {
   display: grid;
   border-bottom: 1px solid var(--line);
 }
 
-.service-test-rate__quote-picker > button {
+.service-test-rate__quote-picker > div {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto minmax(88px, auto);
+  grid-template-columns: 34px minmax(0, 1fr) minmax(88px, auto);
   align-items: center;
   gap: 10px;
   min-height: 65px;
@@ -266,22 +204,11 @@
   border-bottom: 1px solid var(--line-2, var(--line));
   background: transparent;
   color: inherit;
-  font: inherit;
   text-align: left;
-  cursor: pointer;
 }
 
-.service-test-rate__quote-picker > button:last-child {
+.service-test-rate__quote-picker > div:last-child {
   border-bottom: 0;
-}
-
-.service-test-rate__quote-picker > button:hover,
-.service-test-rate__quote-picker > button.is-selected {
-  background: var(--side, #fcfbfa);
-}
-
-.service-test-rate__quote-picker > button.is-selected {
-  box-shadow: inset 3px 0 0 var(--pink, var(--accent));
 }
 
 .service-test-rate__avatar {
@@ -326,131 +253,6 @@
   text-align: right;
 }
 
-.service-test-rate__selected-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 15px var(--page-pad, 20px) 10px;
-}
-
-.service-test-rate__selected-head > div {
-  display: grid;
-  gap: 3px;
-}
-
-.service-test-rate__selected-head span {
-  color: var(--ink-3);
-  font-size: 11px;
-}
-
-.service-test-rate__selected-head strong {
-  color: var(--ink);
-  font-size: 13px;
-}
-
-.service-test-rate__selected-head button {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--accent-ink, var(--accent));
-  font: inherit;
-  font-size: 11.5px;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.service-test-rate__night-table {
-  margin: 0 var(--page-pad, 20px);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-}
-
-.service-test-rate__night-row {
-  display: grid;
-  grid-template-columns: minmax(110px, 1.1fr) minmax(90px, 0.9fr) repeat(3, minmax(74px, 0.72fr));
-  align-items: center;
-  min-height: 49px;
-  border-bottom: 1px solid var(--line-2, var(--line));
-  color: var(--ink-2);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-}
-
-.service-test-rate__night-row:last-child {
-  border-bottom: 0;
-}
-
-.service-test-rate__night-row > span,
-.service-test-rate__night-row > strong {
-  min-width: 0;
-  padding-right: 10px;
-  text-align: right;
-}
-
-.service-test-rate__night-row > :first-child,
-.service-test-rate__night-row > :nth-child(2) {
-  text-align: left;
-}
-
-.service-test-rate__night-row strong {
-  color: var(--ink);
-}
-
-.service-test-rate__night-row--head {
-  min-height: 36px;
-  color: var(--ink-3);
-  font-family: var(--font-sans);
-  font-size: 10px;
-  font-weight: 650;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.service-test-rate__summary {
-  padding: 13px var(--page-pad, 20px) 18px;
-}
-
-.service-test-rate__summary > div {
-  display: grid;
-  grid-template-columns: minmax(118px, 0.8fr) minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: baseline;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--line-2, var(--line));
-}
-
-.service-test-rate__summary span {
-  color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 650;
-}
-
-.service-test-rate__summary small {
-  overflow: hidden;
-  color: var(--ink-3);
-  font-size: 11.5px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.service-test-rate__summary strong {
-  color: var(--ink);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-}
-
-.service-test-rate__summary > .service-test-rate__grand-total {
-  margin-top: 4px;
-  padding-top: 14px;
-  border-bottom: 0;
-  border-top: 1px solid var(--ink);
-}
-
-.service-test-rate__grand-total span,
-.service-test-rate__grand-total strong {
-  font-size: 15px;
-}
 
 .service-test-rate__empty {
   display: flex;
@@ -499,23 +301,7 @@
     grid-column: 1 / -1;
   }
 
-  .service-test-rate__quote-picker > button {
+  .service-test-rate__quote-picker > div {
     grid-template-columns: 34px minmax(0, 1fr) auto;
-  }
-
-  .service-test-rate__quote-picker .pt-status {
-    display: none;
-  }
-
-  .service-test-rate__night-table {
-    overflow-x: auto;
-  }
-
-  .service-test-rate__night-row {
-    min-width: 580px;
-  }
-
-  .service-test-rate__summary > div {
-    grid-template-columns: minmax(110px, 0.8fr) minmax(0, 1fr) auto;
   }
 }

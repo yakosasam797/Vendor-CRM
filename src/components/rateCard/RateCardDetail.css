@@ -225,16 +225,21 @@
   white-space: nowrap;
 }
 
-/* Global rate-card markup — view / edit / save under season */
+/* Commercial markup summary — deliberately last in the rate-card flow. */
 .rc-markup {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px 20px;
-  margin: 0 0 28px;
-  padding: 14px 0 18px;
-  border-bottom: 1px solid var(--line);
+  margin: 30px 0 0;
+  padding: 20px 0 24px;
+  border-top: 1px solid var(--line);
+}
+
+.rc-markup__copy {
+  min-width: 0;
+  max-width: 560px;
 }
 
 .rc-markup__title {
@@ -244,6 +249,13 @@
   font-weight: var(--type-heading-section-weight, 700);
   letter-spacing: var(--type-heading-section-tracking, -0.02em);
   color: var(--ink);
+}
+
+.rc-markup__desc {
+  margin: 4px 0 0;
+  color: var(--ink-2);
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .rc-markup__aside {

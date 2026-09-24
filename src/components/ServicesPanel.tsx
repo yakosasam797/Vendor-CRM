@@ -7,6 +7,7 @@ import {
   DataSheetCell,
   DataSheetHeader,
   DataSheetRow,
+  EmptyState,
   FilterSelect,
   IconButton,
   LeadCell,
@@ -17,6 +18,7 @@ import {
   StatusChip,
   TabBar,
   type CheckboxState,
+  type StatusTone,
   type TabItem,
 } from "@paryatech/design-system";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
@@ -39,6 +41,7 @@ import { VENDORS } from "../data/vendors";
 import type { PageNavigationChange } from "../pageNavigation";
 import {
   IconCard,
+  IconBuilding,
   IconCheck,
   IconClose,
   IconImage,
@@ -54,7 +57,9 @@ import { AnchoredImport } from "./AnchoredImport";
 import { CreateVendorServicePage } from "./CreateVendorServicePage";
 import { ServiceTestRate } from "./ServiceTestRate";
 import { StatusChipWithDot } from "./StatusChipWithDot";
+import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTypeLabel } from "./ServiceTypeLabel";
+import { ServiceRateDetails } from "./VendorsListPage";
 import "./ServicesPanel.css";
 
 type MediaOpen = {
@@ -285,79 +290,20 @@ function ServiceMediaImage({ item }: { item: ServiceMedia }) {
   );
 }
 
-type ServiceDetailTab = "overview" | "test-service" | "test-price" | "rate-cards";
+type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate";
 
-function VendorServiceTest({ service, vendorName }: { service: VendorService; vendorName: string }) {
-  const checks = [
-    {
-      label: "Profile",
-      description: "Required service details and search information are available.",
-      passed: Boolean(service.name && service.location && service.about && service.profile.searchText),
-    },
-    {
-      label: "Media",
-      description: "At least one service image is available for proposals and packages.",
-      passed: service.media.length > 0,
-    },
-    {
-      label: "Price source",
-      description: "A linked rate card is available for price testing.",
-      passed: service.rateCards.length > 0,
-    },
-    {
-      label: "Publishing status",
-      description: "The service is available for operational use.",
-      passed: service.status !== "draft",
-    },
-  ];
-  const passedCount = checks.filter((check) => check.passed).length;
-  const ready = passedCount === checks.length;
-
-  return (
-    <div className="svc-test-service">
-      <section className="svc-test-service__summary" aria-labelledby="svc-test-service-title">
-        <div>
-          <p className="svc-test-service__eyebrow">Service test</p>
-          <h2 id="svc-test-service-title">{ready ? "Ready to use" : "Needs attention"}</h2>
-          <p>
-            Validate that {service.name} from {vendorName} has everything needed before it is used
-            in a booking or package.
-          </p>
-        </div>
-        <StatusChipWithDot tone={ready ? "done" : "progress"}>
-          {passedCount} of {checks.length} passed
-        </StatusChipWithDot>
-      </section>
-
-      <div className="svc-test-service__checks">
-        {checks.map((check) => (
-          <article className="svc-test-service__check" key={check.label}>
-            <span
-              className={check.passed ? "svc-test-service__icon is-passed" : "svc-test-service__icon"}
-              aria-hidden="true"
-            >
-              {check.passed ? <IconCheck size={16} /> : <IconWarn size={16} />}
-            </span>
-            <div>
-              <h3>{check.label}</h3>
-              <p>{check.description}</p>
-            </div>
-            <StatusChipWithDot tone={check.passed ? "done" : "progress"}>
-              {check.passed ? "Passed" : "Review"}
-            </StatusChipWithDot>
-          </article>
-        ))}
-      </div>
-    </div>
-  );
+function serviceConnectionTone(status: VendorServiceConnection["status"]): StatusTone {
+  if (status === "Active") return "done";
+  if (status === "Expiring soon") return "progress";
+  return "open";
 }
 
-function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", onOpenRateCard }: {
+function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCard, onOpenVendor }: {
   service: VendorService;
-  vendorName: string;
   canEdit: boolean;
   initialTab?: ServiceDetailTab;
   onOpenRateCard?: (id: string) => void;
+  onOpenVendor?: (id: string) => void;
 }) {
   const [profile, setProfile] = useState<ServiceDraft>(() => draftFromService(service));
   const [draft, setDraft] = useState<ServiceDraft>(() => draftFromService(service));
@@ -365,6 +311,8 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
   const [mediaItems, setMediaItems] = useState<ServiceMedia[]>(service.media);
   const [editingMedia, setEditingMedia] = useState(false);
   const [tab, setTab] = useState<ServiceDetailTab>(initialTab);
+  const [selectedVendorIds, setSelectedVendorIds] = useState<string[]>([]);
+  const [linkedVendorMenu, setLinkedVendorMenu] = useState<{ vendorId: string; top: number; left: number } | null>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
 
   const detailFields = [
@@ -378,13 +326,6 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
   const orderedMedia = [...mediaItems].sort(
     (a, b) => Number(Boolean(b.usedInBanner)) - Number(Boolean(a.usedInBanner)),
   );
-  const tabs: TabItem[] = [
-    { id: "overview", label: "Overview" },
-    { id: "test-service", label: "Test service" },
-    { id: "test-price", label: "Test price" },
-    { id: "rate-cards", label: "Rate cards", count: service.rateCards.length },
-  ];
-
   const directoryService = useMemo<DirectoryService>(() => {
     const existing = DIRECTORY_SERVICES.find((item) => item.serviceId === service.id);
     if (existing) return existing;
@@ -401,8 +342,7 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
 
   const testPriceConnections = useMemo<VendorServiceConnection[]>(() => {
     const linked = VENDOR_SERVICE_CONNECTIONS.filter(
-      (connection) =>
-        connection.vendorId === service.vendorId && connection.serviceId === directoryService.id,
+      (connection) => connection.serviceId === directoryService.id,
     );
     if (linked.length) return linked;
     return service.rateCards.map((rateCard, index) => ({
@@ -417,6 +357,101 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
       status: service.status === "draft" ? "Draft" : "Active",
     }));
   }, [directoryService.id, service]);
+
+  const linkedVendors = useMemo(
+    () => testPriceConnections.flatMap((connection) => {
+      const vendor = VENDORS.find((item) => item.id === connection.vendorId);
+      return vendor ? [{ connection, vendor }] : [];
+    }),
+    [testPriceConnections],
+  );
+  const linkedRateCardCount = new Set(testPriceConnections.map((connection) => connection.rateCardId)).size;
+  const activeConnectionCount = testPriceConnections.filter((connection) => connection.status === "Active").length;
+  const attentionConnectionCount = testPriceConnections.length - activeConnectionCount;
+  const primaryMediaCount = mediaItems.filter((item) => item.usedInBanner).length;
+  const tabs: TabItem[] = [
+    { id: "overview", label: "Overview" },
+    { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
+    { id: "vendors", label: "Vendors", count: linkedVendors.length },
+    { id: "test-rate", label: "Test rate" },
+  ];
+  const serviceSummary: SummaryField[] = [
+    {
+      id: "location",
+      label: "Base location",
+      value: service.location,
+      note: service.type,
+      icon: <IconPin size={15} />,
+    },
+    {
+      id: "vendors",
+      label: "Vendor coverage",
+      value: linkedVendors.length,
+      note: `${activeConnectionCount} active vendor${activeConnectionCount === 1 ? "" : "s"}`,
+      icon: <IconBuilding size={15} />,
+    },
+    {
+      id: "rate-cards",
+      label: "Rate cards",
+      value: linkedRateCardCount,
+      note: "Linked pricing records",
+      icon: <IconCard size={15} />,
+    },
+    {
+      id: "media",
+      label: "Media",
+      value: mediaItems.length,
+      note: `${primaryMediaCount} primary banner${primaryMediaCount === 1 ? "" : "s"}`,
+      icon: <IconImage size={15} />,
+    },
+  ];
+  const vendorSummary: SummaryField[] = [
+    {
+      id: "connected",
+      label: "Connected vendors",
+      value: linkedVendors.length,
+      note: "Supplier relationships",
+      icon: <IconBuilding size={15} />,
+    },
+    {
+      id: "active",
+      label: "Active supply",
+      value: activeConnectionCount,
+      note: "Ready for costing",
+      icon: <IconCheck size={15} />,
+      tone: "ok",
+    },
+    {
+      id: "attention",
+      label: "Needs attention",
+      value: attentionConnectionCount,
+      note: `${attentionConnectionCount} relationship${attentionConnectionCount === 1 ? "" : "s"}`,
+      icon: <IconWarn size={15} />,
+      tone: attentionConnectionCount > 0 ? "warn" : "ok",
+    },
+    {
+      id: "pricing",
+      label: "Rate cards",
+      value: linkedRateCardCount,
+      note: "Current pricing sources",
+      icon: <IconCard size={15} />,
+    },
+  ];
+  const linkedVendorIds = linkedVendors.map(({ vendor }) => vendor.id);
+  const vendorHeaderState: CheckboxState = selectedVendorIds.length === 0
+    ? "off"
+    : selectedVendorIds.length === linkedVendorIds.length
+      ? "on"
+      : "indeterminate";
+
+  useEffect(() => {
+    if (!linkedVendorMenu) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setLinkedVendorMenu(null);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [linkedVendorMenu]);
 
   const beginEditing = () => {
     setDraft(profile);
@@ -461,6 +496,7 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
   };
 
   return (
+    <>
     <div className="service-directory-detail svc-vendor-detail">
       <header className="service-directory-detail__record">
         <div className="service-directory-detail__identity">
@@ -515,6 +551,10 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
 
       {tab === "overview" ? (
         <div className="service-overview svc-vendor-overview">
+          <div className="service-overview__summary">
+            <SummaryStrip title="Service overview" columns={4} fields={serviceSummary} />
+          </div>
+
           <div className="service-detail-panels">
             <div className="service-detail-panels__layout">
               <section className="service-detail-panel" aria-labelledby="svc-profile-title">
@@ -645,37 +685,177 @@ function ServiceDetail({ service, vendorName, canEdit, initialTab = "overview", 
             </div>
           </div>
         </div>
-      ) : tab === "test-service" ? (
-        <VendorServiceTest service={service} vendorName={vendorName} />
-      ) : tab === "test-price" ? (
+      ) : tab === "rate-details" ? (
+        <ServiceRateDetails
+          connections={testPriceConnections}
+          vendors={VENDORS}
+          onOpenRateCard={(_, rateCardId) => onOpenRateCard?.(rateCardId)}
+        />
+      ) : tab === "test-rate" ? (
         <ServiceTestRate
           service={directoryService}
           connections={testPriceConnections}
           vendors={VENDORS}
-          onOpenRateCard={(_vendorId, rateCardId) => onOpenRateCard?.(rateCardId)}
         />
-      ) : (
-        <div className="svc-vendor-rates">
-          <section className="svc-linked-rates" aria-labelledby="svc-rates-title">
-            <div className="svc-section-head">
-              <div>
-                <h2 id="svc-rates-title" className="svc-section-head__title">Linked rate cards</h2>
-                <p className="svc-section-head__sub">Pricing records from {vendorName} that cover this service.</p>
+      ) : tab === "vendors" ? (
+        <div className="service-vendors-overview">
+          <div className="service-vendors-overview__summary">
+            <SummaryStrip title="Vendor coverage" columns={4} fields={vendorSummary} />
+          </div>
+
+          <section className="service-suppliers" aria-labelledby="vendor-service-suppliers-title">
+            <div className="service-section-head">
+              <h2 id="vendor-service-suppliers-title">Linked vendors</h2>
+              {linkedVendors.length > 0 ? (
+                <span className="service-suppliers__count">
+                  {activeConnectionCount} active of {linkedVendors.length}
+                </span>
+              ) : null}
+            </div>
+            {linkedVendors.length === 0 ? (
+              <EmptyState
+                title="No vendors linked"
+                description="Link a vendor to make this service available for costing."
+              />
+            ) : (
+              <div className="service-directory-detail__sheet">
+                <DataSheet className="service-suppliers-sheet" aria-label={`Vendors providing ${service.name}`}>
+                  <DataSheetHeader>
+                    <DataSheetCell check>
+                      <Checkbox
+                        state={vendorHeaderState}
+                        onCheckedChange={(state) => setSelectedVendorIds(state === "on" ? linkedVendorIds : [])}
+                        label="Select all vendors"
+                      />
+                    </DataSheetCell>
+                    <DataSheetCell>Vendor</DataSheetCell>
+                    <DataSheetCell>Supplier relationship</DataSheetCell>
+                    <DataSheetCell>Location</DataSheetCell>
+                    <DataSheetCell>Current rate card</DataSheetCell>
+                    <DataSheetCell>Status</DataSheetCell>
+                    <DataSheetCell className="service-suppliers-sheet__action">Action</DataSheetCell>
+                  </DataSheetHeader>
+                  {linkedVendors.map(({ connection, vendor }) => (
+                    <DataSheetRow
+                      key={connection.id}
+                      className="data-row--interactive"
+                      role="link"
+                      tabIndex={0}
+                      aria-label={`Open ${vendor.name}`}
+                      onClick={(event) => {
+                        const target = event.target as HTMLElement;
+                        if (target.closest("button, a, input, select, textarea")) return;
+                        onOpenVendor?.(vendor.id);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.target !== event.currentTarget) return;
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          onOpenVendor?.(vendor.id);
+                        }
+                      }}
+                    >
+                      <DataSheetCell check>
+                        <Checkbox
+                          state={selectedVendorIds.includes(vendor.id) ? "on" : "off"}
+                          onCheckedChange={(state) => setSelectedVendorIds((current) => (
+                            state === "on"
+                              ? current.includes(vendor.id) ? current : [...current, vendor.id]
+                              : current.filter((id) => id !== vendor.id)
+                          ))}
+                          label={`Select ${vendor.name}`}
+                        />
+                      </DataSheetCell>
+                      <DataSheetCell>
+                        <LeadCell
+                          align="start"
+                          icon={vendor.imageUrl ? (
+                            <img className="services-sheet__thumb" src={vendor.imageUrl} alt="" width={36} height={36} />
+                          ) : (
+                            <span className="services-sheet__thumb services-sheet__thumb--empty" aria-hidden="true">
+                              {vendor.initials}
+                            </span>
+                          )}
+                          title={vendor.name}
+                          subtitle={vendor.code}
+                        />
+                      </DataSheetCell>
+                      <DataSheetCell>
+                        <StackCell>
+                          <StackLine>{connection.supplierType}</StackLine>
+                          <StackLine muted>{connection.productsCovered}</StackLine>
+                        </StackCell>
+                      </DataSheetCell>
+                      <DataSheetCell>
+                        <span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span>
+                      </DataSheetCell>
+                      <DataSheetCell>
+                        <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard?.(connection.rateCardId)}>
+                          {connection.rateCardName}
+                        </button>
+                      </DataSheetCell>
+                      <DataSheetCell>
+                        <StatusChipWithDot tone={serviceConnectionTone(connection.status)}>{connection.status}</StatusChipWithDot>
+                      </DataSheetCell>
+                      <DataSheetCell className="service-suppliers-sheet__action">
+                        <div className="services-sheet__act">
+                          <IconButton
+                            label={`More actions for ${vendor.name}`}
+                            aria-haspopup="menu"
+                            aria-expanded={linkedVendorMenu?.vendorId === vendor.id}
+                            onClick={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect();
+                              setLinkedVendorMenu((current) => current?.vendorId === vendor.id ? null : {
+                                vendorId: vendor.id,
+                                top: rect.bottom + 6,
+                                left: Math.max(12, Math.min(window.innerWidth - 184, rect.right - 172)),
+                              });
+                            }}
+                          >
+                            <IconMore />
+                          </IconButton>
+                        </div>
+                      </DataSheetCell>
+                    </DataSheetRow>
+                  ))}
+                </DataSheet>
+                <Pagination
+                  rangeLabel={`Showing 1–${linkedVendors.length} of ${linkedVendors.length} vendors`}
+                  page={1}
+                  pageCount={1}
+                  onPageChange={() => {}}
+                />
               </div>
-            </div>
-            <div className="svc-rate-cards">
-              {service.rateCards.length === 0 ? <p className="svc-detail__empty">No rate card linked yet.</p> : service.rateCards.map((rateCard) => (
-                <button key={rateCard.id} type="button" className="svc-rate-card" onClick={() => onOpenRateCard?.(rateCard.id)}>
-                  <span className="svc-rate-card__icon" aria-hidden="true"><IconCard size={16} /></span>
-                  <span className="svc-rate-card__name">{rateCard.name}</span>
-                  <span className="svc-rate-card__go">Open rate card</span>
-                </button>
-              ))}
-            </div>
+            )}
           </section>
         </div>
-      )}
+      ) : null}
     </div>
+    {linkedVendorMenu ? createPortal(
+      <div className="services-sheet__menu-overlay" role="presentation" onClick={() => setLinkedVendorMenu(null)}>
+        <div
+          className="services-sheet__menu"
+          role="menu"
+          aria-label={`Actions for ${linkedVendors.find(({ vendor }) => vendor.id === linkedVendorMenu.vendorId)?.vendor.name ?? "vendor"}`}
+          style={{ top: linkedVendorMenu.top, left: linkedVendorMenu.left }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              const vendorId = linkedVendorMenu.vendorId;
+              setLinkedVendorMenu(null);
+              onOpenVendor?.(vendorId);
+            }}
+          >
+            Open vendor
+          </button>
+        </div>
+      </div>,
+      document.body,
+    ) : null}
+    </>
   );
 }
 
@@ -686,6 +866,7 @@ export function ServicesPanel({
   openServiceId = null,
   onOpenServiceIdChange,
   onOpenRateCard,
+  onOpenVendor,
   onNavigationContextChange,
 }: {
   vendorId?: string;
@@ -694,6 +875,7 @@ export function ServicesPanel({
   openServiceId?: string | null;
   onOpenServiceIdChange?: (id: string | null) => void;
   onOpenRateCard?: (id: string) => void;
+  onOpenVendor?: (id: string) => void;
   onNavigationContextChange?: PageNavigationChange;
 }) {
   const [query, setQuery] = useState("");
@@ -777,10 +959,10 @@ export function ServicesPanel({
       <ServiceDetail
         key={openService.id}
         service={openService}
-        vendorName={vendorName}
         canEdit={canEdit}
         initialTab={openServiceTab}
         onOpenRateCard={onOpenRateCard}
+        onOpenVendor={onOpenVendor}
       />
     );
   }
@@ -968,9 +1150,8 @@ export function ServicesPanel({
             style={{ top: serviceMenu.top, left: serviceMenu.left }}
             onClick={(event) => event.stopPropagation()}
           >
-            <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "test-service")}>Test service</button>
-            <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "test-price")}>Test price</button>
-            <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "rate-cards")}>Open rate cards</button>
+            <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "test-rate")}>Test rate</button>
+            <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "rate-details")}>Open rate details</button>
           </div>
         </div>,
         document.body,

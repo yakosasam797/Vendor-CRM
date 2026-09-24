@@ -560,8 +560,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Vendor desk",
     initials: "AM",
     avatarTone: "pink",
-    event: "Updated the reservations contact and operating phone number",
+    event: "Contact details updated",
     module: "Vendor",
+    context: "Vendor profile",
   },
   {
     id: "vendor-act-2",
@@ -571,8 +572,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Operations",
     initials: "VJ",
     avatarTone: "default",
-    event: "Marked booking BK-2026-000003 as at risk",
+    event: "Booking marked at risk",
     module: "Bookings",
+    context: "Bookings · BK-2026-000003",
   },
   {
     id: "vendor-act-3",
@@ -582,8 +584,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Finance",
     initials: "DT",
     avatarTone: "default",
-    event: "Recorded partial settlement against the September supplier statement",
+    event: "Partial settlement recorded",
     module: "Finance",
+    context: "Finance · September statement",
   },
   {
     id: "vendor-act-4",
@@ -593,8 +596,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Vendor desk",
     initials: "AM",
     avatarTone: "pink",
-    event: "Uploaded the renewed GST registration certificate",
+    event: "GST certificate renewed",
     module: "Docs",
+    context: "Docs",
   },
   {
     id: "vendor-act-5",
@@ -604,8 +608,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Vendor desk",
     initials: "AM",
     avatarTone: "pink",
-    event: "Published Accommodation tariff 2026–27",
+    event: "Rate card published",
     module: "Rate cards",
+    context: "Rate cards · Accommodation 2026–27",
   },
   {
     id: "vendor-act-6",
@@ -615,8 +620,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Operations",
     initials: "RS",
     avatarTone: "default",
-    event: "Added the peak-season blackout window to Lake & garden stay",
+    event: "Blackout window added",
     module: "Services",
+    context: "Services · Lake & garden stay",
   },
   {
     id: "vendor-act-7",
@@ -626,8 +632,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Operations",
     initials: "MI",
     avatarTone: "default",
-    event: "Completed supplier handoff for the Kapoor group booking",
+    event: "Supplier handoff completed",
     module: "Bookings",
+    context: "Bookings · Kapoor group",
   },
   {
     id: "vendor-act-8",
@@ -637,8 +644,9 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     role: "Operations",
     initials: "VJ",
     avatarTone: "default",
-    event: "Sent a WhatsApp request for updated room inventory",
+    event: "Inventory request sent",
     module: "Communications",
+    context: "Communications · WhatsApp",
   },
 ];
 
@@ -654,8 +662,9 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       role: "Vendor desk",
       initials: vendor.ownerInitials,
       avatarTone: "pink",
-      event: `Reviewed operating coverage for ${primaryCategory}`,
+      event: "Coverage reviewed",
       module: "Services",
+      context: `Services · ${primaryCategory}`,
     },
     {
       id: `${vendor.id}-activity-location`,
@@ -665,8 +674,9 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       role: "Vendor desk",
       initials: vendor.ownerInitials,
       avatarTone: "pink",
-      event: `Confirmed ${vendor.city} as the vendor's base location`,
+      event: "Base location confirmed",
       module: "Vendor",
+      context: `Vendor profile · ${vendor.city}`,
     },
     {
       id: `${vendor.id}-activity-owner`,
@@ -676,8 +686,9 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       role: "Operations",
       initials: "VJ",
       avatarTone: "default",
-      event: `Assigned ${vendor.owner} as the internal owner`,
+      event: "Internal owner assigned",
       module: "Vendor",
+      context: `Vendor profile · ${vendor.owner}`,
     },
     {
       id: `${vendor.id}-activity-contact`,
@@ -687,8 +698,9 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       role: "Vendor desk",
       initials: vendor.ownerInitials,
       avatarTone: "pink",
-      event: `Verified supplier contact routing for ${vendor.name}`,
+      event: "Contact routing verified",
       module: "Communications",
+      context: "Communications",
     },
     {
       id: `${vendor.id}-activity-directory`,
@@ -698,8 +710,9 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       role: "Operations",
       initials: "VJ",
       avatarTone: "default",
-      event: `Added the vendor to the ${primaryCategory} directory`,
-      module: "Vendor",
+      event: "Directory listing added",
+      module: "Services",
+      context: `Services · ${primaryCategory}`,
     },
   ];
 }
@@ -723,8 +736,9 @@ export function vendorActivityForVendor(vendor: Vendor): ActivityRow[] {
     role: event.role,
     initials: initialsFor(event.actor),
     avatarTone: "pink" as const,
-    event: event.event,
+    event: event.at === "Imported" ? "Vendor profile imported" : event.event,
     module: event.area,
+    context: event.area === "Vendor" ? "Vendor profile" : event.area,
   }));
 
   const recentProfileEvents = profileEvents.filter((event) => event.date !== "Imported");

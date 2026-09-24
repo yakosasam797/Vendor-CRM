@@ -9,7 +9,6 @@ import {
   IconPlus,
   IconUser,
 } from "../icons";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import "./ServiceTestRate.css";
 
 type ChildInput = {
@@ -18,21 +17,9 @@ type ChildInput = {
   bed: "extra" | "none" | "existing" | "cot";
 };
 
-type NightPrice = {
-  date: Date;
-  dateLabel: string;
-  priceSet: "Shoulder" | "Weekend";
-  room: number;
-  guests: number;
-  total: number;
-};
-
 type VendorQuote = {
   connection: VendorServiceConnection;
   vendor: Vendor;
-  nightRows: NightPrice[];
-  roomTotal: number;
-  guestTotal: number;
   total: number;
 };
 
@@ -78,31 +65,14 @@ function addDays(date: Date, count: number) {
   return result;
 }
 
-function dateLabel(date: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
-
-function bedLabel(bed: ChildInput["bed"]) {
-  if (bed === "extra") return "with extra bed";
-  if (bed === "existing") return "on existing bed";
-  if (bed === "cot") return "with cot";
-  return "without extra bed";
-}
-
 export function ServiceTestRate({
   service,
   connections,
   vendors,
-  onOpenRateCard,
 }: {
   service: DirectoryService;
   connections: VendorServiceConnection[];
   vendors: Vendor[];
-  onOpenRateCard: (vendorId: string, rateCardId: string) => void;
 }) {
   const [checkIn, setCheckIn] = useState("2026-10-12");
   const [nights, setNights] = useState(3);
@@ -111,7 +81,6 @@ export function ServiceTestRate({
   const [adults, setAdults] = useState(2);
   const [rooms, setRooms] = useState(1);
   const [children, setChildren] = useState<ChildInput[]>([{ id: 1, age: 8, bed: "none" }]);
-  const [selectedConnectionId, setSelectedConnectionId] = useState<string | null>(connections[0]?.id ?? null);
 
   const roomType = ROOM_TYPES.find((room) => room.id === roomTypeId) ?? ROOM_TYPES[0];
   const mealPlan = MEAL_PLANS.find((meal) => meal.id === mealPlanId) ?? MEAL_PLANS[1];
@@ -135,38 +104,20 @@ export function ServiceTestRate({
         }, 0);
         const guestPerNight = extraAdults * 2200 + childPerNight;
 
-        const nightRows = Array.from({ length: nights }, (_, index) => {
+        const roomTotal = Array.from({ length: nights }, (_, index) => {
           const date = addDays(startDate, index);
           const weekend = date.getDay() === 0 || date.getDay() === 6;
-          const roomRate = (roomType.base + mealPlan.add + supplierAdjustment + (weekend ? 550 : 0)) * rooms;
-          return {
-            date,
-            dateLabel: dateLabel(date),
-            priceSet: weekend ? "Weekend" : "Shoulder",
-            room: roomRate,
-            guests: guestPerNight,
-            total: roomRate + guestPerNight,
-          } satisfies NightPrice;
-        });
-
-        const roomTotal = nightRows.reduce((total, night) => total + night.room, 0);
-        const guestTotal = nightRows.reduce((total, night) => total + night.guests, 0);
+          return (roomType.base + mealPlan.add + supplierAdjustment + (weekend ? 550 : 0)) * rooms;
+        }).reduce((total, amount) => total + amount, 0);
+        const guestTotal = guestPerNight * nights;
         return {
           connection,
           vendor,
-          nightRows,
-          roomTotal,
-          guestTotal,
           total: roomTotal + guestTotal,
         } satisfies VendorQuote;
       })
-      .filter((quote): quote is VendorQuote => Boolean(quote))
-      .sort((a, b) => a.total - b.total);
+      .filter((quote): quote is VendorQuote => Boolean(quote));
   }, [adults, checkIn, children, connections, mealPlan.add, nights, roomType.base, rooms, vendors]);
-
-  const selectedQuote = quotes.find((quote) => quote.connection.id === selectedConnectionId) ?? quotes[0];
-  const bestQuote = quotes[0];
-  const extraAdults = Math.max(0, adults - rooms * 2);
 
   const updateChild = (id: number, patch: Partial<ChildInput>) => {
     setChildren((current) => current.map((child) => (child.id === id ? { ...child, ...patch } : child)));
@@ -184,18 +135,7 @@ export function ServiceTestRate({
 
   return (
     <div className="service-test-rate">
-      <section className="service-test-rate__inputs" aria-labelledby="service-test-inputs-title">
-        <header className="service-test-rate__input-head">
-          <div>
-            <p className="service-test-rate__eyebrow">
-              <IconCard size={13} />
-              {service.serviceId.toUpperCase()}
-            </p>
-            <h2 id="service-test-inputs-title">Stay inputs</h2>
-            <p>Use one stay to compare every vendor price linked to this service.</p>
-          </div>
-        </header>
-
+      <section className="service-test-rate__inputs" aria-label={`Test price inputs for ${service.name}`}>
         <div className="service-test-rate__fields">
           <label className="service-test-rate__field">
             <span>Check-in</span>
@@ -286,71 +226,20 @@ export function ServiceTestRate({
         </div>
       </section>
 
-      <section className="service-test-rate__results" aria-labelledby="service-test-results-title">
-        <header className="service-test-rate__results-head">
-          <div>
-            <p className="service-test-rate__eyebrow">Live comparison</p>
-            <h2 id="service-test-results-title">Vendor prices</h2>
-            <p>{quotes.length} linked vendors · {nights} nights · {adults + children.length} travellers</p>
-          </div>
-          <div className="service-test-rate__best">
-            <span>Best price</span>
-            <strong>{bestQuote ? currency(bestQuote.total) : "—"}</strong>
-          </div>
-        </header>
-
-        {quotes.length && selectedQuote ? (
-          <>
-            <div className="service-test-rate__quote-picker" role="list" aria-label="Vendor quotes">
-              {quotes.map((quote, index) => (
-                <button
-                  type="button"
-                  key={quote.connection.id}
-                  className={quote.connection.id === selectedQuote.connection.id ? "is-selected" : undefined}
-                  onClick={() => setSelectedConnectionId(quote.connection.id)}
-                  role="listitem"
-                >
-                  <span className="service-test-rate__avatar" aria-hidden="true">{quote.vendor.initials}</span>
-                  <span className="service-test-rate__quote-name">
-                    <strong>{quote.vendor.name}</strong>
-                    <span>{quote.connection.supplierType} · {quote.connection.rateCardName}</span>
-                  </span>
-                  {index === 0 ? <StatusChipWithDot tone="done">Best</StatusChipWithDot> : null}
-                  <strong className="service-test-rate__quote-price">{currency(quote.total)}</strong>
-                </button>
-              ))}
-            </div>
-
-            <div className="service-test-rate__selected-head">
-              <div>
-                <span>{selectedQuote.vendor.name}</span>
-                <strong>{roomType.label} · {mealPlan.code}</strong>
+      <section className="service-test-rate__results" aria-label={`Vendor price comparison for ${service.name}`}>
+        {quotes.length ? (
+          <div className="service-test-rate__quote-picker" role="list" aria-label="Vendor prices">
+            {quotes.map((quote) => (
+              <div key={quote.connection.id} role="listitem">
+                <span className="service-test-rate__avatar" aria-hidden="true">{quote.vendor.initials}</span>
+                <span className="service-test-rate__quote-name">
+                  <strong>{quote.vendor.name}</strong>
+                  <span>{quote.connection.supplierType} · {quote.connection.rateCardName}</span>
+                </span>
+                <strong className="service-test-rate__quote-price">{currency(quote.total)}</strong>
               </div>
-              <button type="button" onClick={() => onOpenRateCard(selectedQuote.vendor.id, selectedQuote.connection.rateCardId)}>Open rate card</button>
-            </div>
-
-            <div className="service-test-rate__night-table" role="table" aria-label={`${selectedQuote.vendor.name} nightly price breakdown`}>
-              <div className="service-test-rate__night-row service-test-rate__night-row--head" role="row">
-                <span role="columnheader">Night</span><span role="columnheader">Price set</span><span role="columnheader">Room</span><span role="columnheader">Guests</span><span role="columnheader">Total</span>
-              </div>
-              {selectedQuote.nightRows.map((night) => (
-                <div className="service-test-rate__night-row" role="row" key={night.date.toISOString()}>
-                  <strong role="cell">{night.dateLabel}</strong>
-                  <span role="cell"><StatusChipWithDot tone={night.priceSet === "Weekend" ? "progress" : "done"}>{night.priceSet}</StatusChipWithDot></span>
-                  <span role="cell">{currency(night.room)}</span>
-                  <span role="cell">{night.guests ? currency(night.guests) : "—"}</span>
-                  <strong role="cell">{currency(night.total)}</strong>
-                </div>
-              ))}
-            </div>
-
-            <div className="service-test-rate__summary">
-              <div><span>Room rate</span><small>{nights} nights · {rooms} room{rooms === 1 ? "" : "s"} · {roomType.label}</small><strong>{currency(selectedQuote.roomTotal)}</strong></div>
-              {selectedQuote.guestTotal > 0 ? <div><span>Guest charges</span><small>{extraAdults ? `${extraAdults} extra adult${extraAdults === 1 ? "" : "s"}` : ""}{extraAdults && children.length ? " · " : ""}{children.map((child) => `Child ${child.age} ${bedLabel(child.bed)}`).join(", ")}</small><strong>{currency(selectedQuote.guestTotal)}</strong></div> : null}
-              <div><span>Tax</span><small>Included in supplier price</small><strong>—</strong></div>
-              <div className="service-test-rate__grand-total"><span>Stay total</span><small>{selectedQuote.connection.validity}</small><strong>{currency(selectedQuote.total)}</strong></div>
-            </div>
-          </>
+            ))}
+          </div>
         ) : (
           <div className="service-test-rate__empty">
             <IconCard size={20} />

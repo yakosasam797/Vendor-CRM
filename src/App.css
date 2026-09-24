@@ -143,6 +143,52 @@ button.app-top-search:focus-visible {
   flex: none;
 }
 
+/* Keep the sidebar credits footer on one compact row when Upgrade has an icon. */
+.pt-credits {
+  gap: 7px;
+}
+
+.pt-credits__info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pt-credits__num {
+  display: block;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.pt-credits__bar {
+  width: 58px;
+}
+
+.pt-credits .pt-credits__up {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-inline: 9px;
+  line-height: 1;
+}
+
+.pt-credits .pt-credits__up > svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+}
+
+.pt-credits .pt-credits__up > span {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+.pt-frame--collapsed .pt-credits__upgrade-tip {
+  display: none;
+}
+
 @media (max-width: 1000px) {
   button.app-top-search {
     width: min(260px, 31vw);
