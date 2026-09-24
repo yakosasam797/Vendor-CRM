@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Avatar,
   Button,
@@ -23,7 +24,15 @@ import {
   type TaskStatus,
   type VendorTask,
 } from "../data/tasks";
-import { IconCalendar, IconClock, IconClose, IconPlus, IconTaskCheck } from "../icons";
+import {
+  IconCalendar,
+  IconCheck,
+  IconChevronDown,
+  IconClock,
+  IconClose,
+  IconPlus,
+  IconTaskCheck,
+} from "../icons";
 import "./TasksPanel.css";
 
 const STATUS_FILTERS = [
@@ -114,6 +123,156 @@ function formatTaskDue(dateValue: string, timeValue: string) {
   return `${dateLabel} ${timeLabel}`;
 }
 
+type TaskFormSelectOption = {
+  value: string;
+  label: string;
+  meta?: string;
+  avatar?: {
+    initials: string;
+    tone: "pink" | "default";
+  };
+};
+
+function TaskFormSelect({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  options: TaskFormSelectOption[];
+  onChange: (value: string) => void;
+}) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
+  const selected = options.find((option) => option.value === value) ?? options[0];
+
+  const openMenu = () => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const menuHeight = Math.min(288, options.length * 48 + 10);
+    const roomBelow = window.innerHeight - rect.bottom - 12;
+    const openAbove = roomBelow < Math.min(menuHeight, 220) && rect.top > roomBelow;
+    setMenuStyle({
+      left: rect.left,
+      top: openAbove ? Math.max(12, rect.top - menuHeight - 6) : rect.bottom + 6,
+      width: rect.width,
+      maxHeight: Math.min(288, openAbove ? rect.top - 18 : roomBelow),
+    });
+    setOpen(true);
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const closeOnOutside = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.stopImmediatePropagation();
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    const scrollParent = triggerRef.current?.closest(".task-create-modal__body");
+    const closeOnLayoutChange = () => setOpen(false);
+    document.addEventListener("pointerdown", closeOnOutside);
+    window.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeOnLayoutChange);
+    scrollParent?.addEventListener("scroll", closeOnLayoutChange);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      window.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeOnLayoutChange);
+      scrollParent?.removeEventListener("scroll", closeOnLayoutChange);
+    };
+  }, [open]);
+
+  return (
+    <div className={`pt-mf task-form-select${open ? " is-open" : ""}`} ref={rootRef}>
+      <span id={`${id}-label`} className="pt-mf__l">{label}</span>
+      <button
+        ref={triggerRef}
+        id={id}
+        type="button"
+        className="task-form-select__trigger"
+        aria-labelledby={`${id}-label ${id}-value`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => (open ? setOpen(false) : openMenu())}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown") {
+            event.preventDefault();
+            if (!open) openMenu();
+          }
+        }}
+      >
+        <span className="task-form-select__value">
+          {selected?.avatar ? (
+            <Avatar tone={selected.avatar.tone} size={30} aria-hidden="true">
+              {selected.avatar.initials}
+            </Avatar>
+          ) : null}
+          <span id={`${id}-value`} className="task-form-select__copy">
+            <strong>{selected?.label ?? "Choose"}</strong>
+            {selected?.meta ? <small>{selected.meta}</small> : null}
+          </span>
+        </span>
+        <IconChevronDown size={15} />
+      </button>
+      {open
+        ? createPortal(
+            <div
+              ref={menuRef}
+              className="task-form-select__menu"
+              role="listbox"
+              aria-labelledby={`${id}-label`}
+              data-task-select-menu
+              style={menuStyle}
+            >
+              {options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={option.value === value}
+                  className={option.value === value ? "is-selected" : undefined}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                    triggerRef.current?.focus();
+                  }}
+                >
+                  <span className="task-form-select__value">
+                    {option.avatar ? (
+                      <Avatar tone={option.avatar.tone} size={28} aria-hidden="true">
+                        {option.avatar.initials}
+                      </Avatar>
+                    ) : null}
+                    <span className="task-form-select__copy">
+                      <strong>{option.label}</strong>
+                      {option.meta ? <small>{option.meta}</small> : null}
+                    </span>
+                  </span>
+                  {option.value === value ? <IconCheck size={14} /> : null}
+                </button>
+              ))}
+            </div>,
+            document.body,
+          )
+        : null}
+    </div>
+  );
+}
+
 function AddTaskPopover({
   taskId,
   vendorName,
@@ -131,17 +290,18 @@ function AddTaskPopover({
   const popoverRef = useRef<HTMLFormElement>(null);
   const [draft, setDraft] = useState<TaskDraft>(() => createEmptyTaskDraft(linkGroups));
   const [showError, setShowError] = useState(false);
-  const selectedAssignee = TASK_ASSIGNEES.find((person) => person.name === draft.assignee) ?? TASK_ASSIGNEES[0];
   const selectedLinkGroup = linkGroups.find((group) => group.id === draft.linkedSection) ?? linkGroups[0];
   const selectedLinkRecord = selectedLinkGroup?.options.find((option) => option.id === draft.linkedRecordId)
     ?? selectedLinkGroup?.options[0];
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !document.querySelector("[data-task-select-menu]")) onClose();
     };
     const onPointerDown = (event: PointerEvent) => {
-      if (!popoverRef.current?.contains(event.target as Node)) onClose();
+      const target = event.target as HTMLElement;
+      if (target.closest("[data-task-select-menu]")) return;
+      if (!popoverRef.current?.contains(target)) onClose();
     };
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("pointerdown", onPointerDown);
@@ -207,7 +367,6 @@ function AddTaskPopover({
         <div className="pt-modal__head">
           <div className="pt-modal__head-copy">
             <h2 id={titleId} className="pt-modal__title">Add task</h2>
-            <p className="pt-modal__desc">Create a follow-up and link it to the right vendor record.</p>
           </div>
           <IconButton className="pt-modal__close" label="Close task form" onClick={onClose}>
             <IconClose />
@@ -215,68 +374,47 @@ function AddTaskPopover({
         </div>
 
         <div className="pt-modal__body task-create-modal__body">
-          <div className="task-create-modal__identity" aria-label={`Task ID ${taskId}`}>
-            <div>
-              <span>Task ID</span>
-              <code>{taskId}</code>
+          <div className="task-create-modal__identity-grid">
+            <div className="pt-mf">
+              <span id="task-id-label" className="pt-mf__l">Task ID</span>
+              <output className="pt-mf__i task-create-modal__id" aria-labelledby="task-id-label">{taskId}</output>
             </div>
-            <small>Generated automatically</small>
+            <div className="pt-mf">
+              <label className="pt-mf__l" htmlFor="task-title">Task name</label>
+              <input
+                id="task-title"
+                className={`pt-mf__i${showError ? " is-invalid" : ""}`}
+                value={draft.title}
+                onChange={(event) => setField("title", event.target.value)}
+                placeholder="What needs to be done?"
+                aria-invalid={showError}
+                aria-describedby={showError ? "task-title-error" : undefined}
+                autoFocus
+              />
+              {showError ? <span id="task-title-error" className="task-create-modal__error">Enter a task name.</span> : null}
+            </div>
           </div>
 
-          <div className="pt-mf">
-            <label className="pt-mf__l" htmlFor="task-title">Task name</label>
-            <input
-              id="task-title"
-              className={`pt-mf__i${showError ? " is-invalid" : ""}`}
-              value={draft.title}
-              onChange={(event) => setField("title", event.target.value)}
-              placeholder="What needs to be done?"
-              aria-invalid={showError}
-              aria-describedby={showError ? "task-title-error" : undefined}
-              autoFocus
+          <div className="task-create-modal__grid task-create-modal__link-fields">
+            <TaskFormSelect
+              id="task-link-section"
+              label="Link task to"
+              value={draft.linkedSection}
+              options={linkGroups.map((group) => ({ value: group.id, label: group.label }))}
+              onChange={setLinkedSection}
             />
-            {showError ? <span id="task-title-error" className="task-create-modal__error">Enter a task name.</span> : null}
+            <TaskFormSelect
+              id="task-link-record"
+              label={selectedLinkGroup?.recordLabel ?? "Record"}
+              value={draft.linkedRecordId}
+              options={(selectedLinkGroup?.options ?? []).map((option) => ({
+                value: option.id,
+                label: option.label,
+                meta: option.meta,
+              }))}
+              onChange={(value) => setField("linkedRecordId", value)}
+            />
           </div>
-
-          <fieldset className="task-create-modal__link">
-            <legend className="pt-mf__l">Link task to</legend>
-            <p>Choose the section and exact record this work belongs to.</p>
-            <div className="task-create-modal__grid">
-              <div className="pt-mf">
-                <label className="pt-mf__l" htmlFor="task-link-section">Section</label>
-                <select
-                  id="task-link-section"
-                  className="pt-mf__i"
-                  value={draft.linkedSection}
-                  onChange={(event) => setLinkedSection(event.target.value)}
-                >
-                  {linkGroups.map((group) => <option key={group.id} value={group.id}>{group.label}</option>)}
-                </select>
-              </div>
-              <div className="pt-mf">
-                <label className="pt-mf__l" htmlFor="task-link-record">{selectedLinkGroup?.recordLabel ?? "Record"}</label>
-                <select
-                  id="task-link-record"
-                  className="pt-mf__i"
-                  value={draft.linkedRecordId}
-                  onChange={(event) => setField("linkedRecordId", event.target.value)}
-                >
-                  {selectedLinkGroup?.options.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.label}{option.meta ? ` — ${option.meta}` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="task-create-modal__path" aria-live="polite">
-              <span>{vendorName}</span>
-              <span aria-hidden="true">/</span>
-              <span>{selectedLinkGroup?.label}</span>
-              <span aria-hidden="true">/</span>
-              <strong>{selectedLinkRecord?.label}</strong>
-            </div>
-          </fieldset>
 
           <div className="pt-mf">
             <label className="pt-mf__l" htmlFor="task-description">Description <span>Optional</span></label>
@@ -291,31 +429,34 @@ function AddTaskPopover({
           </div>
 
           <div className="task-create-modal__grid">
-            <div className="pt-mf">
-              <label className="pt-mf__l" htmlFor="task-status">Status</label>
-              <select id="task-status" className="pt-mf__i" value={draft.status} onChange={(event) => setField("status", event.target.value as TaskStatus)}>
-                {CREATE_STATUS_OPTIONS.map((status) => <option key={status}>{status}</option>)}
-              </select>
-            </div>
-            <div className="pt-mf">
-              <label className="pt-mf__l" htmlFor="task-priority">Priority</label>
-              <select id="task-priority" className="pt-mf__i" value={draft.priority} onChange={(event) => setField("priority", event.target.value as TaskDraft["priority"])}>
-                {PRIORITY_OPTIONS.map((priority) => <option key={priority}>{priority}</option>)}
-              </select>
-            </div>
+            <TaskFormSelect
+              id="task-status"
+              label="Status"
+              value={draft.status}
+              options={CREATE_STATUS_OPTIONS.map((status) => ({ value: status, label: status }))}
+              onChange={(value) => setField("status", value as TaskStatus)}
+            />
+            <TaskFormSelect
+              id="task-priority"
+              label="Priority"
+              value={draft.priority}
+              options={PRIORITY_OPTIONS.map((priority) => ({ value: priority, label: priority }))}
+              onChange={(value) => setField("priority", value as TaskDraft["priority"])}
+            />
           </div>
 
-          <div className="pt-mf">
-            <label className="pt-mf__l" htmlFor="task-assignee">Assignee</label>
-            <div className="task-create-modal__assignee">
-              <Avatar tone={selectedAssignee.tone} size={32} aria-hidden="true">
-                {selectedAssignee.initials}
-              </Avatar>
-              <select id="task-assignee" value={draft.assignee} onChange={(event) => setField("assignee", event.target.value)}>
-                {TASK_ASSIGNEES.map((person) => <option key={person.name}>{person.name} · {person.role}</option>)}
-              </select>
-            </div>
-          </div>
+          <TaskFormSelect
+            id="task-assignee"
+            label="Assignee"
+            value={draft.assignee}
+            options={TASK_ASSIGNEES.map((person) => ({
+              value: person.name,
+              label: person.name,
+              meta: person.role,
+              avatar: { initials: person.initials, tone: person.tone },
+            }))}
+            onChange={(value) => setField("assignee", value)}
+          />
 
           <div className="pt-mf">
             <span className="pt-mf__l">Due date and time <span>Optional</span></span>
