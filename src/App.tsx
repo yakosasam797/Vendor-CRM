@@ -10,7 +10,6 @@ import {
 } from "@paryatech/design-system";
 import { AccountLauncher } from "./components/account/AccountLauncher";
 import { NotificationPanel } from "./components/notifications/NotificationPanel";
-import { RoleSwitcher } from "./components/RoleSwitcher";
 import { SettingsLauncherModal } from "./components/settings/SettingsLauncherModal";
 import { UniversalSearch, type UniversalSearchItem } from "./components/UniversalSearch";
 import { VendorsListPage } from "./components/VendorsListPage";
@@ -71,7 +70,7 @@ export default function App() {
     parsePathname(window.location.pathname),
   );
   const [notesOpen, setNotesOpen] = useState(false);
-  const [orgRole, setOrgRole] = useState<OrgRole>("Owner");
+  const orgRole: OrgRole = "Owner";
   const [vendors, setVendors] = useState<Vendor[]>(() =>
     SEED_VENDORS.map((v) => structuredClone(v)),
   );
@@ -431,11 +430,6 @@ export default function App() {
     window.requestAnimationFrame(() => searchBtnRef.current?.focus());
   };
 
-  const changeOrgRole = (role: OrgRole) => {
-    setOrgRole(role);
-    if (!canOpenWorkspaceSettings(role)) setSettingsOpen(false);
-  };
-
   const universalSearchItems: UniversalSearchItem[] = [
     {
       id: "page-home",
@@ -669,7 +663,6 @@ export default function App() {
             <span>Search anything</span>
             <kbd aria-hidden="true">Ctrl K</kbd>
           </button>
-          <RoleSwitcher value={orgRole} onChange={changeOrgRole} />
           {canOpenWorkspaceSettings(orgRole) ? (
             <span ref={settingsBtnRef}>
               <IconButton
