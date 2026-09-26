@@ -22,12 +22,14 @@ export function SummaryStrip({
   actions,
   fields,
   columns = 5,
+  variant = "default",
 }: {
   title?: string;
   meta?: ReactNode;
   actions?: ReactNode;
   fields: SummaryField[];
   columns?: number;
+  variant?: "default" | "icon-leading";
 }) {
   return (
     <section className="summary-section" aria-labelledby="summary-strip-title">
@@ -41,7 +43,7 @@ export function SummaryStrip({
         {actions ? <div className="summary-section__actions">{actions}</div> : null}
       </div>
       <div
-        className={`summary-strip summary-strip--cols-${columns}`}
+        className={`summary-strip summary-strip--cols-${columns} summary-strip--${variant}`}
         role="list"
       >
         {fields.map((field) => {
@@ -61,18 +63,25 @@ export function SummaryStrip({
               role="listitem"
               onClick={field.onClick}
             >
-              <div className="summary-strip__label">{field.label}</div>
-              <div className="summary-strip__value">
-                {field.icon ? (
-                  <span className="summary-strip__icon" aria-hidden="true">
-                    {field.icon}
-                  </span>
-                ) : null}
-                <span className={`summary-strip__text pt-mono${toneClass}`}>
-                  {field.value}
+              {variant === "icon-leading" && field.icon ? (
+                <span className="summary-strip__icon" aria-hidden="true">
+                  {field.icon}
                 </span>
+              ) : null}
+              <div className="summary-strip__content">
+                <div className="summary-strip__label">{field.label}</div>
+                <div className="summary-strip__value">
+                  {variant === "default" && field.icon ? (
+                    <span className="summary-strip__icon" aria-hidden="true">
+                      {field.icon}
+                    </span>
+                  ) : null}
+                  <span className={`summary-strip__text pt-mono${toneClass}`}>
+                    {field.value}
+                  </span>
+                </div>
               </div>
-              {field.note ? (
+              {variant === "default" && field.note ? (
                 <div className="summary-strip__note">{field.note}</div>
               ) : null}
             </Tag>

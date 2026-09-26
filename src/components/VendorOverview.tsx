@@ -19,7 +19,7 @@ import {
   IconRefresh,
   IconWarn,
 } from "../icons";
-import { ActivityPanel } from "./ActivityPanel";
+import { RecentActivityTimeline } from "./RecentActivityTimeline";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip } from "./SummaryStrip";
 import { VendorSetupChecklist } from "./VendorSetupChecklist";
@@ -177,7 +177,12 @@ export function VendorOverview({
   return (
     <div className="vendor-overview">
       <div className="vo-history">
-        <SummaryStrip title="Operating history" columns={4} fields={operatingHistory} />
+        <SummaryStrip
+          title="Operating history"
+          columns={4}
+          fields={operatingHistory}
+          variant="icon-leading"
+        />
       </div>
 
       <VendorSetupChecklist
@@ -338,15 +343,20 @@ export function VendorOverview({
           <h2 id="vo-recent-activity-title" className="vendor-overview__title">
             Recent activities
           </h2>
-          <span className="vendor-overview__count pt-mono">
-            {recentActivity.length} recent event{recentActivity.length === 1 ? "" : "s"}
-          </span>
+          <div className="vendor-overview__section-actions">
+            <span className="vendor-overview__count pt-mono">
+              {recentActivity.length} recent event{recentActivity.length === 1 ? "" : "s"}
+            </span>
+            <button
+              type="button"
+              className="vendor-overview__view-all"
+              onClick={() => onJumpTab("activity")}
+            >
+              View all
+            </button>
+          </div>
         </div>
-        <ActivityPanel
-          rows={recentActivity}
-          searchPlaceholder="Search recent activity"
-          ariaLabel="Recent vendor activities overview"
-        />
+        <RecentActivityTimeline rows={recentActivity} />
       </section>
 
     </div>

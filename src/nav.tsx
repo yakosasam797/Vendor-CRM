@@ -10,18 +10,26 @@ import {
   IconPackages,
   IconQueries,
   IconReports,
+  IconSettings,
   IconTasks,
   IconTeam,
   IconVendors,
 } from "./icons";
 
 /** AppShell Storybook `exampleNav` — Patterns/AppShell. Vendors is active on this screen. */
-export function buildNavGroups(activeId: string, onSelect?: (id: string) => void): NavGroupData[] {
+export function buildNavGroups(
+  activeId: string,
+  onSelect?: (id: string) => void,
+  settings?: { visible: boolean; onSelect: () => void },
+): NavGroupData[] {
   const item = (
     id: string,
     label: string,
     icon: NavGroupData["items"][number]["icon"],
-    extra?: { badge?: NavGroupData["items"][number]["badge"] },
+    extra?: {
+      badge?: NavGroupData["items"][number]["badge"];
+      onSelect?: () => void;
+    },
   ): NavGroupData["items"][number] => ({
     id,
     label,
@@ -29,7 +37,7 @@ export function buildNavGroups(activeId: string, onSelect?: (id: string) => void
     icon,
     badge: extra?.badge,
     active: activeId === id,
-    onSelect: onSelect ? () => onSelect(id) : undefined,
+    onSelect: extra?.onSelect ?? (onSelect ? () => onSelect(id) : undefined),
   });
 
   return [
@@ -68,6 +76,9 @@ export function buildNavGroups(activeId: string, onSelect?: (id: string) => void
         item("team", "Team", <IconTeam />),
         item("automations", "Automations", <IconAutomations />),
         item("reports", "Reports", <IconReports />),
+        ...(settings?.visible
+          ? [item("settings", "Settings", <IconSettings />, { onSelect: settings.onSelect })]
+          : []),
       ],
     },
   ];

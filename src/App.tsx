@@ -48,7 +48,6 @@ import {
   IconNotes,
   IconSearch,
   IconSparkles,
-  IconSettings,
 } from "./icons";
 import "./App.css";
 import "./components/rateCard/RateCardDetail.css";
@@ -84,7 +83,6 @@ export default function App() {
   const [universalSearchOpen, setUniversalSearchOpen] = useState(false);
   const [pageNavigation, setPageNavigation] = useState<PageNavigationContext | null>(null);
 
-  const settingsBtnRef = useRef<HTMLElement>(null);
   const notifBtnRef = useRef<HTMLElement>(null);
   const accountBtnRef = useRef<HTMLButtonElement>(null);
   const searchBtnRef = useRef<HTMLButtonElement>(null);
@@ -156,8 +154,6 @@ export default function App() {
     openVendors();
   };
 
-  const navGroups = buildNavGroups(activeNav, openNavigation);
-
   useEffect(() => {
     const onPop = () => {
       setHubRoute(parsePathname(window.location.pathname));
@@ -188,7 +184,21 @@ export default function App() {
     window.history.pushState({ hub: route }, "", pathForHub(route));
   };
 
+  const openSettingsHome = () => {
+    setPageNavigation(null);
+    setOpenServiceId(null);
+    goHub({ area: "settings", id: "organization" });
+  };
+
   const isHub = hubRoute !== null;
+  const navGroups = buildNavGroups(
+    isHub && hubRoute.area === "settings" ? "settings" : activeNav,
+    openNavigation,
+    {
+      visible: canOpenWorkspaceSettings(orgRole),
+      onSelect: openSettingsHome,
+    },
+  );
   const isVendorsList = !isHub && crmRoute.name === "vendors" && activeNav === "vendors";
   const isNewVendor = !isHub && crmRoute.name === "vendor-new";
   const isVendorDetail = !isHub && crmRoute.name === "vendor";
@@ -663,21 +673,6 @@ export default function App() {
             <span>Search anything</span>
             <kbd aria-hidden="true">Ctrl K</kbd>
           </button>
-          {canOpenWorkspaceSettings(orgRole) ? (
-            <span ref={settingsBtnRef}>
-              <IconButton
-                className="app-top-util"
-                label="Workspace settings"
-                onClick={() => {
-                  setAccountOpen(false);
-                  setNotifOpen(false);
-                  setSettingsOpen(true);
-                }}
-              >
-                <IconSettings />
-              </IconButton>
-            </span>
-          ) : null}
           <IconButton
             className="app-top-util"
             label="Help and support"
@@ -852,8 +847,6 @@ export default function App() {
         open={settingsOpen}
         orgRole={orgRole}
         onClose={() => setSettingsOpen(false)}
-        anchorRef={settingsBtnRef}
-        returnFocusRef={settingsBtnRef}
         onNavigate={openSettingsDestination}
       />
 

@@ -751,3 +751,98 @@ final result: passed
 - Pass 1: button hierarchy, labels, spacing, and interactions matched the requested platform button system. No P0/P1/P2 follow-up fix was required.
 
 final result: passed
+
+---
+
+# Design QA â€” Vendor overview recent activity
+
+## Comparison target
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-6597fddd-e764-4da4-b554-08d976da58ec.png`
+- Browser-rendered implementation: `C:\Users\YAKSHITH\.t3\userdata\browser-artifacts\browser-screenshot-localhost-muhzlrt5-b5547212.png`
+- Source pixels: 1519 Ã— 444, cropped reference region at 1Ã— density.
+- Implementation pixels: 1280 Ã— 800, CSS viewport 1280 Ã— 800 at 1Ã— density.
+- State: Trailmakers Experiences â†’ Overview, scrolled to Recent activities.
+
+## Full-view comparison evidence
+
+The implementation keeps the existing vendor CRM frame and converts only the Recent activities region. The source's chronological reading order is preserved: date, connected stage marker, event, and supporting context. Member attribution is added as the final column because it is required by the vendor CRM information model. The surrounding CRM spacing, typography, borders, and teal/pink accents remain consistent with the existing product rather than copying the source's unrelated shell.
+
+## Focused region comparison evidence
+
+The timeline region was reviewed at its rendered desktop size. Row height is compact, the date column remains stable, the rail is continuous between events, the latest event has a stronger teal marker, event context stays secondary, and member attribution is visually quieter than the event. No table headers, checkboxes, search field, or pagination remain in the Overview summary.
+
+## Required fidelity surfaces
+
+- Fonts and typography: Existing CRM font tokens and hierarchy are preserved. Dates use the established mono treatment; event titles remain the strongest row text; context, time, and member role are secondary.
+- Spacing and layout rhythm: Four evenly separated rows use the product's existing page padding and hairline dividers. The rail aligns consistently through every row and the responsive layout collapses to a single reading column below 620px.
+- Colors and visual tokens: Existing surface, ink, line, accent, and focus tokens are used. The only emphasized marker is the newest event.
+- Image quality and asset fidelity: No raster imagery is required. Existing design-system avatars and the product's icon library are used; no placeholder or improvised image assets were introduced.
+- Copy and content: Existing vendor activity data is preserved and shortened to event title plus source context. The member remains last, matching the requested operational reading order.
+
+## Interaction and accessibility checks
+
+- Semantic ordered-list structure and a descriptive timeline label are present.
+- The `View all` control uses the existing vendor tab callback to open the full Activity workspace.
+- Visible keyboard focus is provided for `View all`.
+- Desktop rendering was checked in the collaborative browser at 1280 Ã— 800.
+- Browser console contained only the preview host's pre-existing Electron sandbox error; there were no application runtime errors.
+
+## Findings
+
+- No actionable P0, P1, or P2 issues remain.
+- P3: The compact mobile composition is implemented in CSS but could not be re-captured after the collaborative preview host disconnected.
+
+## Comparison history
+
+- Initial implementation removed the duplicate table workflow and introduced the chronological stream.
+- Browser review confirmed the event hierarchy and showed no desktop overflow or alignment problems; no P0/P1/P2 correction pass was required.
+
+## Implementation checklist
+
+- [x] Replace the Overview data table with a timeline summary.
+- [x] Keep date and time first.
+- [x] Show event and module context together.
+- [x] Keep the responsible member last.
+- [x] Make `View all` hand off to the detailed Activity tab.
+- [x] Preserve responsive and keyboard-accessible behavior.
+
+final result: passed
+
+---
+
+# Design QA — Operating history summary
+
+## Comparison target
+
+- Source visual truth: `C:\Users\YAKSHITH\.t3\userdata\attachments\8d85a0b4-8554-45af-9df6-b26129e4a521-fd2c1d40-da35-4364-b876-50b121b01d0f.png`
+- Browser-rendered implementation: `C:\Users\YAKSHITH\.t3\userdata\browser-artifacts\operating-history-icon-leading.png`
+- Source pixels: 372 × 419, focused reference crop at 1× density.
+- Implementation pixels: 1107 × 139, focused component capture from a 1440 × 900 CSS viewport at 1× density.
+- State: Trailmakers Experiences → Overview → Operating history.
+
+## Visual comparison
+
+The reference's icon-leading composition is preserved across all four fields: a softly tinted icon tile anchors the left side, and one uppercase label plus one mono value forms the text stack. Supporting notes are intentionally omitted. Existing CRM dividers, page padding, palette, and typography tokens keep the component native to the product.
+
+## Required fidelity surfaces
+
+- Fonts and typography: Existing label and mono value tokens match the reference hierarchy and remain legible without a tertiary line.
+- Spacing and layout rhythm: The 48px icon tile, 14px gap, and 100px field height match the reference proportions while preserving the four-column strip.
+- Colors and visual tokens: Existing pink-soft and pink tokens reproduce the reference's icon treatment without introducing a new palette.
+- Image quality and asset fidelity: The product's existing icon library is used; no raster or placeholder assets are required.
+- Copy and content: Each field contains exactly one label and one value. The former descriptive notes are not rendered in this variant.
+
+## Verification
+
+- Four fields rendered with zero `.summary-strip__note` elements.
+- Document width matched the 1440px viewport, with no page-level horizontal overflow.
+- Browser console and page-error capture returned no application errors.
+- Production build and lint completed successfully; lint reports only pre-existing warnings outside this change.
+
+## Findings
+
+- Initial comparison found the icon tile too small relative to the source; padding was increased from 10px to 14px.
+- Post-fix comparison found no remaining P0, P1, or P2 mismatch.
+
+final result: passed

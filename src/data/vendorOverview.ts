@@ -727,6 +727,17 @@ function initialsFor(name: string): string {
     .toUpperCase();
 }
 
+type WorkspaceAccessRole = "Owner" | "Admin" | "Staff member";
+
+const WORKSPACE_ROLE_BY_MEMBER: Record<string, WorkspaceAccessRole> = {
+  "Vrushabh Jain": "Owner",
+  "Anjali Menon": "Admin",
+};
+
+function workspaceRoleForMember(name: string): WorkspaceAccessRole {
+  return WORKSPACE_ROLE_BY_MEMBER[name] ?? "Staff member";
+}
+
 export function vendorActivityForVendor(vendor: Vendor): ActivityRow[] {
   const profileEvents = vendor.activity.map((event) => ({
     id: event.id,
@@ -745,7 +756,10 @@ export function vendorActivityForVendor(vendor: Vendor): ActivityRow[] {
   const importedProfileEvents = profileEvents.filter((event) => event.date === "Imported");
   const history = vendor.id === "exhosp" ? EXAMPLE_VENDOR_ACTIVITY : standardVendorActivity(vendor);
 
-  return [...recentProfileEvents, ...history, ...importedProfileEvents];
+  return [...recentProfileEvents, ...history, ...importedProfileEvents].map((activity) => ({
+    ...activity,
+    role: workspaceRoleForMember(activity.member),
+  }));
 }
 
 export function operatingHistoryForVendor(vendor: Vendor): TradeMetric[] {

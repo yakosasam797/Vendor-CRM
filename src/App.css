@@ -234,6 +234,17 @@ button.app-top-search:focus-visible {
   display: none;
 }
 
+/* Group sidebar destinations with the shell's shared divider language, not text headings. */
+.pt-side__scroll .pt-nav-group__label {
+  display: none;
+}
+
+.pt-side__scroll .pt-nav-group + .pt-nav-group {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
 /* Keep both shell regions scrollable without exposing browser scrollbar chrome. */
 .pt-side__scroll,
 .pt-scroll {

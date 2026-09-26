@@ -111,6 +111,33 @@ button.summary-strip__field:focus-visible {
   padding-right: var(--page-pad, 16px);
 }
 
+.summary-strip__content {
+  min-width: 0;
+}
+
+.summary-strip--icon-leading .summary-strip__field {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 100px;
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
+.summary-strip--icon-leading .summary-strip__icon {
+  padding: 14px;
+  border-radius: 10px;
+}
+
+.summary-strip--icon-leading .summary-strip__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.summary-strip--icon-leading .summary-strip__value {
+  margin-top: 5px;
+}
+
 .summary-strip__label {
   font-family: var(--type-label-kpi-family, var(--font-sans));
   font-size: var(--type-label-kpi-size, 11px);
@@ -213,5 +240,10 @@ button.summary-strip__field:focus-visible {
 
   .summary-strip__field:nth-child(n + 2) {
     border-top: 1px solid var(--line);
+  }
+
+  .summary-strip--icon-leading .summary-strip__field,
+  .summary-strip--icon-leading .summary-strip__field:nth-child(2n + 1) {
+    min-height: 84px;
   }
 }
