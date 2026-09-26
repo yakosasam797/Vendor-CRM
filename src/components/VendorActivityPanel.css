@@ -3,7 +3,7 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  padding-bottom: 32px;
+  min-height: 0;
 }
 
 .vendor-activity__head {

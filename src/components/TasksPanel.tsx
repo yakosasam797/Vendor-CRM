@@ -33,6 +33,7 @@ import {
   IconPlus,
   IconTaskCheck,
 } from "../icons";
+import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import "./TasksPanel.css";
 
 const STATUS_FILTERS = [
@@ -517,7 +518,7 @@ function TaskSheet({
   }
 
   return (
-    <>
+    <div className="tasks-sheet-wrap dashboard-table-end">
       <DataSheet className="tasks-sheet" aria-label={ariaLabel}>
         <DataSheetHeader>
           <DataSheetCell check>
@@ -598,6 +599,7 @@ function TaskSheet({
             </DataSheetCell>
           </DataSheetRow>
         ))}
+        <DashboardDataSheetFill columns={5} />
       </DataSheet>
       <Pagination
         rangeLabel={`Showing 1–${tasks.length} of ${tasks.length}`}
@@ -605,7 +607,7 @@ function TaskSheet({
         pageCount={1}
         onPageChange={() => undefined}
       />
-    </>
+    </div>
   );
 }
 
@@ -633,6 +635,7 @@ export function TasksPanel({
   const [createOpen, setCreateOpen] = useState(false);
   const [openTasks, setOpenTasks] = useState<VendorTask[]>(OPEN_VENDOR_TASKS);
   const [doneTasks, setDoneTasks] = useState<VendorTask[]>(DONE_VENDOR_TASKS);
+  const [activeList, setActiveList] = useState<"open" | "completed">("open");
 
   useEffect(() => {
     onOpenTaskCountChange?.(openTasks.length);
@@ -669,8 +672,13 @@ export function TasksPanel({
   }, [doneQuery, doneTasks]);
 
   const createTask = (task: VendorTask) => {
-    if (task.status === "Done") setDoneTasks((current) => [task, ...current]);
-    else setOpenTasks((current) => [task, ...current]);
+    if (task.status === "Done") {
+      setDoneTasks((current) => [task, ...current]);
+      setActiveList("completed");
+    } else {
+      setOpenTasks((current) => [task, ...current]);
+      setActiveList("open");
+    }
     setCreateOpen(false);
     setOpenQuery("");
     setStatusFilter("all");
@@ -694,13 +702,12 @@ export function TasksPanel({
   };
 
   return (
-    <div className="tasks-panel">
-      <section className="tasks-panel__section" aria-labelledby="tasks-open-title">
-        <div className="tasks-panel__head">
-          <h2 id="tasks-open-title" className="tasks-panel__title">
-            Open
-          </h2>
-        </div>
+    <div className="tasks-panel dashboard-table-panel">
+      <div className="tasks-panel__list-tabs" role="tablist" aria-label="Task lists">
+        <button type="button" id="tasks-open-tab" role="tab" aria-selected={activeList === "open"} aria-controls="tasks-open-panel" onClick={() => setActiveList("open")}>Open <span>{openTasks.length}</span></button>
+        <button type="button" id="tasks-completed-tab" role="tab" aria-selected={activeList === "completed"} aria-controls="tasks-completed-panel" onClick={() => setActiveList("completed")}>Completed <span>{doneTasks.length}</span></button>
+      </div>
+      <section id="tasks-open-panel" className="tasks-panel__section" role="tabpanel" aria-labelledby="tasks-open-tab" hidden={activeList !== "open"}>
         <div className="tasks-panel__toolbar">
           <SearchField
             fullWidth
@@ -757,13 +764,7 @@ export function TasksPanel({
           statusInteractive
         />
       </section>
-
-      <section className="tasks-panel__section" aria-labelledby="tasks-done-title">
-        <div className="tasks-panel__head">
-          <h2 id="tasks-done-title" className="tasks-panel__title">
-            Completed
-          </h2>
-        </div>
+      <section id="tasks-completed-panel" className="tasks-panel__section" role="tabpanel" aria-labelledby="tasks-completed-tab" hidden={activeList !== "completed"}>
         <div className="tasks-panel__toolbar">
           <SearchField
             fullWidth

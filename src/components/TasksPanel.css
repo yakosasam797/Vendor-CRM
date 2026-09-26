@@ -1,14 +1,70 @@
 .tasks-panel {
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+}
+
+.tasks-panel__list-tabs {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tasks-panel__list-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin-bottom: -1px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tasks-panel__list-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--accent-ink, var(--accent));
+  font-weight: 650;
+}
+
+.tasks-panel__list-tabs button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.tasks-panel__list-tabs span {
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .tasks-panel__section {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+}
+
+.tasks-panel__section[hidden] {
+  display: none;
+}
+
+.tasks-sheet-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
 }
 
 .tasks-panel__head {

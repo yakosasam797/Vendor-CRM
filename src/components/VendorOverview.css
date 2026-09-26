@@ -36,7 +36,6 @@
   flex-direction: column;
   min-width: 0;
   margin-top: 8px;
-  padding-bottom: 32px;
 }
 
 .vendor-overview__section {
@@ -618,7 +617,7 @@
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--vb-cols);
-  min-width: 990px;
+  min-width: 960px;
 }
 
 .vendor-bookings-sheet .pt-sheet__cell--check {

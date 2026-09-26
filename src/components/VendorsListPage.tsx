@@ -699,7 +699,7 @@ function ServiceDirectoryDetail({
             {connections.length === 0 ? (
               <EmptyState title="No vendors linked" description="Link a vendor to make this service available for costing." />
             ) : (
-              <div className="service-directory-detail__sheet">
+              <div className="service-directory-detail__sheet dashboard-table-end">
                 <DataSheet className="service-suppliers-sheet" aria-label={`Vendors providing ${service.name}`}>
             <DataSheetHeader>
               <DataSheetCell check><Checkbox state={vendorHeaderState} onCheckedChange={(state) => setSelectedVendorIds(state === "on" ? connectedVendorIds : [])} label="Select all vendors" /></DataSheetCell>
@@ -771,6 +771,7 @@ function ServiceDirectoryDetail({
                 </DataSheetRow>
               );
             })}
+                <DashboardDataSheetFill columns={7} />
                 </DataSheet>
                 {selectedVendorIds.length > 0 ? <ListBulkBar label={`${selectedVendorIds.length} vendor${selectedVendorIds.length === 1 ? "" : "s"} selected`}><Button variant="brand" size="sm"><IconImport />Export</Button><Button variant="ghost" size="sm" onClick={() => setSelectedVendorIds([])}>Clear</Button></ListBulkBar> : null}
                 <Pagination rangeLabel={`Showing 1–${connections.length} of ${connections.length} vendors`} page={1} pageCount={1} onPageChange={() => {}} />
@@ -1005,7 +1006,7 @@ export function VendorsListPage({
               <DataSheet className="vendors-sheet vendors-sheet--vendors" aria-label="Vendors">
                 <DataSheetHeader>
                   <DataSheetCell check><Checkbox state={headerState} onCheckedChange={toggleAll} label="Select all vendors" /></DataSheetCell>
-                  <DataSheetCell>Vendor</DataSheetCell><DataSheetCell>Services offered</DataSheetCell><DataSheetCell>Location</DataSheetCell><DataSheetCell>Services</DataSheetCell><DataSheetCell>Status</DataSheetCell><DataSheetCell>Action</DataSheetCell>
+                  <DataSheetCell>Vendor</DataSheetCell><DataSheetCell>Services offered</DataSheetCell><DataSheetCell>Location</DataSheetCell><DataSheetCell>Status</DataSheetCell><DataSheetCell>Action</DataSheetCell>
                 </DataSheetHeader>
                 {vendorRows.map((row) => (
                   <DataSheetRow
@@ -1038,12 +1039,11 @@ export function VendorsListPage({
                       />
                     </DataSheetCell>
                     <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{row.vendor.location}</span></DataSheetCell>
-                    <DataSheetCell><span className="directory-count">{new Set(row.connections.map((connection) => connection.serviceId)).size}</span></DataSheetCell>
                     <DataSheetCell><StatusChipWithDot tone={vendorStatusTone(row.vendor.status)}>{row.vendor.status}</StatusChipWithDot></DataSheetCell>
                     <DataSheetCell>{canEdit ? <div className="vendors-sheet__more" ref={menuId === row.vendor.id ? menuRef : undefined}><IconButton label={`More actions for ${row.vendor.name}`} aria-expanded={menuId === row.vendor.id} aria-haspopup="menu" onClick={() => setMenuId((current) => current === row.vendor.id ? null : row.vendor.id)}><IconMore /></IconButton>{menuId === row.vendor.id ? <div className="vendors-sheet__menu" role="menu"><button type="button" role="menuitem" onClick={() => { setEditId(row.vendor.id); setModal("edit"); setMenuId(null); }}>Edit vendor</button></div> : null}</div> : null}</DataSheetCell>
                   </DataSheetRow>
                 ))}
-                <DashboardDataSheetFill columns={7} />
+                <DashboardDataSheetFill columns={6} />
               </DataSheet>
             ) : (
               <DataSheet className="vendors-sheet vendors-sheet--services" aria-label="Services">

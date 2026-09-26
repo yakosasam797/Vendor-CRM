@@ -359,7 +359,7 @@ export function VendorDocsPanel({
 
   return (
     <div className="vendor-finance dashboard-table-panel">
-      <section className="vendor-finance__section" aria-labelledby="docs-title">
+      <section className="vendor-finance__section dashboard-table-panel" aria-labelledby="docs-title">
         <div className="vendor-finance__section-head">
           <h2 id="docs-title" className="vendor-finance__title">
             Compliance documents

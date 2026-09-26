@@ -322,7 +322,7 @@
 }
 
 .vendors-sheet--vendors {
-  --ven-cols: var(--ven-lead) minmax(245px, 1.25fr) minmax(235px, 1.1fr) minmax(170px, 0.82fr) 96px 126px 72px;
+  --ven-cols: var(--ven-lead) minmax(270px, 1.2fr) minmax(300px, 1.25fr) minmax(190px, 0.85fr) 126px 72px;
 }
 
 .vendors-sheet--services {
@@ -336,7 +336,7 @@
 }
 
 .vendors-sheet--vendors .pt-sheet__row {
-  min-width: 1120px;
+  min-width: 1000px;
 }
 
 .vendors-sheet--services .pt-sheet__row {
@@ -1232,6 +1232,25 @@
   gap: 28px;
   min-width: 0;
   padding-bottom: 32px;
+}
+
+.service-vendors-overview {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+.service-vendors-overview .service-suppliers {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.service-vendors-overview .service-directory-detail__sheet {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .service-overview__summary .summary-section,

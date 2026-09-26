@@ -7,6 +7,22 @@
   min-width: 0;
 }
 
+.vendor-finance__overview {
+  display: flex;
+  flex: 0 1 42%;
+  min-height: 0;
+  flex-direction: column;
+  gap: var(--space-6, 28px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.vendor-finance__overview + .vendor-finance__section {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 .vendor-finance__section {
   display: flex;
   flex-direction: column;

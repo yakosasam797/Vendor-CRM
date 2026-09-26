@@ -720,7 +720,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                 description="Link a vendor to make this service available for costing."
               />
             ) : (
-              <div className="service-directory-detail__sheet">
+              <div className="service-directory-detail__sheet dashboard-table-end">
                 <DataSheet className="service-suppliers-sheet" aria-label={`Vendors providing ${service.name}`}>
                   <DataSheetHeader>
                     <DataSheetCell check>
@@ -820,6 +820,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                       </DataSheetCell>
                     </DataSheetRow>
                   ))}
+                  <DashboardDataSheetFill columns={7} />
                 </DataSheet>
                 <Pagination
                   rangeLabel={`Showing 1–${linkedVendors.length} of ${linkedVendors.length} vendors`}

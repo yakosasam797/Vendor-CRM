@@ -1026,6 +1026,10 @@
   padding-bottom: 32px;
 }
 
+.svc-vendor-detail:has(> .service-vendors-overview) {
+  padding-bottom: 0;
+}
+
 .svc-vendor-detail .service-directory-detail__record {
   margin-bottom: 14px;
 }

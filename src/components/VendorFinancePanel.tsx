@@ -464,6 +464,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
 
   return (
     <div className="vendor-finance dashboard-table-panel">
+      <div className="vendor-finance__overview">
       <SummaryStrip
         title="Finance summary"
         columns={4}
@@ -571,6 +572,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
           ))}
         </div>
       </section>
+      </div>
 
       <section className="vendor-finance__section" aria-labelledby="payables-title">
         <div className="vendor-finance__section-head">
