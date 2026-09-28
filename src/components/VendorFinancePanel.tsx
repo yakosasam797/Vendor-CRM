@@ -19,7 +19,6 @@ import {
   Tooltip,
   type CheckboxState,
 } from "@paryatech/design-system";
-import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import {
   ACCOUNT_TRANSACTIONS,
   FINANCE_METRICS,
@@ -463,8 +462,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
   };
 
   return (
-    <div className="vendor-finance dashboard-table-panel">
-      <div className="vendor-finance__overview">
+    <div className="vendor-finance">
       <SummaryStrip
         title="Finance summary"
         columns={4}
@@ -572,8 +570,6 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
           ))}
         </div>
       </section>
-      </div>
-
       <section className="vendor-finance__section" aria-labelledby="payables-title">
         <div className="vendor-finance__section-head">
           <div className="vendor-finance__titles">
@@ -617,7 +613,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
           </div>
         </div>
 
-        <div className="vendor-finance__sheet dashboard-table-end">
+        <div className="vendor-finance__sheet">
           {payables.length === 0 ? (
             <EmptyState
               title="No invoices match this search"
@@ -709,7 +705,6 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
                     </DataSheetCell>
                   </DataSheetRow>
                 ))}
-                <DashboardDataSheetFill columns={7} />
               </DataSheet>
               <Pagination
                 rangeLabel={`Showing 1–${payables.length} of ${payables.length} invoices`}
