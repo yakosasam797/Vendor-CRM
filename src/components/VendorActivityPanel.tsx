@@ -1,10 +1,13 @@
-import { vendorActivityForVendor } from "../data/vendorOverview";
 import type { Vendor } from "../data/vendors";
-import { ActivityPanel } from "./ActivityPanel";
+import { ActivityPanel, type ActivityRow } from "./ActivityPanel";
 import "./VendorActivityPanel.css";
 
-export function VendorActivityPanel({ vendor }: { vendor: Vendor }) {
-  const activity = vendorActivityForVendor(vendor);
+export function VendorActivityPanel({ vendor, activity, onRemoveActivity, onOpenRelated }: {
+  vendor: Vendor;
+  activity: ActivityRow[];
+  onRemoveActivity: (id: string) => void;
+  onOpenRelated: (row: ActivityRow) => void;
+}) {
 
   return (
     <section className="vendor-activity" aria-labelledby="vendor-activity-title">
@@ -18,6 +21,9 @@ export function VendorActivityPanel({ vendor }: { vendor: Vendor }) {
       </div>
       <ActivityPanel
         rows={activity}
+        vendorName={vendor.name}
+        onRemoveActivity={onRemoveActivity}
+        onOpenRelated={onOpenRelated}
         searchPlaceholder="Search recent activity"
         ariaLabel="Recent vendor activities"
       />

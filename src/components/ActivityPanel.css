@@ -32,24 +32,20 @@
 /* Open DataSheet column template (ND03 --act-cols) */
 .act-sheet {
   --act-check: calc(var(--page-pad, 16px) + 46px);
-  --act-cols: var(--act-check) minmax(140px, 0.8fr) minmax(300px, 2.6fr) minmax(210px, 1.2fr);
+  --act-cols: var(--act-check) minmax(112px, 0.75fr) minmax(240px, 2.3fr) minmax(150px, 1fr) minmax(115px, 0.8fr) 78px;
 }
 
 .act-sheet .pt-sheet__row {
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--act-cols);
-  min-width: 760px;
+  min-width: 820px;
 }
 
 .act-member {
   display: flex;
   align-items: center;
   gap: 9px;
-  min-width: 0;
-}
-
-.act-member__text {
   min-width: 0;
 }
 
@@ -63,13 +59,96 @@
   white-space: nowrap;
 }
 
-.act-member__role {
+.act-role {
   font-family: var(--type-body-secondary-family);
   font-size: var(--type-body-secondary-size);
   color: var(--ink-2);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.act-action {
+  justify-content: flex-end;
+  padding-right: var(--page-pad, 16px) !important;
+}
+
+.act-menu {
+  position: fixed;
+  z-index: 510;
+  display: grid;
+  width: 172px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface);
+  box-shadow: var(--menuShadow);
+}
+
+.act-menu button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.act-menu button:hover,
+.act-menu button:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+}
+
+.act-menu .act-menu__danger {
+  color: var(--bad, #b43b48);
+}
+
+.act-detail-modal {
+  max-width: 520px;
+}
+
+.act-detail-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.act-detail-facts > div {
+  min-width: 0;
+  padding: 11px 14px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.act-detail-facts dt {
+  color: var(--ink-3);
+  font-size: 11.5px;
+}
+
+.act-detail-facts dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.act-remove-copy {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .act-detail-facts { grid-template-columns: 1fr; }
 }
 
 .act-event {

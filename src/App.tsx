@@ -681,18 +681,20 @@ export default function App() {
             <IconHelp />
           </IconButton>
           <span ref={notifBtnRef}>
-            <IconButton
-              className="app-top-util"
-              label="Notifications"
-              alert
-              onClick={() => {
-                setSettingsOpen(false);
-                setAccountOpen(false);
-                setNotifOpen(true);
-              }}
-            >
-              <IconBell />
-            </IconButton>
+            <Tooltip tip="Notifications">
+              <IconButton
+                className="app-top-util"
+                label="Notifications"
+                alert
+                onClick={() => {
+                  setSettingsOpen(false);
+                  setAccountOpen(false);
+                  setNotifOpen(true);
+                }}
+              >
+                <IconBell />
+              </IconButton>
+            </Tooltip>
           </span>
           <div className="account-btn-wrap">
             <button

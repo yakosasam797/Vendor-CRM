@@ -622,7 +622,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     avatarTone: "default",
     event: "Blackout window added",
     module: "Services",
-    context: "Services · Lake & garden stay",
+    context: "Services · Example Lake Resort",
+    relatedServiceId: "svc-lake",
   },
   {
     id: "vendor-act-7",

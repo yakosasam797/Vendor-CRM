@@ -42,6 +42,7 @@ import { StatusChipWithDot } from "./StatusChipWithDot";
 import { TasksPanel, type TaskLinkGroup } from "./TasksPanel";
 import { VendorBookingsPanel } from "./VendorBookingsPanel";
 import { VendorActivityPanel } from "./VendorActivityPanel";
+import type { ActivityRow } from "./ActivityPanel";
 import { VendorDocsPanel } from "./VendorDocsPanel";
 import { VendorFinancePanel } from "./VendorFinancePanel";
 import { VendorFormModal } from "./VendorFormModal";
@@ -385,6 +386,7 @@ export function VendorRateCardsPage({
     body: string;
   } | null>(null);
   const [openTaskCount, setOpenTaskCount] = useState(5);
+  const [removedActivityIdsByVendor, setRemovedActivityIdsByVendor] = useState<Record<string, string[]>>({});
   const rateCardFilterRef = useRef<HTMLDivElement>(null);
   const canEdit = can(orgRole, "vendor.edit");
   const canAddTask = can(orgRole, "vendor.task.add");
@@ -393,6 +395,11 @@ export function VendorRateCardsPage({
 
   const vendorServices = servicesForVendor(vendor.id);
   const serviceCount = vendorServices.length;
+  const vendorActivity = vendorActivityForVendor(vendor).filter((row) => !removedActivityIdsByVendor[vendor.id]?.includes(row.id));
+  const removeActivity = (id: string) => setRemovedActivityIdsByVendor((current) => ({
+    ...current,
+    [vendor.id]: [...new Set([...(current[vendor.id] ?? []), id])],
+  }));
   const taskLinkGroups: TaskLinkGroup[] = [
       {
         id: "overview",
@@ -454,7 +461,7 @@ export function VendorRateCardsPage({
   const activeService = openServiceId
     ? vendorServices.find((service) => service.id === openServiceId)
     : undefined;
-  const activityCount = vendorActivityForVendor(vendor).length;
+  const activityCount = vendorActivity.length;
   const tabs: TabItem[] = useMemo(
     () =>
       BASE_TABS.map((t) => {
@@ -478,6 +485,26 @@ export function VendorRateCardsPage({
     if (next !== "comms") setDocumentRequestDraft(null);
     if (next !== "rate-cards") setRateCardFilterOpen(false);
     setTab(next);
+  };
+
+  const openActivityRelated = (row: ActivityRow) => {
+    const key = row.module.trim().toLowerCase();
+    if (row.relatedServiceId) {
+      setVendorTab("services");
+      onOpenServiceIdChange?.(row.relatedServiceId);
+      return;
+    }
+    const target = key.includes("service") ? "services"
+      : key.includes("vendor") ? "overview"
+      : key.includes("booking") ? "bookings"
+      : key.includes("rate") ? "rate-cards"
+      : key.includes("package") ? "packages"
+      : key.includes("finance") ? "finance"
+      : key.includes("doc") ? "docs"
+      : key.includes("task") ? "tasks"
+      : key.includes("communication") ? "comms"
+      : "overview";
+    setVendorTab(target);
   };
 
   useEffect(() => {
@@ -569,6 +596,9 @@ export function VendorRateCardsPage({
       {tab === "overview" ? (
         <VendorOverview
           vendor={vendor}
+          activity={vendorActivity}
+          onRemoveActivity={removeActivity}
+          onOpenRelated={openActivityRelated}
           flash={flash}
           canEdit={canEdit}
           onJumpTab={(next) => {
@@ -591,7 +621,7 @@ export function VendorRateCardsPage({
           onNewCard={onNewCard}
         />
       ) : tab === "activity" ? (
-        <VendorActivityPanel vendor={vendor} />
+        <VendorActivityPanel vendor={vendor} activity={vendorActivity} onRemoveActivity={removeActivity} onOpenRelated={openActivityRelated} />
       ) : tab === "services" ? (
         <ServicesPanel
           vendorId={vendor.id}

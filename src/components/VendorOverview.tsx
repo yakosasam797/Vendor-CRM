@@ -1,16 +1,14 @@
-import { useState } from "react";
 import { Avatar, Button, EmptyState } from "@paryatech/design-system";
 import {
   KEY_CONTACTS,
   operatingHistoryForVendor,
-  vendorActivityForVendor,
   type KeyContact,
 } from "../data/vendorOverview";
 import type { Vendor } from "../data/vendors";
+import { ActivityPanel, type ActivityRow } from "./ActivityPanel";
 import {
   IconBookings,
   IconCalendar,
-  IconChevronDown,
   IconClock,
   IconGlobe,
   IconMail,
@@ -19,7 +17,6 @@ import {
   IconRefresh,
   IconWarn,
 } from "../icons";
-import { RecentActivityTimeline } from "./RecentActivityTimeline";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip } from "./SummaryStrip";
 import { VendorSetupChecklist } from "./VendorSetupChecklist";
@@ -78,15 +75,19 @@ export function VendorOverview({
   canEdit = false,
   onJumpTab,
   onEditProfile,
+  activity = [],
+  onRemoveActivity,
+  onOpenRelated,
 }: {
   vendor?: Vendor;
   flash?: string | null;
   canEdit?: boolean;
   onJumpTab: (tab: string) => void;
   onEditProfile?: () => void;
+  activity?: ActivityRow[];
+  onRemoveActivity?: (id: string) => void;
+  onOpenRelated?: (row: ActivityRow) => void;
 }) {
-  const [expandedContactsVendorId, setExpandedContactsVendorId] = useState<string | null>(null);
-
   if (!vendor) {
     return flash ? (
       <div className="vendor-setup__flash" role="status" style={{ marginTop: 20 }}>
@@ -167,9 +168,7 @@ export function VendorOverview({
   }
 
   const contacts = contactsForVendor(vendor);
-  const contactsExpanded = expandedContactsVendorId === vendor.id;
-  const visibleContacts = contactsExpanded ? contacts : contacts.slice(0, 2);
-  const recentActivity = vendorActivityForVendor(vendor).slice(0, 4);
+  const recentActivity = activity.slice(0, 4);
   const operatingHistory = operatingHistoryForVendor(vendor).map((field) => ({
     ...field,
     icon: OPERATING_HISTORY_ICONS[field.id as keyof typeof OPERATING_HISTORY_ICONS],
@@ -265,7 +264,7 @@ export function VendorOverview({
                 />
               ) : (
                 <ul className="vo-contacts">
-                  {visibleContacts.map((contact) => (
+                  {contacts.map((contact) => (
                     <li key={contact.id} className="vo-contact">
                       <div className="vo-contact__who">
                         <Avatar tone="pink" size={32}>
@@ -313,26 +312,6 @@ export function VendorOverview({
                   ))}
                 </ul>
               )}
-              {contacts.length > 2 ? (
-                <div className="vo-contacts__disclosure">
-                  <button
-                    type="button"
-                    className="vo-contacts__toggle"
-                    aria-expanded={contactsExpanded}
-                    onClick={() =>
-                      setExpandedContactsVendorId(contactsExpanded ? null : vendor.id)
-                    }
-                  >
-                    {contactsExpanded ? "Show fewer contacts" : `View all ${contacts.length} contacts`}
-                    <span
-                      className={`vo-contacts__toggle-icon${contactsExpanded ? " is-expanded" : ""}`}
-                      aria-hidden="true"
-                    >
-                      <IconChevronDown size={14} />
-                    </span>
-                  </button>
-                </div>
-              ) : null}
             </div>
           </section>
         </div>
@@ -356,7 +335,15 @@ export function VendorOverview({
             </button>
           </div>
         </div>
-        <RecentActivityTimeline rows={recentActivity} />
+        <ActivityPanel
+          rows={recentActivity}
+          vendorName={vendor.name}
+          ariaLabel="Recent vendor activity in overview"
+          searchPlaceholder="Search recent activity"
+          onRemoveActivity={onRemoveActivity}
+          onOpenRelated={onOpenRelated}
+          showPagination={false}
+        />
       </section>
 
     </div>
