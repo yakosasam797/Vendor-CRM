@@ -19,6 +19,7 @@ import { RateCardDetailPage } from "./components/rateCard/RateCardDetailPage";
 import { NotesPanel } from "./components/NotesPanel";
 import { SEED_VENDORS, type Vendor } from "./data/vendors";
 import { getVendorService } from "./data/services";
+import { readCreatedDirectoryServices, saveCreatedDirectoryServices, type DirectoryService } from "./data/vendorDirectory";
 import { buildNavGroups } from "./nav";
 import { AccountHubPage } from "./pages/account/AccountHubPage";
 import { NotificationsPage } from "./pages/notifications/NotificationsPage";
@@ -73,6 +74,8 @@ export default function App() {
   const [vendors, setVendors] = useState<Vendor[]>(() =>
     SEED_VENDORS.map((v) => structuredClone(v)),
   );
+  const [createdDirectoryServices, setCreatedDirectoryServices] = useState<DirectoryService[]>(readCreatedDirectoryServices);
+  useEffect(() => saveCreatedDirectoryServices(createdDirectoryServices), [createdDirectoryServices]);
   const [flash, setFlash] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -747,6 +750,8 @@ export default function App() {
       ) : isVendorsList ? (
         <VendorsListPage
           vendors={vendors}
+          createdServices={createdDirectoryServices}
+          onCreatedServicesChange={setCreatedDirectoryServices}
           orgRole={orgRole}
           flash={flash}
           onClearFlash={() => setFlash(null)}

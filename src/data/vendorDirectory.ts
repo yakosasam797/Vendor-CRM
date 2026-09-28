@@ -18,6 +18,10 @@ export interface DirectoryService {
   category: DirectoryCategory;
   location: string;
   status: "Active" | "Draft";
+  description?: string;
+  attributes?: Array<{ label: string; value: string }>;
+  inclusions?: string[];
+  exclusions?: string[];
 }
 
 export interface VendorServiceConnection {
@@ -46,6 +50,21 @@ export const SUPPLIER_TYPES: SupplierType[] = [
   "DMC",
   "Wholesaler",
 ];
+
+const createdServicesKey = "paryatech-vendor-directory-services";
+
+export function readCreatedDirectoryServices(): DirectoryService[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(createdServicesKey) || "[]");
+    return Array.isArray(saved) ? saved.filter((item) => item && typeof item.id === "string" && typeof item.name === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveCreatedDirectoryServices(services: DirectoryService[]) {
+  localStorage.setItem(createdServicesKey, JSON.stringify(services));
+}
 
 export const DIRECTORY_SERVICES: DirectoryService[] = [
   {

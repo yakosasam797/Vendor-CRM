@@ -58,6 +58,7 @@ import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTestRate } from "./ServiceTestRate";
 import { ServicePolicies } from "./ServicePolicies";
 import { ServiceTypeIcon, ServiceTypeLabel, ServiceTypeList } from "./ServiceTypeLabel";
+import { NewServicePage } from "./NewServicePage";
 import "./VendorsListPage.css";
 
 type Perspective = "vendors" | "services";
@@ -630,15 +631,18 @@ function ServiceDirectoryDetail({
                     <div className="service-detail-profile__field"><dt>Service ID</dt><dd className="pt-mono">{service.serviceId.toUpperCase()}</dd></div>
                     <div className="service-detail-profile__field"><dt>Status</dt><dd><StatusChipWithDot tone={service.status === "Active" ? "done" : "progress"}>{service.status}</StatusChipWithDot></dd></div>
                     <div className="service-detail-profile__field"><dt>Category</dt><dd>{serviceProfile?.profile.category ?? service.category}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Duration</dt><dd>{serviceProfile?.profile.duration ?? "Service based"}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Age suitability</dt><dd>{serviceProfile?.profile.ageSuitability ?? "All ages"}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Difficulty</dt><dd>{serviceProfile?.profile.difficulty ?? "Not applicable"}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Seasonality</dt><dd>{serviceProfile?.profile.seasonality ?? "Available year-round"}</dd></div>
+                    {service.attributes?.map((field) => <div className="service-detail-profile__field" key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}
+                    {!service.attributes && <>
+                      <div className="service-detail-profile__field"><dt>Duration</dt><dd>{serviceProfile?.profile.duration ?? "Service based"}</dd></div>
+                      <div className="service-detail-profile__field"><dt>Age suitability</dt><dd>{serviceProfile?.profile.ageSuitability ?? "All ages"}</dd></div>
+                      <div className="service-detail-profile__field"><dt>Difficulty</dt><dd>{serviceProfile?.profile.difficulty ?? "Not applicable"}</dd></div>
+                      <div className="service-detail-profile__field"><dt>Seasonality</dt><dd>{serviceProfile?.profile.seasonality ?? "Available year-round"}</dd></div>
+                    </>}
                     <div className="service-detail-profile__field"><dt>Base location</dt><dd>{service.location}</dd></div>
                     <div className="service-detail-profile__field"><dt>Search keywords</dt><dd>{serviceProfile?.profile.searchText ?? `${service.name} ${service.location}`}</dd></div>
-                    <div className="service-detail-profile__field service-detail-profile__field--wide"><dt>Description</dt><dd>{serviceProfile?.about ?? `${service.name} is an active ${service.category.toLowerCase()} service in ${service.location}.`}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Included</dt><dd>{serviceProfile?.inclusions.join(", ") ?? "As confirmed on the linked rate card"}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Excluded</dt><dd>{serviceProfile?.profile.exclusions.join(", ") ?? "Personal expenses"}</dd></div>
+                    <div className="service-detail-profile__field service-detail-profile__field--wide"><dt>Description</dt><dd>{service.description || serviceProfile?.about || "No description added yet."}</dd></div>
+                    <div className="service-detail-profile__field"><dt>Included</dt><dd>{service.inclusions?.join(", ") || serviceProfile?.inclusions.join(", ") || "Not specified"}</dd></div>
+                    <div className="service-detail-profile__field"><dt>Excluded</dt><dd>{service.exclusions?.join(", ") || serviceProfile?.profile.exclusions.join(", ") || "Not specified"}</dd></div>
                   </dl>
                 </div>
               </section>
@@ -788,6 +792,8 @@ function ServiceDirectoryDetail({
 
 export function VendorsListPage({
   vendors,
+  createdServices,
+  onCreatedServicesChange,
   orgRole,
   flash,
   onClearFlash,
@@ -798,6 +804,8 @@ export function VendorsListPage({
   onVendorsChange,
 }: {
   vendors: Vendor[];
+  createdServices: DirectoryService[];
+  onCreatedServicesChange: (next: DirectoryService[]) => void;
   orgRole: OrgRole;
   flash?: string | null;
   onClearFlash?: () => void;
@@ -809,6 +817,8 @@ export function VendorsListPage({
 }) {
   const [perspective, setPerspective] = useState<Perspective>("vendors");
   const [openServiceId, setOpenServiceId] = useState<string | null>(null);
+  const [creatingService, setCreatingService] = useState(false);
+  const [createdNotice, setCreatedNotice] = useState("");
   const [serviceCategory, setServiceCategory] = useState<"all" | DirectoryCategory>("all");
   const [categoryFilters, setCategoryFilters] = useState<DirectoryCategory[]>([]);
   const [query, setQuery] = useState("");
@@ -830,11 +840,21 @@ export function VendorsListPage({
   const scopedConnections = useMemo(() => VENDOR_SERVICE_CONNECTIONS.filter((connection) => scopedIds.has(connection.vendorId)), [scopedIds]);
   const activeConnections = useMemo(() => scopedConnections.filter((connection) => supplierTypes.length === 0 || supplierTypes.includes(connection.supplierType)), [scopedConnections, supplierTypes]);
   const visibleServiceIds = useMemo(() => new Set(activeConnections.map((connection) => connection.serviceId)), [activeConnections]);
-  const availableServices = useMemo(() => DIRECTORY_SERVICES.filter((service) => visibleServiceIds.has(service.id)), [visibleServiceIds]);
-  const activeService = openServiceId ? DIRECTORY_SERVICES.find((service) => service.id === openServiceId) : undefined;
+  const availableServices = useMemo(() => [...createdServices, ...DIRECTORY_SERVICES.filter((service) => visibleServiceIds.has(service.id))], [createdServices, visibleServiceIds]);
+  const activeService = openServiceId ? availableServices.find((service) => service.id === openServiceId) : undefined;
   const closeServiceDetail = useCallback(() => setOpenServiceId(null), []);
+  const closeCreateService = useCallback(() => setCreatingService(false), []);
 
   useEffect(() => {
+    if (creatingService) {
+      onNavigationContextChange?.({
+        backLabel: "Back to services",
+        sectionLabel: "Services",
+        title: "Add service",
+        onBack: closeCreateService,
+      });
+      return () => onNavigationContextChange?.(null);
+    }
     if (!activeService) {
       onNavigationContextChange?.(null);
       return;
@@ -846,7 +866,7 @@ export function VendorsListPage({
       onBack: closeServiceDetail,
     });
     return () => onNavigationContextChange?.(null);
-  }, [activeService, closeServiceDetail, onNavigationContextChange]);
+  }, [activeService, closeCreateService, closeServiceDetail, creatingService, onNavigationContextChange]);
 
   const viewTabs: TabItem[] = useMemo(() => [
     { id: "vendors", label: "Vendors", count: scoped.length },
@@ -937,6 +957,23 @@ export function VendorsListPage({
     );
   }
 
+  if (creatingService) {
+    return <NewServicePage
+      existingServices={[...createdServices, ...DIRECTORY_SERVICES]}
+      onCancel={closeCreateService}
+      onCreated={(service) => {
+        onCreatedServicesChange([service, ...createdServices]);
+        setCreatingService(false);
+        setServiceCategory("all");
+        setQuery("");
+        setLocationQuery("");
+        setSupplierTypes([]);
+        setPage(1);
+        setCreatedNotice(`${service.name} saved as a draft service.`);
+      }}
+    />;
+  }
+
   return (
     <div className="vendors-page">
       <header className="vendors-page__head">
@@ -944,12 +981,12 @@ export function VendorsListPage({
           {perspective === "vendors" ? "Vendors" : "Services"}
         </h1>
         <div className="vendors-page__actions">
-          <AnchoredImport buttonLabel="Import" title="Import vendors" />
-          {canAdd ? <Button variant="primary" size="sm" onClick={onAddVendor}><IconPlus />Add vendor</Button> : null}
+          <AnchoredImport buttonLabel="Import" title={perspective === "vendors" ? "Import vendors" : "Import services"} />
+          {canAdd ? <Button variant="primary" size="sm" onClick={perspective === "vendors" ? onAddVendor : () => setCreatingService(true)}><IconPlus />{perspective === "vendors" ? "Add vendor" : "Add service"}</Button> : null}
         </div>
       </header>
 
-      {flash ? <div className="vendors-page__flash" role="status"><span>{flash}</span>{onClearFlash ? <button type="button" className="vendors-page__flash-dismiss" onClick={onClearFlash}>Dismiss</button> : null}</div> : null}
+      {flash || createdNotice ? <div className="vendors-page__flash" role="status"><span>{flash || createdNotice}</span><button type="button" className="vendors-page__flash-dismiss" onClick={() => { onClearFlash?.(); setCreatedNotice(""); }}>Dismiss</button></div> : null}
 
       <div className="directory-view-tabs"><TabBar items={viewTabs} value={perspective} onValueChange={setBrowseBy} aria-label="Vendor directory view" /></div>
 

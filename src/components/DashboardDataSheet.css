@@ -4,7 +4,7 @@
  * attached to the bottom edge; it collapses to zero when rows need the space.
  * Long tables scroll inside that space so pagination remains visible.
  */
-.pt-content:has(> .vendor-page :is(.dashboard-table-panel, .dashboard-table-end)),
+.pt-content:has(> .vendor-page > :is(.dashboard-table-panel, .dashboard-table-end)),
 .pt-content:has(> .vendors-page > .dashboard-table-end) {
   height: 100%;
   max-height: 100%;
@@ -12,7 +12,7 @@
   padding-bottom: 0;
 }
 
-.pt-content:has(> .vendor-page :is(.dashboard-table-panel, .dashboard-table-end)) > .vendor-page,
+.pt-content:has(> .vendor-page > :is(.dashboard-table-panel, .dashboard-table-end)) > .vendor-page,
 .pt-content:has(> .vendors-page > .dashboard-table-end) > .vendors-page {
   height: 100%;
   flex: 1 1 auto;
