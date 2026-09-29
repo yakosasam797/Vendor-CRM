@@ -428,6 +428,8 @@
 
 .vo-panels .vo-profile {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(64px, 1fr));
+  height: 100%;
 }
 
 .vo-profile__field {
@@ -651,6 +653,11 @@
   .vo-panels .vo-profile,
   .vo-contacts {
     grid-template-columns: 1fr;
+  }
+
+  .vo-panels .vo-profile {
+    grid-template-rows: none;
+    height: auto;
   }
 
   .vo-profile__field,

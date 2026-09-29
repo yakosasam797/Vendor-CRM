@@ -111,6 +111,18 @@ function directoryService(input: {
 
 export const VENDOR_SERVICES: VendorService[] = [
   directoryService({
+    id: "svc-kerala-private-hire",
+    vendorId: "bluewave",
+    name: "Kerala private transport",
+    type: "Transport",
+    location: "Kerala",
+    details: "Private transfers, local hire and multi-day travel",
+    about: "Customer-defined pickup, final drop and route across Kerala. Choose the vehicle and fare rule for each trip; availability and supplier terms are confirmed before quoting.",
+    pricingLabel: "Kerala private hire rates",
+    rateCards: [{ id: "rc-kerala-private-hire", name: "Kerala private hire rates" }],
+    imageId: "photo-1449965408869-eaa3f722e40d",
+  }),
+  directoryService({
     id: "svc-taj-exotica",
     vendorId: "exhosp",
     name: "Taj Exotica Resort & Spa",

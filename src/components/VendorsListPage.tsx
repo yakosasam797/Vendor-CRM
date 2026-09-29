@@ -21,7 +21,6 @@ import {
   DIRECTORY_SERVICES,
   SUPPLIER_TYPES,
   VENDOR_SERVICE_CONNECTIONS,
-  serviceByDirectoryId,
   type DirectoryCategory,
   type DirectoryService,
   type SupplierType,
@@ -54,6 +53,8 @@ import { AnchoredImport } from "./AnchoredImport";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTestRate } from "./ServiceTestRate";
+import { TransportRateDetails, TransportTestRate } from "./TransportRateWorkspace";
+import { RegionalTransportRates, RegionalTransportTest } from "./RegionalTransportWorkspace";
 import { ServicePolicies } from "./ServicePolicies";
 import { ServiceTypeIcon, ServiceTypeLabel, ServiceTypeList } from "./ServiceTypeLabel";
 import { NewServicePage } from "./NewServicePage";
@@ -276,6 +277,32 @@ export function ServiceRateDetails({
     );
   }
 
+  if (!connection.rateCardId) {
+    return <EmptyState title="No rate card linked" description="Add a supplier rate card to test or display pricing for this service." />;
+  }
+
+  if (card.regionalTransport) {
+    return <div className="service-rate-details">
+      <div className="service-rate-details__record"><div className="service-rate-details__record-copy"><span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span><div><span className="service-rate-details__record-label">Linked rate card</span><div className="service-rate-details__record-title"><strong>{connection.rateCardName}</strong><StatusChipWithDot tone={rateCardStatusTone(card)}>{card.state}</StatusChipWithDot></div></div></div><div className="service-rate-details__record-actions"><Button variant="brand" size="sm" onClick={() => onOpenRateCard(connection.vendorId, connection.rateCardId)}>Open rate card</Button></div></div>
+      <RegionalTransportRates card={card} />
+    </div>;
+  }
+  if (card.transport) {
+    return <div className="service-rate-details">
+      <div className="service-rate-details__record">
+        <div className="service-rate-details__record-copy">
+          <span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span>
+          <div><span className="service-rate-details__record-label">Linked rate card</span><div className="service-rate-details__record-title"><strong>{connection.rateCardName}</strong><StatusChipWithDot tone={rateCardStatusTone(card)}>{card.state}</StatusChipWithDot></div></div>
+        </div>
+        <div className="service-rate-details__record-actions">
+          <ServiceRateSelect className="service-rate-details__source" label="Rate card" value={connection.id} options={rateCardOptions} onChange={(value) => { setConnectionId(value); setSeasonIndex(0); }} />
+          <Button variant="brand" size="sm" onClick={() => onOpenRateCard(connection.vendorId, connection.rateCardId)}>Open rate card</Button>
+        </div>
+      </div>
+      <TransportRateDetails card={card} />
+    </div>;
+  }
+
   return (
     <div className="service-rate-details">
       <div className="service-rate-details__record">
@@ -470,13 +497,15 @@ function ServiceDirectoryDetail({
   const [vendorMenuId, setVendorMenuId] = useState<string | null>(null);
   const vendorMenuRef = useRef<HTMLDivElement>(null);
   const vendorIds = useMemo(() => new Set(vendors.map((vendor) => vendor.id)), [vendors]);
-  const connections = useMemo(
-    () => VENDOR_SERVICE_CONNECTIONS.filter((connection) => connection.serviceId === service.id && vendorIds.has(connection.vendorId)),
-    [service.id, vendorIds],
-  );
+  const connections = useMemo(() => {
+    const linked = VENDOR_SERVICE_CONNECTIONS.filter((connection) => connection.serviceId === service.id && vendorIds.has(connection.vendorId));
+    if (linked.length || !vendorIds.has(service.profileVendorId)) return linked;
+    return [{ id: `created-${service.id}`, vendorId: service.profileVendorId, serviceId: service.id, supplierType: "Direct supplier" as const, productsCovered: service.category, rateCardId: "", rateCardName: "No rate card linked", validity: "Not set" }];
+  }, [service, vendorIds]);
+  const transportCard = connections.map((connection) => getDetailCard(connection.rateCardId)).find((card) => card?.transport || card?.regionalTransport);
   const serviceProfile = getVendorService(service.serviceId);
   const connectedVendorIds = connections.map((connection) => connection.vendorId);
-  const linkedRateCardCount = new Set(connections.map((connection) => connection.rateCardId)).size;
+  const linkedRateCardCount = new Set(connections.map((connection) => connection.rateCardId).filter(Boolean)).size;
   const mediaItems = serviceProfile?.media ?? [];
   const primaryMediaCount = mediaItems.filter((item) => item.usedInBanner).length;
   const serviceSummary: SummaryField[] = [
@@ -599,6 +628,7 @@ function ServiceDirectoryDetail({
                     <div className="service-detail-profile__field"><dt>Service title</dt><dd>{service.name}</dd></div>
                     <div className="service-detail-profile__field"><dt>Service ID</dt><dd className="pt-mono">{service.serviceId.toUpperCase()}</dd></div>
                     <div className="service-detail-profile__field"><dt>Category</dt><dd>{serviceProfile?.profile.category ?? service.category}</dd></div>
+                    {!serviceProfile ? <div className="service-detail-profile__field"><dt>Vendor</dt><dd>{vendors.find((vendor) => vendor.id === service.profileVendorId)?.name ?? "Vendor unavailable"}</dd></div> : null}
                     {service.attributes?.map((field) => <div className="service-detail-profile__field" key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}
                     {!service.attributes && <>
                       <div className="service-detail-profile__field"><dt>Duration</dt><dd>{serviceProfile?.profile.duration ?? "Service based"}</dd></div>
@@ -652,11 +682,13 @@ function ServiceDirectoryDetail({
           onOpenRateCard={onOpenRateCard}
         />
       ) : tab === "test-rate" ? (
-        <ServiceTestRate
-          service={service}
-          connections={connections}
-          vendors={vendors}
-        />
+        !connections.some((connection) => connection.rateCardId)
+          ? <EmptyState title="No rate card linked" description="Add a supplier rate card before testing this service's price." />
+          : transportCard?.regionalTransport
+          ? <RegionalTransportTest card={transportCard} />
+          : transportCard
+          ? <TransportTestRate card={transportCard} />
+          : <ServiceTestRate service={service} connections={connections} vendors={vendors} />
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
           <div className="service-vendors-overview__summary">
@@ -707,7 +739,7 @@ function ServiceDirectoryDetail({
                   <DataSheetCell><DirectoryEntity vendor={vendor} title={vendor.name} subtitle={vendor.code} onClick={() => onOpenVendor(vendor.id)} /></DataSheetCell>
                   <DataSheetCell><span className="directory-relationship"><strong>{connection.supplierType}</strong><span>{connection.productsCovered}</span></span></DataSheetCell>
                   <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span></DataSheetCell>
-                  <DataSheetCell><button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)}>{connection.rateCardName}</button></DataSheetCell>
+                  <DataSheetCell>{connection.rateCardId ? <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)}>{connection.rateCardName}</button> : <span>No rate card linked</span>}</DataSheetCell>
                   <DataSheetCell className="service-suppliers-sheet__action">
                     <div
                       className="vendors-sheet__more"
@@ -802,10 +834,22 @@ export function VendorsListPage({
   const canEdit = can(orgRole, "vendor.edit");
   const scoped = useMemo(() => visibleVendorsForRole(vendors, orgRole), [vendors, orgRole]);
   const scopedIds = useMemo(() => new Set(scoped.map((vendor) => vendor.id)), [scoped]);
-  const scopedConnections = useMemo(() => VENDOR_SERVICE_CONNECTIONS.filter((connection) => scopedIds.has(connection.vendorId)), [scopedIds]);
+  const scopedConnections = useMemo(() => [
+    ...VENDOR_SERVICE_CONNECTIONS.filter((connection) => scopedIds.has(connection.vendorId)),
+    ...createdServices.filter((service) => scopedIds.has(service.profileVendorId)).map((service): VendorServiceConnection => ({
+      id: `created-${service.id}`,
+      vendorId: service.profileVendorId,
+      serviceId: service.id,
+      supplierType: "Direct supplier",
+      productsCovered: service.category,
+      rateCardId: "",
+      rateCardName: "No rate card linked",
+      validity: "Not set",
+    })),
+  ], [createdServices, scopedIds]);
   const activeConnections = useMemo(() => scopedConnections.filter((connection) => supplierTypes.length === 0 || supplierTypes.includes(connection.supplierType)), [scopedConnections, supplierTypes]);
   const visibleServiceIds = useMemo(() => new Set(activeConnections.map((connection) => connection.serviceId)), [activeConnections]);
-  const availableServices = useMemo(() => [...createdServices, ...DIRECTORY_SERVICES.filter((service) => visibleServiceIds.has(service.id))], [createdServices, visibleServiceIds]);
+  const availableServices = useMemo(() => [...createdServices.filter((service) => scopedIds.has(service.profileVendorId)), ...DIRECTORY_SERVICES.filter((service) => visibleServiceIds.has(service.id))], [createdServices, scopedIds, visibleServiceIds]);
   const activeService = openServiceId ? availableServices.find((service) => service.id === openServiceId) : undefined;
   const closeServiceDetail = useCallback(() => setOpenServiceId(null), []);
   const closeCreateService = useCallback(() => setCreatingService(false), []);
@@ -848,7 +892,7 @@ export function VendorsListPage({
     const loc = locationQuery.trim().toLowerCase();
     return scoped.flatMap((vendor) => {
       const connections = activeConnections.filter((connection) => connection.vendorId === vendor.id);
-      const related = connections.map((connection) => serviceByDirectoryId(connection.serviceId)).filter((service): service is DirectoryService => Boolean(service));
+      const related = connections.map((connection) => availableServices.find((service) => service.id === connection.serviceId)).filter((service): service is DirectoryService => Boolean(service));
       if (categoryFilters.length > 0 && !related.some((service) => categoryFilters.includes(service.category))) return [];
       if (supplierTypes.length > 0 && connections.length === 0) return [];
       if (loc && !vendor.location.toLowerCase().includes(loc) && !related.some((service) => service.location.toLowerCase().includes(loc))) return [];
@@ -857,7 +901,7 @@ export function VendorsListPage({
       if (q && !directMatch && !relatedMatch) return [];
       return [{ vendor, connections, regionsServed: [...new Set(related.map((service) => service.location))], matchedThrough: !directMatch && relatedMatch ? relatedMatch.name : undefined }];
     });
-  }, [activeConnections, categoryFilters, locationQuery, query, scoped, supplierTypes.length]);
+  }, [activeConnections, availableServices, categoryFilters, locationQuery, query, scoped, supplierTypes.length]);
 
   const serviceRows = useMemo<ServiceDirectoryRow[]>(() => {
     const q = query.trim().toLowerCase();
@@ -929,6 +973,7 @@ export function VendorsListPage({
   if (creatingService) {
     return <NewServicePage
       existingServices={[...createdServices, ...DIRECTORY_SERVICES]}
+      vendors={vendors}
       onCancel={closeCreateService}
       onCreated={(service) => {
         onCreatedServicesChange([service, ...createdServices]);
@@ -1039,7 +1084,7 @@ export function VendorsListPage({
                     <DataSheetCell>
                       <ServiceTypeList
                         compact
-                        types={row.connections.map((connection) => serviceByDirectoryId(connection.serviceId)?.category).filter((value): value is DirectoryCategory => Boolean(value))}
+                        types={row.connections.map((connection) => availableServices.find((service) => service.id === connection.serviceId)?.category).filter((value): value is DirectoryCategory => Boolean(value))}
                         ariaLabel={`Services offered by ${row.vendor.name}`}
                         className="directory-services-offered"
                       />

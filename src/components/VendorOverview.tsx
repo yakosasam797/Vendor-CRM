@@ -17,18 +17,9 @@ import {
   IconRefresh,
   IconWarn,
 } from "../icons";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip } from "./SummaryStrip";
 import { VendorSetupChecklist } from "./VendorSetupChecklist";
 import "./VendorOverview.css";
-
-const STATUS_TONE = {
-  Draft: "progress",
-  "Setup incomplete": "progress",
-  Active: "done",
-  Inactive: "open",
-  Archived: "blocked",
-} as const;
 
 function contactsForVendor(vendor: Vendor): KeyContact[] {
   if (vendor.id === "exhosp") return KEY_CONTACTS;
@@ -211,14 +202,6 @@ export function VendorOverview({
                   <dd className="pt-mono">{vendor.code}</dd>
                 </div>
                 <div className="vo-profile__field">
-                  <dt>Status</dt>
-                  <dd>
-                    <StatusChipWithDot tone={STATUS_TONE[vendor.status]}>
-                      {vendor.status}
-                    </StatusChipWithDot>
-                  </dd>
-                </div>
-                <div className="vo-profile__field">
                   <dt>Service categories</dt>
                   <dd>{vendor.categories.join(" · ") || "Not set"}</dd>
                 </div>
@@ -238,10 +221,6 @@ export function VendorOverview({
                 <div className="vo-profile__field">
                   <dt>Country</dt>
                   <dd>{vendor.country}</dd>
-                </div>
-                <div className="vo-profile__field">
-                  <dt>Last updated</dt>
-                  <dd>{vendor.updated}</dd>
                 </div>
               </dl>
             </div>

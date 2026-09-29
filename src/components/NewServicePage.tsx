@@ -1,7 +1,8 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@paryatech/design-system";
 import { DIRECTORY_CATEGORIES, type DirectoryCategory, type DirectoryService } from "../data/vendorDirectory";
-import { IconIdCard, IconPackages, IconPin } from "../icons";
+import type { Vendor } from "../data/vendors";
+import { IconBuilding, IconCheck, IconChevronDown, IconIdCard, IconPackages, IconPin, IconSearch } from "../icons";
 import { ServiceTypeIcon } from "./ServiceTypeLabel";
 import "./NewVendorPage.css";
 import "./NewServicePage.css";
@@ -56,21 +57,68 @@ const typeDetails: Record<DirectoryCategory, { description: string; fields: Fiel
   },
 };
 
-function Section({ title, description, icon, children }: { title: string; description: string; icon: ReactNode; children: ReactNode }) {
+function Section({ title, description, icon, children }: { title: string; description?: string; icon: ReactNode; children: ReactNode }) {
   const id = `add-service-${title.toLowerCase().replace(/\W+/g, "-")}`;
   return <section className="new-vendor-section" aria-labelledby={id}>
-    <div className="new-vendor-section__label"><span aria-hidden="true">{icon}</span><div><h2 id={id}>{title}</h2><p>{description}</p></div></div>
+    <div className="new-vendor-section__label"><span aria-hidden="true">{icon}</span><div><h2 id={id}>{title}</h2>{description ? <p>{description}</p> : null}</div></div>
     <div className="new-vendor-section__content">{children}</div>
   </section>;
 }
 
-export function NewServicePage({ existingServices, vendorId = "", onCancel, onCreated }: {
+function VendorPicker({ vendors, value, invalid, onChange }: { vendors: Vendor[]; value: string; invalid: boolean; onChange: (id: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const rootRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const listId = useId();
+  const labelId = useId();
+  const selected = vendors.find((vendor) => vendor.id === value);
+  const matches = vendors.filter((vendor) => `${vendor.name} ${vendor.code} ${vendor.location}`.toLowerCase().includes(query.trim().toLowerCase()));
+
+  useEffect(() => {
+    if (!open) return;
+    searchRef.current?.focus();
+    const closeOutside = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    return () => document.removeEventListener("pointerdown", closeOutside);
+  }, [open]);
+
+  return <div className="new-vendor-field new-service-page__vendor" ref={rootRef} onKeyDown={(event) => {
+    if (event.key === "Escape") { setOpen(false); event.stopPropagation(); }
+    if (event.key === "Enter" && open && document.activeElement === searchRef.current && matches.length) {
+      event.preventDefault(); onChange(matches[0].id); setOpen(false);
+    }
+  }}>
+    <span className="new-vendor-field__label" id={labelId}>Provided by *</span>
+    <button type="button" className={`new-service-vendor-picker__trigger${open ? " is-open" : ""}`} aria-labelledby={labelId} aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined} aria-invalid={invalid} onClick={() => { setQuery(""); setOpen((current) => !current); }}>
+      <span className="new-service-vendor-picker__avatar" aria-hidden="true">{selected?.imageUrl ? <img src={selected.imageUrl} alt="" /> : selected?.initials ?? <IconBuilding size={17} />}</span>
+      <span className="new-service-vendor-picker__selection">{selected ? <><strong>{selected.name}</strong><small>{selected.code} · {selected.location}</small></> : <span className="new-service-vendor-picker__placeholder">Select vendor</span>}</span>
+      <IconChevronDown size={17} />
+    </button>
+    {open && <div className="new-service-vendor-picker__menu">
+      <div className="new-service-vendor-picker__search"><IconSearch size={17} /><input ref={searchRef} type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search vendors" aria-label="Search vendors" /></div>
+      <div className="new-service-vendor-picker__list" id={listId} role="listbox" aria-label="Vendors">
+        {matches.length ? matches.map((vendor) => <button key={vendor.id} type="button" role="option" aria-selected={vendor.id === value} className="new-service-vendor-picker__option" onClick={() => { onChange(vendor.id); setOpen(false); }}>
+          <span className="new-service-vendor-picker__avatar" aria-hidden="true">{vendor.imageUrl ? <img src={vendor.imageUrl} alt="" /> : vendor.initials}</span>
+          <span className="new-service-vendor-picker__option-copy"><strong>{vendor.name}</strong><small>{vendor.code} · {vendor.location}</small></span>
+          {vendor.id === value && <IconCheck size={16} />}
+        </button>) : <p className="new-service-vendor-picker__empty">No vendors found</p>}
+      </div>
+    </div>}
+  </div>;
+}
+
+export function NewServicePage({ existingServices, vendors, vendorId = "", onCancel, onCreated }: {
   existingServices: DirectoryService[];
+  vendors: Vendor[];
   vendorId?: string;
   onCancel: () => void;
   onCreated: (service: DirectoryService) => void;
 }) {
   const [category, setCategory] = useState<DirectoryCategory>("Accommodation");
+  const [selectedVendorId, setSelectedVendorId] = useState(vendorId);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [description, setDescription] = useState("");
@@ -80,8 +128,8 @@ export function NewServicePage({ existingServices, vendorId = "", onCancel, onCr
   const [attempted, setAttempted] = useState(false);
   const [id] = useState(() => `svc-${crypto.randomUUID().slice(0, 8)}`);
   const fields = typeDetails[category].fields;
-  const duplicate = existingServices.find((service) => service.category === category && service.name.trim().toLowerCase() === name.trim().toLowerCase());
-  const missing = !name.trim() || !location.trim() || fields.some((field) => field.required && !details[`${category}:${field.key}`]?.trim());
+  const duplicate = existingServices.find((service) => service.profileVendorId === selectedVendorId && service.category === category && service.name.trim().toLowerCase() === name.trim().toLowerCase());
+  const missing = !selectedVendorId || !vendors.some((vendor) => vendor.id === selectedVendorId) || !name.trim() || !location.trim() || fields.some((field) => field.required && !details[`${category}:${field.key}`]?.trim());
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -90,7 +138,7 @@ export function NewServicePage({ existingServices, vendorId = "", onCancel, onCr
     onCreated({
       id,
       serviceId: id,
-      profileVendorId: vendorId,
+      profileVendorId: selectedVendorId,
       name: name.trim(),
       category,
       location: location.trim(),
@@ -106,8 +154,12 @@ export function NewServicePage({ existingServices, vendorId = "", onCancel, onCr
       <header className="new-vendor-form__head"><h1>Add service</h1></header>
       {(attempted && missing || duplicate) ? <div className="new-vendor-errors" role="alert">
         <strong>{duplicate ? "This service already exists" : "Complete the required details"}</strong>
-        <p>{duplicate ? `${duplicate.name} is already listed under ${category}.` : "Add a name, base location, and the required service detail."}</p>
+        <p>{duplicate ? `${duplicate.name} is already listed for this vendor under ${category}.` : "Choose a vendor and complete the required service details."}</p>
       </div> : null}
+
+      <Section title="Vendor" description="Select the vendor that provides this service." icon={<IconBuilding size={18} />}>
+        <VendorPicker vendors={vendors} value={selectedVendorId} invalid={attempted && !selectedVendorId} onChange={(id) => { setSelectedVendorId(id); setAttempted(false); }} />
+      </Section>
 
       <Section title="Service identity" description="Name the service and choose the type staff will use to find it." icon={<IconPackages size={18} />}>
         <fieldset className="new-vendor-role-field">
@@ -141,7 +193,6 @@ export function NewServicePage({ existingServices, vendorId = "", onCancel, onCr
           <label className="new-vendor-field"><span className="new-vendor-field__label">Included</span><textarea value={inclusions} onChange={(event) => setInclusions(event.target.value)} rows={4} placeholder="One item per line" /></label>
           <label className="new-vendor-field"><span className="new-vendor-field__label">Excluded</span><textarea value={exclusions} onChange={(event) => setExclusions(event.target.value)} rows={4} placeholder="One item per line" /></label>
         </div>
-        <p className="new-service-page__hint">Vendors and rate cards can be linked after creation.</p>
       </Section>
 
       <footer className="new-vendor-actions"><div><Button variant="ghost" size="sm" type="button" onClick={onCancel}>Cancel</Button><Button variant="primary" size="sm" type="submit">Create service</Button></div></footer>

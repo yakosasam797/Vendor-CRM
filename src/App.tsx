@@ -785,6 +785,8 @@ export default function App() {
         <VendorRateCardsPage
           vendorId={crmRoute.id}
           vendors={vendors}
+          createdServices={createdDirectoryServices}
+          onCreatedServicesChange={setCreatedDirectoryServices}
           orgRole={orgRole}
           flash={flash}
           onClearFlash={() => setFlash(null)}

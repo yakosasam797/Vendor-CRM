@@ -375,6 +375,8 @@ function DraftServicesPanel({
 export function VendorRateCardsPage({
   vendorId,
   vendors,
+  createdServices,
+  onCreatedServicesChange,
   orgRole,
   flash,
   onClearFlash,
@@ -388,6 +390,8 @@ export function VendorRateCardsPage({
 }: {
   vendorId: string;
   vendors: Vendor[];
+  createdServices: DirectoryService[];
+  onCreatedServicesChange: (next: DirectoryService[]) => void;
   orgRole: OrgRole;
   flash?: string | null;
   onClearFlash?: () => void;
@@ -409,9 +413,7 @@ export function VendorRateCardsPage({
   const [selected, setSelected] = useState<string[]>([]);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [addServicesOpen, setAddServicesOpen] = useState(false);
-  const [createdVendorServices, setCreatedVendorServices] = useState<VendorService[]>([]);
   const [packageDetailOpen, setPackageDetailOpen] = useState(false);
-  const [draftServicesByVendor, setDraftServicesByVendor] = useState<Record<string, DraftLinkedService[]>>({});
   const [documentRequestDraft, setDocumentRequestDraft] = useState<{
     id: number;
     body: string;
@@ -421,9 +423,17 @@ export function VendorRateCardsPage({
   const canEdit = can(orgRole, "vendor.edit");
   const canAddTask = can(orgRole, "vendor.task.add");
   const isDraft = vendor.status === "Draft";
-  const draftLinkedServices = draftServicesByVendor[vendor.id] ?? [];
+  const draftLinkedServices: DraftLinkedService[] = createdServices.filter((service) => service.profileVendorId === vendor.id).map((service) => ({
+    id: service.id,
+    name: service.name,
+    type: service.category,
+    location: service.location,
+    source: "Manual entry",
+    sourceDetail: service.description || service.attributes?.map(({ value }) => value).join(" · ") || "Service profile",
+  }));
 
-  const vendorServices = [...servicesForVendor(vendor.id), ...createdVendorServices.filter((service) => service.vendorId === vendor.id)];
+  const createdVendorServices = createdServices.filter((service) => service.profileVendorId === vendor.id).map((service) => vendorServiceFromDirectory(service, vendor));
+  const vendorServices = [...servicesForVendor(vendor.id), ...createdVendorServices];
   const vendorActivity = vendorActivityForVendor(vendor).filter((row) => !removedActivityIdsByVendor[vendor.id]?.includes(row.id));
   const removeActivity = (id: string) => setRemovedActivityIdsByVendor((current) => ({
     ...current,
@@ -440,7 +450,7 @@ export function VendorRateCardsPage({
         id: "services",
         label: "Services",
         recordLabel: "Service",
-        options: servicesForVendor(vendor.id).map((service) => ({
+        options: vendorServices.map((service) => ({
           id: service.id,
           label: service.name,
           meta: `${service.type} · ${service.location}`,
@@ -602,26 +612,17 @@ export function VendorRateCardsPage({
     return (
       <NewServicePage
         vendorId={vendor.id}
-        existingServices={DIRECTORY_SERVICES}
+        vendors={vendors}
+        existingServices={[...createdServices, ...DIRECTORY_SERVICES]}
         onCancel={() => setAddServicesOpen(false)}
         onCreated={(service) => {
-          if (isDraft) {
-            const linkedService: DraftLinkedService = {
-              id: service.id,
-              name: service.name,
-              type: service.category,
-              location: service.location,
-              source: "Manual entry",
-              sourceDetail: service.description || service.attributes?.map(({ value }) => value).join(" · ") || "Service profile",
-            };
-            setDraftServicesByVendor((current) => ({
-              ...current,
-              [vendor.id]: [...(current[vendor.id] ?? []), linkedService],
-            }));
-          } else {
-            setCreatedVendorServices((current) => [...current, vendorServiceFromDirectory(service, vendor)]);
-            onOpenServiceIdChange?.(service.id);
+          onCreatedServicesChange([service, ...createdServices]);
+          if (service.profileVendorId !== vendor.id) {
+            setAddServicesOpen(false);
+            onOpenVendor(service.profileVendorId);
+            return;
           }
+          if (!isDraft) onOpenServiceIdChange?.(service.id);
           setAddServicesOpen(false);
           setTab("services");
         }}
@@ -680,6 +681,7 @@ export function VendorRateCardsPage({
       ) : tab === "services" ? (
         <ServicesPanel
           vendorId={vendor.id}
+          vendors={vendors}
           canEdit={canEdit}
           createdServices={createdVendorServices}
           onAddService={() => setAddServicesOpen(true)}

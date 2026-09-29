@@ -15,6 +15,7 @@ import {
   BED_LABEL,
   formatMoney,
   getDetailCard,
+  saveTransportCard,
 } from "../../rateCard/cards";
 import { runQuote, DEFAULT_QUOTE, type QuoteInput } from "../../rateCard/engine";
 import {
@@ -42,6 +43,8 @@ import {
 import { RecordHeader } from "../RecordHeader";
 import { StatusChipWithDot } from "../StatusChipWithDot";
 import { ActivityPanel } from "../ActivityPanel";
+import { TransportRateDetails, TransportTestRate } from "../TransportRateWorkspace";
+import { RegionalTransportRates, RegionalTransportTest } from "../RegionalTransportWorkspace";
 import { activityFromEvents } from "../activityFromEvents";
 import { PoliciesPanel } from "./PoliciesPanel";
 import { SeasonEditorModal, type SeasonDraft } from "./SeasonEditorModal";
@@ -209,6 +212,7 @@ export function RateCardDetailPage({
 
   const commitDraft = (next: RateCardDetail) => {
     setDraft(next);
+    saveTransportCard(next);
     onDraftChange?.(next);
   };
 
@@ -268,20 +272,33 @@ export function RateCardDetailPage({
     const csvCell = (value: string | number | null | undefined) =>
       `"${String(value ?? "").replaceAll('"', '""')}"`;
     const currentSeasonIndex = Math.min(seasonIdx, Math.max(0, card.seasons.length - 1));
-    const rows: Array<Array<string | number | null | undefined>> = [
-      ["Rate card", card.name],
-      ["Reference", card.ref],
-      ["Vendor", card.vendor],
-      ["Validity", card.validity],
-      ["Currency", card.currency],
-      ["Season", season?.name ?? ""],
-      [],
+    const rows: Array<Array<string | number | null | undefined>> = card.regionalTransport ? [
+      ["Rate card", card.name], ["Vendor", card.vendor], ["Service", card.property], ["Currency", card.currency], ["Price type", "Supplier cost"], ["Source", card.regionalTransport.source], ["Source document", card.regionalTransport.sourceDocument], ["Timezone", card.regionalTransport.timezone], [],
+      ["Season", "From", "To"], ...card.regionalTransport.seasons.map((item) => [item.name, item.start, item.end]), [],
+      ["Vehicle", "Passenger seats", "Medium bags"], ...card.regionalTransport.vehicles.map((vehicle) => [vehicle.label, vehicle.passengerSeats, vehicle.luggageBags]), [],
+      ["Route", "Origin", "Destination", "Area"], ...(card.regionalTransport.routes || []).map((route) => [route.name, route.from, route.to, route.areaId]), [],
+      ["Local package", "Included hours", "Included km", "Shared excess"], ...(card.regionalTransport.localPackages || []).map((pkg) => [pkg.name, pkg.hours, pkg.km, pkg.sharedExcess === false ? "No" : "Yes"]), [],
+      ["Method", "Season", "Fare", "Route", "Vehicle", "Package", "Basis", "Supplier amount", "Included km", "Included hours", "Minimum km/day", "Minimum days", "Driver/day", "Extra/km", "Extra/hour", "Waiting min", "Waiting/hour", "Time increment", "Stops included", "Extra/stop", "Included days", "Duty hours/day", "Extra/day", "Minimum method", "Trip type", "Billable day method", "Garage km", "Empty return km", "Cross-season", "Fuel included", "Driver included", "Tax presentation", "Tax profile"],
+      ...card.regionalTransport.fares.map((fare) => [fare.service, fare.seasonId, fare.label, fare.routeId, fare.vehicleId, fare.packageId, fare.basis, fare.amount, fare.includedKm, fare.includedHours, fare.minKmPerDay, fare.minDays, fare.driverAllowancePerDay, fare.extraKm, fare.extraHour, fare.includedWaitingMinutes, fare.waitingRatePerHour, fare.timeIncrementMinutes, fare.includedStops, fare.extraStop, fare.includedDays, fare.dutyHoursPerDay, fare.extraDayRate, fare.minimumRule, fare.tripType, fare.billableDayMethod, fare.additionalGarageKm, fare.additionalReturnKm, fare.crossSeasonPolicy, fare.fuelIncluded ? "Yes" : "No", fare.driverIncluded ? "Yes" : "No", fare.taxPresentation, fare.taxProfileId]), [],
+      ["Charge", "Treatment", "Amount", "Unit", "Route IDs", "Vehicle IDs", "Fare IDs", "Trigger", "Start", "End", "Paid by", "Collected by", "Tax presentation", "Tax profile"],
+      ...card.regionalTransport.charges.map((charge) => [charge.label, charge.treatment, charge.amount, charge.unit, charge.routeIds?.join("; "), charge.vehicleIds?.join("; "), charge.fareIds?.join("; "), charge.trigger, charge.triggerStart, charge.triggerEnd, charge.paidBy, charge.collectedBy, charge.taxPresentation, charge.taxProfileId]), [],
+      ["Special rule", "Season IDs", "Fare methods", "Fare IDs", "Trigger", "Dates", "Treatment", "Amount", "Stacking"],
+      ...(card.regionalTransport.adjustments || []).map((rule) => [rule.name, rule.seasonIds?.join("; "), rule.methods?.join("; "), rule.fareIds.join("; "), rule.trigger, rule.dates.join("; "), rule.treatment, rule.amount, rule.stacking]), [],
+      ["Tax profile", "Rate %", "Approved"], ...(card.regionalTransport.taxProfiles || []).map((profile) => [profile.name, profile.rate, profile.approved ? "Yes" : "No"]),
+    ] : card.transport ? [
+      ["Rate card", card.name], ["Reference", card.ref], ["Vendor", card.vendor], ["Validity", card.validity],
+      ["Service", "Airport transfer"], ["Pricing method", "Fixed per vehicle, per transfer"], ["Currency", card.currency], [],
+      ["Route", "Included km", ...card.transport.offerings.map((offering) => `${offering.label} · per vehicle`)],
+      ...card.transport.routes.map((route) => [route.label, route.includedKm, ...card.transport!.offerings.map((offering) => route.prices[offering.id] ?? "")]),
+      [], ["Vehicle", "Passenger seats excluding driver", "Bags", "Model or equivalent"],
+      ...card.transport.offerings.map((offering) => [offering.label, offering.passengerSeats ?? "Unconfirmed", offering.luggageBags ?? "Unconfirmed", offering.modelOrEquivalent]),
+      [], ["Waiting included (minutes)", card.transport.waitingIncludedMinutes], ["Waiting rate per billable hour, per vehicle", card.transport.waitingRatePerHour], ["Waiting rounding", card.transport.waitingRounding],
+      [], ["Charge", "Treatment", "Amount", "Unit", "Paid by", "Collected by"],
+      ...card.transport.charges.map((charge) => [charge.label, charge.treatment, charge.amount, charge.unit, charge.paidBy, charge.collectedBy]),
+    ] : [
+      ["Rate card", card.name], ["Reference", card.ref], ["Vendor", card.vendor], ["Validity", card.validity], ["Currency", card.currency], ["Season", season?.name ?? ""], [],
       ["Room / product", "Details", ...card.meals.map((meal) => meal.label)],
-      ...card.rooms.map((room, roomIndex) => [
-        room.name,
-        room.note,
-        ...card.meals.map((_, mealIndex) => card.prices[roomIndex]?.[mealIndex]?.[currentSeasonIndex] ?? ""),
-      ]),
+      ...card.rooms.map((room, roomIndex) => [room.name, room.note, ...card.meals.map((_, mealIndex) => card.prices[roomIndex]?.[mealIndex]?.[currentSeasonIndex] ?? "")]),
     ];
     const csv = rows.map((row) => row.map(csvCell).join(",")).join("\r\n");
     const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
@@ -546,7 +563,26 @@ export function RateCardDetailPage({
         />
       </div>
 
-      {page === "ratecard" ? (
+      {page === "ratecard" && card.regionalTransport ? (
+        <div className="rc-ratecard rc-ratecard--transport"><RegionalTransportRates card={card} editing={editing} onChange={(regionalTransport) => updateCard((base) => {
+          const ordered = [...regionalTransport.seasons].sort((a, b) => a.start.localeCompare(b.start));
+          const formatDate = (value: string) => new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
+          const validity = ordered.length ? `${formatDate(ordered[0].start)} – ${formatDate(ordered.reduce((latest, item) => item.end > latest ? item.end : latest, ordered[0].end))}` : base.validity;
+          return { ...base, regionalTransport, validity, seasons: regionalTransport.seasons.map((item) => ({ name: item.name, colorToken: "accent" as const, dates: `${formatDate(item.start)} – ${formatDate(item.end)}`, summary: "Supplier cost", nights: Math.max(1, Math.round((Date.parse(item.end) - Date.parse(item.start)) / 86400000) + 1), priority: "Base" })) };
+        })} /></div>
+      ) : page === "ratecard" && card.transport ? (
+        <div className="rc-ratecard rc-ratecard--transport">
+          <TransportRateDetails
+            card={card}
+            editing={editing}
+            onChange={(transport) => updateCard((base) => ({
+              ...base,
+              transport,
+              prices: transport.routes.map((route) => transport.offerings.map((offering) => [route.prices[offering.id] ?? null])),
+            }))}
+          />
+        </div>
+      ) : page === "ratecard" ? (
         <div className="rc-ratecard">
           <div className="rc-season">
             <div className="rc-season__picker" ref={seasonRef}>
@@ -1027,7 +1063,7 @@ export function RateCardDetailPage({
         </div>
       ) : null}
 
-      {page === "test" ? (
+      {page === "test" && card.regionalTransport ? <RegionalTransportTest card={card} /> : page === "test" && card.transport ? <TransportTestRate card={card} /> : page === "test" ? (
         <div className="rc-test">
           <div className="rc-test__layout">
             <section className="rc-test__block" aria-labelledby="rc-test-inputs-title">

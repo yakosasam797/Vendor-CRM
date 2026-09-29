@@ -34,7 +34,7 @@ import {
   type DirectoryService,
   type VendorServiceConnection,
 } from "../data/vendorDirectory";
-import { VENDORS } from "../data/vendors";
+import type { Vendor } from "../data/vendors";
 import {
   IconCard,
   IconBuilding,
@@ -50,6 +50,8 @@ import {
 } from "../icons";
 import { AnchoredImport } from "./AnchoredImport";
 import { ServiceTestRate } from "./ServiceTestRate";
+import { RegionalTransportTest } from "./RegionalTransportWorkspace";
+import { getDetailCard } from "../rateCard/cards";
 import { ServicePolicies } from "./ServicePolicies";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTypeLabel } from "./ServiceTypeLabel";
@@ -286,8 +288,9 @@ function ServiceMediaImage({ item }: { item: ServiceMedia }) {
 
 type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
 
-function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCard, onOpenVendor }: {
+function ServiceDetail({ service, vendors, canEdit, initialTab = "overview", onOpenRateCard, onOpenVendor }: {
   service: VendorService;
+  vendors: Vendor[];
   canEdit: boolean;
   initialTab?: ServiceDetailTab;
   onOpenRateCard?: (id: string) => void;
@@ -318,7 +321,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
     const existing = DIRECTORY_SERVICES.find((item) => item.serviceId === service.id);
     if (existing) return existing;
     return {
-      id: service.id.replace(/^svc-/, ""),
+      id: service.id,
       serviceId: service.id,
       profileVendorId: service.vendorId,
       name: service.name,
@@ -332,6 +335,16 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       (connection) => connection.serviceId === directoryService.id,
     );
     if (linked.length) return linked;
+    if (!service.rateCards.length) return [{
+      id: `${service.vendorId}-${directoryService.id}`,
+      vendorId: service.vendorId,
+      serviceId: directoryService.id,
+      supplierType: "Direct supplier" as const,
+      productsCovered: service.details,
+      rateCardId: "",
+      rateCardName: "No rate card linked",
+      validity: "Not set",
+    }];
     return service.rateCards.map((rateCard, index) => ({
       id: `${service.vendorId}-${directoryService.id}-${index + 1}`,
       vendorId: service.vendorId,
@@ -346,12 +359,12 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
 
   const linkedVendors = useMemo(
     () => testPriceConnections.flatMap((connection) => {
-      const vendor = VENDORS.find((item) => item.id === connection.vendorId);
+      const vendor = vendors.find((item) => item.id === connection.vendorId);
       return vendor ? [{ connection, vendor }] : [];
     }),
-    [testPriceConnections],
+    [testPriceConnections, vendors],
   );
-  const linkedRateCardCount = new Set(testPriceConnections.map((connection) => connection.rateCardId)).size;
+  const linkedRateCardCount = new Set(testPriceConnections.map((connection) => connection.rateCardId).filter(Boolean)).size;
   const primaryMediaCount = mediaItems.filter((item) => item.usedInBanner).length;
   const tabs: TabItem[] = [
     { id: "overview", label: "Overview" },
@@ -650,14 +663,18 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       ) : tab === "rate-details" ? (
         <ServiceRateDetails
           connections={testPriceConnections}
-          vendors={VENDORS}
+          vendors={vendors}
           onOpenRateCard={(_, rateCardId) => onOpenRateCard?.(rateCardId)}
         />
+      ) : tab === "test-rate" && getDetailCard(testPriceConnections[0]?.rateCardId)?.regionalTransport ? (
+        <RegionalTransportTest card={getDetailCard(testPriceConnections[0].rateCardId)!} />
+      ) : tab === "test-rate" && !testPriceConnections.some((connection) => connection.rateCardId) ? (
+        <EmptyState title="No rate card linked" description="Add a supplier rate card before testing this service's price." />
       ) : tab === "test-rate" ? (
         <ServiceTestRate
           service={directoryService}
           connections={testPriceConnections}
-          vendors={VENDORS}
+          vendors={vendors}
         />
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
@@ -746,9 +763,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                         <span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span>
                       </DataSheetCell>
                       <DataSheetCell>
-                        <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard?.(connection.rateCardId)}>
-                          {connection.rateCardName}
-                        </button>
+                        {connection.rateCardId ? <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard?.(connection.rateCardId)}>{connection.rateCardName}</button> : <span>No rate card linked</span>}
                       </DataSheetCell>
                       <DataSheetCell className="service-suppliers-sheet__action">
                         <div className="services-sheet__act">
@@ -817,6 +832,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
 
 export function ServicesPanel({
   vendorId = "exhosp",
+  vendors,
   canEdit = false,
   createdServices = [],
   onAddService,
@@ -826,6 +842,7 @@ export function ServicesPanel({
   onOpenVendor,
 }: {
   vendorId?: string;
+  vendors: Vendor[];
   canEdit?: boolean;
   createdServices?: VendorService[];
   onAddService?: () => void;
@@ -895,6 +912,7 @@ export function ServicesPanel({
       <ServiceDetail
         key={openService.id}
         service={openService}
+        vendors={vendors}
         canEdit={canEdit}
         initialTab={openServiceTab}
         onOpenRateCard={onOpenRateCard}

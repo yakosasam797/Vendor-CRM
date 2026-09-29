@@ -299,9 +299,6 @@
   content: "";
 }
 
-.act-timeline__item:first-child .act-timeline__rail::before { top: 29px; }
-.act-timeline__item:last-child .act-timeline__rail::before { bottom: calc(100% - 46px); }
-
 .act-timeline__icon {
   position: relative;
   z-index: 1;
@@ -395,8 +392,6 @@
   }
   .act-timeline__select { grid-column: 1; grid-row: 1 / 4; align-items: flex-start; padding-top: 21px; }
   .act-timeline__rail { grid-column: 2; grid-row: 1 / 4; padding-top: 17px; }
-  .act-timeline__item:first-child .act-timeline__rail::before { top: 17px; }
-  .act-timeline__item:last-child .act-timeline__rail::before { bottom: calc(100% - 34px); }
   .act-timeline__date { grid-column: 3; grid-row: 1; flex-direction: row; align-self: end; gap: 8px; }
   .act-timeline__entry { grid-column: 3; grid-row: 2; padding: 0; }
   .act-timeline__member { grid-column: 3; grid-row: 3; margin-top: 4px; }

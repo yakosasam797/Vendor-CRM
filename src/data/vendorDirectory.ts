@@ -65,6 +65,16 @@ export function saveCreatedDirectoryServices(services: DirectoryService[]) {
 
 export const DIRECTORY_SERVICES: DirectoryService[] = [
   {
+    id: "kerala-private-hire",
+    serviceId: "svc-kerala-private-hire",
+    profileVendorId: "bluewave",
+    name: "Kerala private transport",
+    category: "Transport",
+    location: "Kerala",
+    description: "Private vehicle hire with pickup, drop and route defined for each customer trip.",
+    attributes: [{ label: "Service scope", value: "One-way, local, outstation, daily" }],
+  },
+  {
     id: "taj-exotica",
     serviceId: "svc-taj-exotica",
     profileVendorId: "exhosp",
@@ -155,6 +165,7 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
 ];
 
 export const VENDOR_SERVICE_CONNECTIONS: VendorServiceConnection[] = [
+  { id: "kerala-hire-bluewave", vendorId: "bluewave", serviceId: "kerala-private-hire", supplierType: "Direct supplier", productsCovered: "Sedan · MUV · Van · Coach", rateCardId: "rc-kerala-private-hire", rateCardName: "Kerala private hire rates", validity: "01 Oct 26–31 Mar 27" },
   { id: "taj-exotica-exhosp", vendorId: "exhosp", serviceId: "taj-exotica", supplierType: "Direct supplier", productsCovered: "12 room types", rateCardId: "rc-acc-2627", rateCardName: "Accommodation tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
   { id: "taj-exotica-wanderlust", vendorId: "wanderlust", serviceId: "taj-exotica", supplierType: "DMC", productsCovered: "8 room types", rateCardId: "rc-acc-2526", rateCardName: "Taj Goa contracted rates", validity: "01 Oct 26–30 Sep 27" },
   { id: "taj-exotica-coastal", vendorId: "coastal", serviceId: "taj-exotica", supplierType: "Wholesaler", productsCovered: "5 room types", rateCardId: "rc-hill-2627", rateCardName: "Winter FIT tariff", validity: "01 Oct 26–31 Mar 27" },
