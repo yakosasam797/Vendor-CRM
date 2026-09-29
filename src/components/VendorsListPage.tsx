@@ -13,7 +13,6 @@ import {
   SearchField,
   TabBar,
   type CheckboxState,
-  type StatusTone,
   type TabItem,
 } from "@paryatech/design-system";
 import { getVendorService } from "../data/services";
@@ -48,7 +47,6 @@ import {
   IconPin,
   IconPlus,
   IconUser,
-  IconWarn,
 } from "../icons";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import { VendorFormModal } from "./VendorFormModal";
@@ -62,11 +60,13 @@ import { NewServicePage } from "./NewServicePage";
 import "./VendorsListPage.css";
 
 type Perspective = "vendors" | "services";
+const DIRECTORY_PAGE_SIZE = 6;
 type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
 
 type VendorDirectoryRow = {
   vendor: Vendor;
   connections: VendorServiceConnection[];
+  regionsServed: string[];
   matchedThrough?: string;
 };
 
@@ -75,19 +75,6 @@ type ServiceDirectoryRow = {
   connections: VendorServiceConnection[];
   providedBy?: string;
 };
-
-function connectionTone(status: VendorServiceConnection["status"]): StatusTone {
-  if (status === "Active") return "done";
-  if (status === "Expiring soon") return "progress";
-  return "open";
-}
-
-function vendorStatusTone(status: Vendor["status"]): StatusTone {
-  if (status === "Active") return "done";
-  if (status === "Draft" || status === "Setup incomplete") return "progress";
-  if (status === "Archived") return "blocked";
-  return "open";
-}
 
 const DEFAULT_VENDOR_IMAGE = "https://images.unsplash.com/photo-1560179707-f14e90ef3623?auto=format&fit=crop&w=160&h=160&q=80";
 
@@ -489,8 +476,6 @@ function ServiceDirectoryDetail({
   const serviceProfile = getVendorService(service.serviceId);
   const connectedVendorIds = connections.map((connection) => connection.vendorId);
   const linkedRateCardCount = new Set(connections.map((connection) => connection.rateCardId)).size;
-  const activeConnectionCount = connections.filter((connection) => connection.status === "Active").length;
-  const attentionConnectionCount = connections.length - activeConnectionCount;
   const mediaItems = serviceProfile?.media ?? [];
   const primaryMediaCount = mediaItems.filter((item) => item.usedInBanner).length;
   const serviceSummary: SummaryField[] = [
@@ -505,7 +490,7 @@ function ServiceDirectoryDetail({
       id: "vendors",
       label: "Vendor coverage",
       value: connections.length,
-      note: `${activeConnectionCount} active vendor${activeConnectionCount === 1 ? "" : "s"}`,
+      note: "Supplier relationships",
       icon: <IconBuilding size={15} />,
     },
     {
@@ -532,22 +517,6 @@ function ServiceDirectoryDetail({
       icon: <IconBuilding size={15} />,
     },
     {
-      id: "active",
-      label: "Active supply",
-      value: activeConnectionCount,
-      note: "Ready for costing",
-      icon: <IconCheck size={15} />,
-      tone: "ok",
-    },
-    {
-      id: "attention",
-      label: "Needs attention",
-      value: attentionConnectionCount,
-      note: attentionConnectionCount === 1 ? "1 relationship" : `${attentionConnectionCount} relationships`,
-      icon: <IconWarn size={15} />,
-      tone: attentionConnectionCount > 0 ? "warn" : "ok",
-    },
-    {
       id: "pricing",
       label: "Rate cards",
       value: linkedRateCardCount,
@@ -562,8 +531,8 @@ function ServiceDirectoryDetail({
       : "indeterminate";
   const tabs: TabItem[] = [
     { id: "overview", label: "Overview" },
-    { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
-    { id: "vendors", label: "Vendors", count: connections.length },
+    { id: "rate-details", label: "Rate details" },
+    { id: "vendors", label: "Vendors" },
     { id: "test-rate", label: "Test rate" },
     { id: "policies", label: "Policies" },
   ];
@@ -592,7 +561,6 @@ function ServiceDirectoryDetail({
           <div className="service-directory-detail__identity-copy">
             <div className="service-directory-detail__title-row">
               <h1>{service.name}</h1>
-              <StatusChipWithDot tone={service.status === "Active" ? "done" : "progress"}>{service.status}</StatusChipWithDot>
             </div>
             <p>
               <IconPin size={14} />{service.location}
@@ -629,7 +597,6 @@ function ServiceDirectoryDetail({
                   <dl className="service-detail-profile">
                     <div className="service-detail-profile__field"><dt>Service title</dt><dd>{service.name}</dd></div>
                     <div className="service-detail-profile__field"><dt>Service ID</dt><dd className="pt-mono">{service.serviceId.toUpperCase()}</dd></div>
-                    <div className="service-detail-profile__field"><dt>Status</dt><dd><StatusChipWithDot tone={service.status === "Active" ? "done" : "progress"}>{service.status}</StatusChipWithDot></dd></div>
                     <div className="service-detail-profile__field"><dt>Category</dt><dd>{serviceProfile?.profile.category ?? service.category}</dd></div>
                     {service.attributes?.map((field) => <div className="service-detail-profile__field" key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}
                     {!service.attributes && <>
@@ -692,13 +659,12 @@ function ServiceDirectoryDetail({
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
           <div className="service-vendors-overview__summary">
-            <SummaryStrip title="Vendor coverage" columns={4} fields={vendorSummary} />
+            <SummaryStrip title="Vendor coverage" columns={2} fields={vendorSummary} />
           </div>
 
           <section className="service-suppliers" aria-labelledby="service-suppliers-title">
             <div className="service-section-head">
               <h2 id="service-suppliers-title">Linked vendors</h2>
-              {connections.length > 0 ? <span className="service-suppliers__count">{activeConnectionCount} active of {connections.length}</span> : null}
             </div>
             {connections.length === 0 ? (
               <EmptyState title="No vendors linked" description="Link a vendor to make this service available for costing." />
@@ -711,7 +677,6 @@ function ServiceDirectoryDetail({
               <DataSheetCell>Supplier relationship</DataSheetCell>
               <DataSheetCell>Location</DataSheetCell>
               <DataSheetCell>Current rate card</DataSheetCell>
-              <DataSheetCell>Status</DataSheetCell>
               <DataSheetCell className="service-suppliers-sheet__action">Action</DataSheetCell>
             </DataSheetHeader>
             {connections.map((connection) => {
@@ -742,7 +707,6 @@ function ServiceDirectoryDetail({
                   <DataSheetCell><span className="directory-relationship"><strong>{connection.supplierType}</strong><span>{connection.productsCovered}</span></span></DataSheetCell>
                   <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span></DataSheetCell>
                   <DataSheetCell><button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)}>{connection.rateCardName}</button></DataSheetCell>
-                  <DataSheetCell><StatusChipWithDot tone={connectionTone(connection.status)}>{connection.status}</StatusChipWithDot></DataSheetCell>
                   <DataSheetCell className="service-suppliers-sheet__action">
                     <div
                       className="vendors-sheet__more"
@@ -868,18 +832,15 @@ export function VendorsListPage({
     return () => onNavigationContextChange?.(null);
   }, [activeService, closeCreateService, closeServiceDetail, creatingService, onNavigationContextChange]);
 
-  const viewTabs: TabItem[] = useMemo(() => [
-    { id: "vendors", label: "Vendors", count: scoped.length },
-    { id: "services", label: "Services", count: availableServices.length },
-  ], [availableServices.length, scoped.length]);
+  const viewTabs: TabItem[] = [
+    { id: "vendors", label: "Vendors" },
+    { id: "services", label: "Services" },
+  ];
 
-  const serviceCategoryTabs = useMemo(() => DIRECTORY_CATEGORIES.map((category) => ({
+  const serviceCategoryTabs = DIRECTORY_CATEGORIES.map((category) => ({
     id: category,
     label: category === "all" ? "All services" : category,
-    count: category === "all"
-      ? availableServices.length
-      : availableServices.filter((service) => service.category === category).length,
-  })), [availableServices]);
+  }));
 
   const vendorRows = useMemo<VendorDirectoryRow[]>(() => {
     const q = query.trim().toLowerCase();
@@ -893,7 +854,7 @@ export function VendorsListPage({
       const directMatch = `${vendor.name} ${vendor.code} ${vendor.owner}`.toLowerCase().includes(q);
       const relatedMatch = q ? related.find((service) => `${service.name} ${service.category} ${service.location}`.toLowerCase().includes(q)) : undefined;
       if (q && !directMatch && !relatedMatch) return [];
-      return [{ vendor, connections, matchedThrough: !directMatch && relatedMatch ? relatedMatch.name : undefined }];
+      return [{ vendor, connections, regionsServed: [...new Set(related.map((service) => service.location))], matchedThrough: !directMatch && relatedMatch ? relatedMatch.name : undefined }];
     });
   }, [activeConnections, categoryFilters, locationQuery, query, scoped, supplierTypes.length]);
 
@@ -913,7 +874,13 @@ export function VendorsListPage({
   }, [activeConnections, availableServices, locationQuery, query, scoped, serviceCategory]);
 
   const rows = perspective === "vendors" ? vendorRows : serviceRows;
-  const rowIds = rows.map((row) => perspective === "vendors" ? (row as VendorDirectoryRow).vendor.id : (row as ServiceDirectoryRow).service.id);
+  const pageCount = Math.max(1, Math.ceil(rows.length / DIRECTORY_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const firstRow = (currentPage - 1) * DIRECTORY_PAGE_SIZE;
+  const visibleVendorRows = vendorRows.slice(firstRow, firstRow + DIRECTORY_PAGE_SIZE);
+  const visibleServiceRows = serviceRows.slice(firstRow, firstRow + DIRECTORY_PAGE_SIZE);
+  const visibleRows = perspective === "vendors" ? visibleVendorRows : visibleServiceRows;
+  const visibleRowIds = visibleRows.map((row) => perspective === "vendors" ? (row as VendorDirectoryRow).vendor.id : (row as ServiceDirectoryRow).service.id);
   const editVendor = editId ? vendors.find((vendor) => vendor.id === editId) ?? null : null;
 
   useEffect(() => {
@@ -927,9 +894,10 @@ export function VendorsListPage({
     return () => document.removeEventListener("mousedown", onDocumentPointer);
   }, [filtersOpen, menuId]);
 
-  const headerState: CheckboxState = selected.length === 0 ? "off" : selected.length === rowIds.length && rowIds.length > 0 ? "on" : "indeterminate";
+  const selectedOnPage = visibleRowIds.filter((id) => selected.includes(id)).length;
+  const headerState: CheckboxState = selectedOnPage === 0 ? "off" : selectedOnPage === visibleRowIds.length ? "on" : "indeterminate";
   const resetRows = () => { setSelected([]); setPage(1); };
-  const toggleAll = (state: CheckboxState) => setSelected(state === "on" ? rowIds : []);
+  const toggleAll = (state: CheckboxState) => setSelected((current) => state === "on" ? [...new Set([...current, ...visibleRowIds])] : current.filter((id) => !visibleRowIds.includes(id)));
   const toggleRow = (id: string, state: CheckboxState) => setSelected((current) => state === "on" ? current.includes(id) ? current : [...current, id] : current.filter((item) => item !== id));
   const toggleSupplierType = (type: SupplierType) => { setSupplierTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]); resetRows(); };
   const toggleCategory = (type: DirectoryCategory) => { setCategoryFilters((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type]); resetRows(); };
@@ -969,7 +937,7 @@ export function VendorsListPage({
         setLocationQuery("");
         setSupplierTypes([]);
         setPage(1);
-        setCreatedNotice(`${service.name} saved as a draft service.`);
+        setCreatedNotice(`${service.name} created.`);
       }}
     />;
   }
@@ -1005,7 +973,6 @@ export function VendorsListPage({
                 {category.id === "all" ? <IconPackages size={14} /> : <ServiceTypeIcon type={category.id} size={14} />}
               </span>
               <span>{category.label}</span>
-              <span className="service-category-tabs__count">{category.count}</span>
             </button>
           ))}
         </div>
@@ -1013,7 +980,7 @@ export function VendorsListPage({
 
       <div className="vendors-page__toolbar">
         <SearchField fullWidth className="vendors-page__search" value={query} onChange={(event) => { setQuery(event.target.value); resetRows(); }} placeholder={perspective === "vendors" ? "Search vendors" : "Search services"} aria-label={perspective === "vendors" ? "Search vendors" : "Search services"} />
-        <label className="vendors-page__location"><span className="visually-hidden">Search by location</span><span className="vendors-page__location-icon" aria-hidden="true"><IconPin size={16} /></span><input type="search" value={locationQuery} onChange={(event) => { setLocationQuery(event.target.value); resetRows(); }} placeholder="Location" aria-label="Search by location" /></label>
+        <label className="vendors-page__location"><span className="vendors-page__location-icon" aria-hidden="true"><IconPin size={16} /></span><span className="vendors-page__location-prompt">Find {perspective === "vendors" ? "vendors" : "services"} in</span><input type="search" value={locationQuery} onChange={(event) => { setLocationQuery(event.target.value); resetRows(); }} placeholder="City or region" aria-label={`Find ${perspective} by city or region`} /></label>
         <div className="directory-filters" ref={filterRef}>
           <Button variant="brand" size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}><IconFilter />Filters{activeFilterCount > 0 ? ` ${activeFilterCount}` : ""}</Button>
           {filtersOpen ? (
@@ -1043,9 +1010,9 @@ export function VendorsListPage({
               <DataSheet className="vendors-sheet vendors-sheet--vendors" aria-label="Vendors">
                 <DataSheetHeader>
                   <DataSheetCell check><Checkbox state={headerState} onCheckedChange={toggleAll} label="Select all vendors" /></DataSheetCell>
-                  <DataSheetCell>Vendor</DataSheetCell><DataSheetCell>Services offered</DataSheetCell><DataSheetCell>Location</DataSheetCell><DataSheetCell>Status</DataSheetCell><DataSheetCell>Action</DataSheetCell>
+                  <DataSheetCell>Vendor</DataSheetCell><DataSheetCell>Regions served</DataSheetCell><DataSheetCell>Services offered</DataSheetCell><DataSheetCell>Action</DataSheetCell>
                 </DataSheetHeader>
-                {vendorRows.map((row) => (
+                {visibleVendorRows.map((row) => (
                   <DataSheetRow
                     key={row.vendor.id}
                     className="data-row--interactive"
@@ -1067,6 +1034,7 @@ export function VendorsListPage({
                   >
                     <DataSheetCell check><Checkbox state={selected.includes(row.vendor.id) ? "on" : "off"} onCheckedChange={(state) => toggleRow(row.vendor.id, state)} label={`Select ${row.vendor.name}`} /></DataSheetCell>
                     <DataSheetCell><DirectoryEntity vendor={row.vendor} title={row.vendor.name} subtitle={row.vendor.code} match={row.matchedThrough ? `Matched through ${row.matchedThrough}` : undefined} onClick={() => onOpenVendor(row.vendor.id)} /></DataSheetCell>
+                    <DataSheetCell><span className="vendors-sheet__regions"><IconPin size={14} />{row.regionsServed.length ? row.regionsServed.join(" · ") : "Not set"}</span></DataSheetCell>
                     <DataSheetCell>
                       <ServiceTypeList
                         compact
@@ -1075,20 +1043,18 @@ export function VendorsListPage({
                         className="directory-services-offered"
                       />
                     </DataSheetCell>
-                    <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{row.vendor.location}</span></DataSheetCell>
-                    <DataSheetCell><StatusChipWithDot tone={vendorStatusTone(row.vendor.status)}>{row.vendor.status}</StatusChipWithDot></DataSheetCell>
                     <DataSheetCell>{canEdit ? <div className="vendors-sheet__more" ref={menuId === row.vendor.id ? menuRef : undefined}><IconButton label={`More actions for ${row.vendor.name}`} aria-expanded={menuId === row.vendor.id} aria-haspopup="menu" onClick={() => setMenuId((current) => current === row.vendor.id ? null : row.vendor.id)}><IconMore /></IconButton>{menuId === row.vendor.id ? <div className="vendors-sheet__menu" role="menu"><button type="button" role="menuitem" onClick={() => { setEditId(row.vendor.id); setModal("edit"); setMenuId(null); }}>Edit vendor</button></div> : null}</div> : null}</DataSheetCell>
                   </DataSheetRow>
                 ))}
-                <DashboardDataSheetFill columns={6} />
+                <DashboardDataSheetFill columns={5} />
               </DataSheet>
             ) : (
               <DataSheet className="vendors-sheet vendors-sheet--services" aria-label="Services">
                 <DataSheetHeader>
                   <DataSheetCell check><Checkbox state={headerState} onCheckedChange={toggleAll} label="Select all services" /></DataSheetCell>
-                  <DataSheetCell>Service</DataSheetCell><DataSheetCell>Service type</DataSheetCell><DataSheetCell>Location</DataSheetCell><DataSheetCell>Vendors</DataSheetCell><DataSheetCell>Status</DataSheetCell><DataSheetCell>Action</DataSheetCell>
+                  <DataSheetCell>Service</DataSheetCell><DataSheetCell>Service type</DataSheetCell><DataSheetCell>Location</DataSheetCell><DataSheetCell>Vendors</DataSheetCell><DataSheetCell>Action</DataSheetCell>
                 </DataSheetHeader>
-                {serviceRows.map((row) => (
+                {visibleServiceRows.map((row) => (
                   <DataSheetRow
                     key={row.service.id}
                     className="data-row--interactive"
@@ -1113,7 +1079,6 @@ export function VendorsListPage({
                     <DataSheetCell><ServiceTypeLabel type={row.service.category} /></DataSheetCell>
                     <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{row.service.location}</span></DataSheetCell>
                     <DataSheetCell><span className="directory-count">{new Set(row.connections.map((connection) => connection.vendorId)).size}</span></DataSheetCell>
-                    <DataSheetCell><StatusChipWithDot tone={row.service.status === "Active" ? "done" : "progress"}>{row.service.status}</StatusChipWithDot></DataSheetCell>
                     <DataSheetCell>
                       <div
                         className="vendors-sheet__more"
@@ -1149,7 +1114,7 @@ export function VendorsListPage({
               </DataSheet>
             )}
             {selected.length > 0 ? <ListBulkBar label={`${selected.length} ${perspective === "vendors" ? "vendor" : "service"}${selected.length === 1 ? "" : "s"} selected`}><Button variant="brand" size="sm"><IconImport />Export</Button><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></ListBulkBar> : null}
-            <Pagination rangeLabel={`Showing 1–${rows.length} of ${rows.length} ${perspective}`} page={page} pageCount={1} onPageChange={setPage} />
+            <Pagination rangeLabel={`Showing ${firstRow + 1}–${Math.min(firstRow + DIRECTORY_PAGE_SIZE, rows.length)} of ${rows.length}`} page={currentPage} pageCount={pageCount} onPageChange={setPage} />
           </>
         )}
       </div>

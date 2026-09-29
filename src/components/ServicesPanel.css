@@ -7,7 +7,7 @@
   --svc-action-control: 44px;
   --svc-action: calc(var(--svc-action-control) + var(--page-pad, 16px));
   --svc-cols: var(--svc-check) minmax(200px, 1.7fr) minmax(110px, 0.85fr) minmax(150px, 1fr)
-    minmax(150px, 1.05fr) minmax(150px, 1.1fr) minmax(100px, 0.7fr) var(--svc-action);
+    minmax(150px, 1.05fr) minmax(150px, 1.1fr) var(--svc-action);
 }
 
 .services-sheet .pt-sheet__scroll {

@@ -49,23 +49,55 @@ import { VendorFormModal } from "./VendorFormModal";
 import { VendorOverview } from "./VendorOverview";
 import { VendorProfileHeader } from "./VendorProfileHeader";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
-import { SERVICE_TYPE_FILTERS, servicesForVendor } from "../data/services";
-import { AddServicesModal, type DraftLinkedService } from "./AddServicesModal";
+import { SERVICE_TYPE_FILTERS, servicesForVendor, type VendorService } from "../data/services";
+import { DIRECTORY_SERVICES, type DirectoryService } from "../data/vendorDirectory";
+import type { DraftLinkedService } from "./AddServicesModal";
+import { NewServicePage } from "./NewServicePage";
 import { ServiceTypeIcon, ServiceTypeLabel, type ServiceTypeName } from "./ServiceTypeLabel";
 import "./VendorRateCardsPage.css";
 
 const BASE_TABS: TabItem[] = [
   { id: "overview", label: "Overview" },
   { id: "services", label: "Services" },
-  { id: "rate-cards", label: "Rate cards", count: 1 },
-  { id: "packages", label: "Packages", count: 2 },
-  { id: "bookings", label: "Bookings", count: 12 },
-  { id: "finance", label: "Finance", count: 2 },
-  { id: "docs", label: "Docs", count: 2 },
-  { id: "tasks", label: "Tasks", count: 5 },
-  { id: "comms", label: "Communications", count: 2 },
+  { id: "rate-cards", label: "Rate cards" },
+  { id: "packages", label: "Packages" },
+  { id: "bookings", label: "Bookings" },
+  { id: "finance", label: "Finance" },
+  { id: "docs", label: "Docs" },
+  { id: "tasks", label: "Tasks" },
+  { id: "comms", label: "Communications" },
   { id: "activity", label: "Activity" },
 ];
+
+function vendorServiceFromDirectory(service: DirectoryService, vendor: Vendor): VendorService {
+  const attributes = Object.fromEntries((service.attributes ?? []).map(({ label, value }) => [label, value]));
+  const description = service.description?.trim() ?? "";
+  return {
+    id: service.id,
+    vendorId: vendor.id,
+    name: service.name,
+    type: service.category === "Activities" ? "Activity" : service.category,
+    details: description || (service.attributes ?? []).map(({ value }) => value).join(" · ") || service.location,
+    about: description || `${service.name} is supplied by ${vendor.name}.`,
+    location: service.location,
+    inclusions: service.inclusions ?? [],
+    profile: {
+      category: service.category,
+      duration: attributes.Duration ?? "Service based",
+      ageSuitability: attributes["Age suitability"] ?? "All ages",
+      difficulty: attributes.Difficulty ?? "Not applicable",
+      seasonality: attributes.Seasonality ?? "Available year-round",
+      searchText: `${service.name} ${service.location} ${service.category}`,
+      exclusions: service.exclusions ?? [],
+    },
+    pricingLabel: "No pricing linked",
+    rateCardCount: 0,
+    rateCards: [],
+    imageUrl: "",
+    imageAlt: `${service.name} service image`,
+    media: [],
+  };
+}
 
 const TASK_PACKAGE_IDS_BY_VENDOR: Record<string, string[]> = {
   trailmakers: ["pkg-1", "pkg-2"],
@@ -271,7 +303,7 @@ function DraftServicesPanel({
       </div>
 
       <div className="vendor-page__sheet dashboard-table-end">
-        <DataSheet className="services-sheet draft-services-sheet" aria-label="Draft vendor services">
+        <DataSheet className="services-sheet draft-services-sheet" aria-label="Vendor services">
           <DataSheetHeader>
             <DataSheetCell check>
               <Checkbox state={headerState} onCheckedChange={toggleAll} label="Select all services" />
@@ -281,7 +313,6 @@ function DraftServicesPanel({
             <DataSheetCell>Important details</DataSheetCell>
             <DataSheetCell>Media</DataSheetCell>
             <DataSheetCell>Current pricing</DataSheetCell>
-            <DataSheetCell>Status</DataSheetCell>
           </DataSheetHeader>
           {filtered.map((service) => {
             const serviceType = serviceTypeForTable(service.type);
@@ -315,7 +346,6 @@ function DraftServicesPanel({
                     <StackLine muted><span className="services-sheet__rate-count pt-mono">0</span> Rate cards</StackLine>
                   </StackCell>
                 </DataSheetCell>
-                <DataSheetCell><StatusChipWithDot tone="progress">Draft</StatusChipWithDot></DataSheetCell>
               </DataSheetRow>
             );
           })}
@@ -379,13 +409,13 @@ export function VendorRateCardsPage({
   const [selected, setSelected] = useState<string[]>([]);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [addServicesOpen, setAddServicesOpen] = useState(false);
+  const [createdVendorServices, setCreatedVendorServices] = useState<VendorService[]>([]);
   const [packageDetailOpen, setPackageDetailOpen] = useState(false);
   const [draftServicesByVendor, setDraftServicesByVendor] = useState<Record<string, DraftLinkedService[]>>({});
   const [documentRequestDraft, setDocumentRequestDraft] = useState<{
     id: number;
     body: string;
   } | null>(null);
-  const [openTaskCount, setOpenTaskCount] = useState(5);
   const [removedActivityIdsByVendor, setRemovedActivityIdsByVendor] = useState<Record<string, string[]>>({});
   const rateCardFilterRef = useRef<HTMLDivElement>(null);
   const canEdit = can(orgRole, "vendor.edit");
@@ -393,8 +423,7 @@ export function VendorRateCardsPage({
   const isDraft = vendor.status === "Draft";
   const draftLinkedServices = draftServicesByVendor[vendor.id] ?? [];
 
-  const vendorServices = servicesForVendor(vendor.id);
-  const serviceCount = vendorServices.length;
+  const vendorServices = [...servicesForVendor(vendor.id), ...createdVendorServices.filter((service) => service.vendorId === vendor.id)];
   const vendorActivity = vendorActivityForVendor(vendor).filter((row) => !removedActivityIdsByVendor[vendor.id]?.includes(row.id));
   const removeActivity = (id: string) => setRemovedActivityIdsByVendor((current) => ({
     ...current,
@@ -461,23 +490,7 @@ export function VendorRateCardsPage({
   const activeService = openServiceId
     ? vendorServices.find((service) => service.id === openServiceId)
     : undefined;
-  const activityCount = vendorActivity.length;
-  const tabs: TabItem[] = useMemo(
-    () =>
-      BASE_TABS.map((t) => {
-        if (isDraft) {
-          if (t.id === "services" && draftLinkedServices.length > 0) {
-            return { ...t, count: draftLinkedServices.length };
-          }
-          return { ...t, count: undefined };
-        }
-        if (t.id === "services") return { ...t, count: serviceCount || undefined };
-        if (t.id === "activity") return { ...t, count: activityCount || undefined };
-        if (t.id === "tasks") return { ...t, count: openTaskCount || undefined };
-        return t;
-      }),
-    [activityCount, draftLinkedServices.length, isDraft, openTaskCount, serviceCount],
-  );
+  const tabs: TabItem[] = BASE_TABS;
 
   const setVendorTab = (next: string) => {
     if (next !== "services") onOpenServiceIdChange?.(null);
@@ -574,6 +587,48 @@ export function VendorRateCardsPage({
     setVendorTab("comms");
   };
 
+  useEffect(() => {
+    if (!addServicesOpen) return;
+    onNavigationContextChange?.({
+      backLabel: "Back to services",
+      sectionLabel: "Services",
+      title: "Add service",
+      onBack: () => setAddServicesOpen(false),
+    });
+    return () => onNavigationContextChange?.(null);
+  }, [addServicesOpen, onNavigationContextChange]);
+
+  if (addServicesOpen) {
+    return (
+      <NewServicePage
+        vendorId={vendor.id}
+        existingServices={DIRECTORY_SERVICES}
+        onCancel={() => setAddServicesOpen(false)}
+        onCreated={(service) => {
+          if (isDraft) {
+            const linkedService: DraftLinkedService = {
+              id: service.id,
+              name: service.name,
+              type: service.category,
+              location: service.location,
+              source: "Manual entry",
+              sourceDetail: service.description || service.attributes?.map(({ value }) => value).join(" · ") || "Service profile",
+            };
+            setDraftServicesByVendor((current) => ({
+              ...current,
+              [vendor.id]: [...(current[vendor.id] ?? []), linkedService],
+            }));
+          } else {
+            setCreatedVendorServices((current) => [...current, vendorServiceFromDirectory(service, vendor)]);
+            onOpenServiceIdChange?.(service.id);
+          }
+          setAddServicesOpen(false);
+          setTab("services");
+        }}
+      />
+    );
+  }
+
   return (
     <div className="vendor-page">
       {activeService || packageDetailOpen ? null : (
@@ -625,14 +680,14 @@ export function VendorRateCardsPage({
       ) : tab === "services" ? (
         <ServicesPanel
           vendorId={vendor.id}
-          vendorName={vendor.name}
           canEdit={canEdit}
+          createdServices={createdVendorServices}
+          onAddService={() => setAddServicesOpen(true)}
           openServiceId={openServiceId}
           onOpenServiceIdChange={(id) => {
             onOpenServiceIdChange?.(id);
             if (id) setTab("services");
           }}
-          onNavigationContextChange={onNavigationContextChange}
           onOpenRateCard={onOpenCard}
           onOpenVendor={onOpenVendor}
         />
@@ -659,7 +714,6 @@ export function VendorRateCardsPage({
           canAddTask={canAddTask}
           vendorName={vendor.name}
           linkGroups={taskLinkGroups}
-          onOpenTaskCountChange={setOpenTaskCount}
         />
       ) : tab === "comms" ? (
         <CommunicationPanel
@@ -872,21 +926,6 @@ export function VendorRateCardsPage({
         onNavigateTab={(next) => setVendorTab(next)}
       />
 
-      {addServicesOpen ? (
-        <AddServicesModal
-          open
-          vendorName={vendor.name}
-          onClose={() => setAddServicesOpen(false)}
-          onAdd={(services) => {
-            setDraftServicesByVendor((current) => {
-              const byId = new Map((current[vendor.id] ?? []).map((service) => [service.id, service]));
-              services.forEach((service) => byId.set(service.id, service));
-              return { ...current, [vendor.id]: [...byId.values()] };
-            });
-            setTab("services");
-          }}
-        />
-      ) : null}
     </div>
   );
 }

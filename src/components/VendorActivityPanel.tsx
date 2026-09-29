@@ -26,6 +26,7 @@ export function VendorActivityPanel({ vendor, activity, onRemoveActivity, onOpen
         onOpenRelated={onOpenRelated}
         searchPlaceholder="Search recent activity"
         ariaLabel="Recent vendor activities"
+        variant="timeline"
       />
     </section>
   );

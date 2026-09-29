@@ -1,5 +1,3 @@
-import type { StatusTone } from "@paryatech/design-system";
-
 /** Activity / type of the service — used by the Services toolbar filter. */
 export type ServiceType =
   | "Accommodation"
@@ -8,8 +6,6 @@ export type ServiceType =
   | "DMC/Ground handling"
   | "Visa"
   | "Flights";
-
-export type ServiceStatus = "published" | "active" | "draft";
 
 const thumb = (id: string, w = 640, h = 480) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&h=${h}&q=80`;
@@ -57,24 +53,11 @@ export interface VendorService {
   rateCardCount: number;
   /** Linked rate cards — name only in the UI */
   rateCards: ServiceRateCardLink[];
-  status: ServiceStatus;
   /** Primary / list thumb (usually the banner media) */
   imageUrl: string;
   imageAlt: string;
   media: ServiceMedia[];
 }
-
-export const SERVICE_STATUS_LABEL: Record<ServiceStatus, string> = {
-  published: "Published",
-  active: "Active",
-  draft: "Draft",
-};
-
-export const SERVICE_STATUS_TONE: Record<ServiceStatus, StatusTone> = {
-  published: "done",
-  active: "done",
-  draft: "progress",
-};
 
 export const SERVICE_TYPE_FILTERS: { value: string; label: string }[] = [
   { value: "all", label: "All types" },
@@ -114,7 +97,6 @@ function directoryService(input: {
     },
     inclusions: ["Products listed on the linked rate card", "Vendor confirmation and support"],
     rateCardCount: input.rateCards.length,
-    status: "active",
     imageUrl,
     imageAlt: input.name,
     media: galleryIds.map((imageId, index) => ({
@@ -223,7 +205,6 @@ export const VENDOR_SERVICES: VendorService[] = [
       { id: "rc-acc-2627", name: "Accommodation tariff · 2026–27" },
       { id: "rc-acc-2526", name: "Accommodation tariff · 2025–26" },
     ],
-    status: "published",
     imageUrl: thumb("photo-1566073771259-6a8506099945", 96, 96),
     imageAlt: "Example Lake Resort exterior",
     media: [
@@ -286,7 +267,6 @@ export const VENDOR_SERVICES: VendorService[] = [
       { id: "rc-acc-2627", name: "Accommodation tariff · 2026–27" },
       { id: "rc-hill-2627", name: "Hill Retreat tariff · 2026–27" },
     ],
-    status: "active",
     imageUrl: thumb("photo-1544735716-392fe2489ffa", 96, 96),
     imageAlt: "Cardamom plantation path",
     media: [
@@ -334,7 +314,6 @@ export const VENDOR_SERVICES: VendorService[] = [
     pricingLabel: "Hill Retreat tariff · 2026–27",
     rateCardCount: 1,
     rateCards: [{ id: "rc-hill-2627", name: "Hill Retreat tariff · 2026–27" }],
-    status: "draft",
     imageUrl: thumb("photo-1506905925346-21bda4d32df4", 96, 96),
     imageAlt: "Example Hill Retreat in the mountains",
     media: [
@@ -387,7 +366,6 @@ export const VENDOR_SERVICES: VendorService[] = [
     pricingLabel: "Activity tariff · 2026",
     rateCardCount: 1,
     rateCards: [{ id: "rc-acc-2627", name: "Activity tariff · 2026" }],
-    status: "published",
     imageUrl: thumb("photo-1506905925346-21bda4d32df4", 96, 96),
     imageAlt: "Ridge path through tea estates",
     media: [
@@ -445,7 +423,6 @@ export const VENDOR_SERVICES: VendorService[] = [
     pricingLabel: "Activity tariff · 2026",
     rateCardCount: 1,
     rateCards: [{ id: "rc-acc-2627", name: "Activity tariff · 2026" }],
-    status: "active",
     imageUrl: thumb("photo-1602216056096-3b40cc0c9944", 96, 96),
     imageAlt: "Kayak on backwater canal",
     media: [
@@ -501,7 +478,6 @@ export const VENDOR_SERVICES: VendorService[] = [
     pricingLabel: "Airport transfer rates · 2026",
     rateCardCount: 1,
     rateCards: [{ id: "rc-air-2026", name: "Airport transfer rates · 2026" }],
-    status: "published",
     imageUrl: thumb("photo-1449965408869-eaa3f722e40d", 96, 96),
     imageAlt: "Transfer vehicle at airport curb",
     media: [

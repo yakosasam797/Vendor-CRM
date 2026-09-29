@@ -369,18 +369,19 @@
   margin: 0 calc(var(--page-pad, 16px) * -1);
 }
 
-/* Profile and contacts use the same edge-to-edge panel language as Test rate. */
+/* Profile and contacts share one outlined record grid. */
 
 .vo-panels {
-  margin: 0 calc(var(--page-pad, 16px) * -1);
+  margin: 0;
 }
 
 .vo-panels__layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 8px);
   background: var(--surface);
+  overflow: hidden;
 }
 
 .vo-panel {
@@ -390,7 +391,7 @@
 }
 
 .vo-panels .vo-panel + .vo-panel {
-  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
 }
 
 .vo-panel__head {
@@ -400,8 +401,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px 16px;
-  padding: 10px var(--page-pad, 20px);
-  background: var(--side, #fcfbfa);
+  padding: 10px 18px;
+  background: var(--side, #faf8f6);
   border-bottom: 1px solid var(--line);
 }
 
@@ -426,7 +427,7 @@
 }
 
 .vo-panels .vo-profile {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .vo-profile__field {
@@ -446,14 +447,10 @@
 }
 
 .vo-panels .vo-profile__field:nth-child(2n) {
-  border-right: 1px solid var(--line-2, var(--line));
-}
-
-.vo-panels .vo-profile__field:nth-child(4n) {
   border-right: none;
 }
 
-.vo-panels .vo-profile__field:nth-last-child(-n + 4) {
+.vo-panels .vo-profile__field:nth-last-child(-n + 2) {
   border-bottom: none;
 }
 
@@ -484,7 +481,7 @@
 
 .vo-contacts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -495,15 +492,10 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
-  padding: 11px var(--page-pad, 20px);
-  border-right: 1px solid var(--line-2, var(--line));
+  padding: 12px 18px;
 }
 
-.vo-contact:nth-child(3n) {
-  border-right: none;
-}
-
-.vo-contact:nth-child(n + 4) {
+.vo-contact:nth-child(n + 2) {
   border-top: 1px solid var(--line-2, var(--line));
 }
 
@@ -570,7 +562,6 @@
 @media (min-width: 1001px) and (max-width: 1150px) {
   .vo-contact__acts {
     gap: 5px;
-    padding-left: 0;
   }
 
   .vo-contact__act {
@@ -639,34 +630,8 @@
 }
 
 @media (max-width: 1000px) {
-  .vo-panels .vo-profile,
-  .vo-contacts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .vo-panels .vo-profile__field:nth-child(2n) {
-    border-right: none;
-  }
-
-  .vo-panels .vo-profile__field:nth-last-child(-n + 4) {
-    border-bottom: 1px solid var(--line-2, var(--line));
-  }
-
-  .vo-panels .vo-profile__field:nth-last-child(-n + 2) {
-    border-bottom: none;
-  }
-
-  .vo-contact:nth-child(3n) {
-    border-right: 1px solid var(--line-2, var(--line));
-  }
-
-  .vo-contact:nth-child(2n) {
-    border-right: none;
-  }
-
-  .vo-contact:nth-child(3) {
-    border-top: 1px solid var(--line-2, var(--line));
-  }
+  .vo-panels__layout { grid-template-columns: 1fr; }
+  .vo-panels .vo-panel + .vo-panel { border-left: 0; border-top: 1px solid var(--line); }
 
   .vendor-overview__toolbar {
     align-items: stretch;
@@ -704,13 +669,7 @@
   }
 
   .vo-contact,
-  .vo-contact:nth-child(3n) {
-    border-right: none;
-  }
-
-  .vo-contact:nth-child(n + 2) {
-    border-top: 1px solid var(--line-2, var(--line));
-  }
+  .vo-contact:nth-child(3n) { border-right: none; }
 
   .vendor-overview__section-actions {
     width: 100%;

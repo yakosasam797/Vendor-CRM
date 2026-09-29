@@ -8,8 +8,6 @@ import {
 } from "../data/packages";
 import type { ServiceCategory } from "../data/vendors";
 import {
-  SERVICE_STATUS_LABEL,
-  SERVICE_STATUS_TONE,
   VENDOR_SERVICES,
 } from "../data/services";
 import {
@@ -950,7 +948,6 @@ export function PackageDetailPage({
               </div>
             </div>
             <footer className="pt-modal__foot">
-              {previewService ? <StatusChipWithDot tone={SERVICE_STATUS_TONE[previewService.status]}>{SERVICE_STATUS_LABEL[previewService.status]}</StatusChipWithDot> : <span />}
               <div className="package-service-preview__footer-actions">
                 <Button variant="brand" size="sm" onClick={() => setModal(null)}>Close</Button>
                 <Button variant="primary" size="sm" onClick={openLinkedService}>View service <IconOpenOut size={14} /></Button>

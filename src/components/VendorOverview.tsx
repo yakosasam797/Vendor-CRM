@@ -339,6 +339,7 @@ export function VendorOverview({
           rows={recentActivity}
           vendorName={vendor.name}
           ariaLabel="Recent vendor activity in overview"
+          variant="timeline"
           searchPlaceholder="Search recent activity"
           onRemoveActivity={onRemoveActivity}
           onOpenRelated={onOpenRelated}

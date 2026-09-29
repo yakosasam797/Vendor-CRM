@@ -226,11 +226,10 @@ export function RateCardDetailPage({
     );
   }
 
-  const unresolved = card.policies.filter((t) => t.status === "unresolved").length;
   const tabs: TabItem[] = [
     { id: "ratecard", label: "Rate card" },
     { id: "test", label: "Test rate" },
-    { id: "policies", label: "Policies", count: unresolved || undefined },
+    { id: "policies", label: "Policies" },
     { id: "activity", label: "Activity" },
   ];
 
@@ -1358,6 +1357,7 @@ export function RateCardDetailPage({
         <ActivityPanel
           rows={activityFromEvents(card.activity)}
           searchPlaceholder="Search rate card activity"
+          variant="timeline"
         />
       ) : null}
 

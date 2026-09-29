@@ -9,7 +9,6 @@ import {
   IconPlus,
   IconTrash,
 } from "../icons";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import "./CreateVendorServicePage.css";
 
 type ServiceDraft = {
@@ -171,7 +170,6 @@ export function CreateVendorServicePage({
       pricingLabel: "No pricing linked",
       rateCardCount: 0,
       rateCards: [],
-      status: "draft",
       imageUrl: primaryMedia?.imageUrl ?? "",
       imageAlt: primaryMedia?.imageAlt ?? `${draft.name.trim()} service image`,
       media,
@@ -205,7 +203,6 @@ export function CreateVendorServicePage({
             <div className="service-directory-detail__identity-copy">
               <div className="service-directory-detail__title-row">
                 <h1>{draft.name.trim() || "Untitled service"}</h1>
-                <StatusChipWithDot tone="progress">Draft</StatusChipWithDot>
               </div>
               <p>
                 <IconPin size={14} />

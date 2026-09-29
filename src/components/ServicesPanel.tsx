@@ -18,13 +18,10 @@ import {
   StatusChip,
   TabBar,
   type CheckboxState,
-  type StatusTone,
   type TabItem,
 } from "@paryatech/design-system";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import {
-  SERVICE_STATUS_LABEL,
-  SERVICE_STATUS_TONE,
   SERVICE_TYPE_FILTERS,
   servicesForVendor,
   type ServiceMedia,
@@ -38,7 +35,6 @@ import {
   type VendorServiceConnection,
 } from "../data/vendorDirectory";
 import { VENDORS } from "../data/vendors";
-import type { PageNavigationChange } from "../pageNavigation";
 import {
   IconCard,
   IconBuilding,
@@ -51,13 +47,10 @@ import {
   IconPlay,
   IconPlus,
   IconTrash,
-  IconWarn,
 } from "../icons";
 import { AnchoredImport } from "./AnchoredImport";
-import { CreateVendorServicePage } from "./CreateVendorServicePage";
 import { ServiceTestRate } from "./ServiceTestRate";
 import { ServicePolicies } from "./ServicePolicies";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTypeLabel } from "./ServiceTypeLabel";
 import { ServiceRateDetails } from "./VendorsListPage";
@@ -293,12 +286,6 @@ function ServiceMediaImage({ item }: { item: ServiceMedia }) {
 
 type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
 
-function serviceConnectionTone(status: VendorServiceConnection["status"]): StatusTone {
-  if (status === "Active") return "done";
-  if (status === "Expiring soon") return "progress";
-  return "open";
-}
-
 function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCard, onOpenVendor }: {
   service: VendorService;
   canEdit: boolean;
@@ -337,7 +324,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       name: service.name,
       category: directoryCategoryForServiceType(service.type) ?? "Activities",
       location: service.location,
-      status: service.status === "draft" ? "Draft" : "Active",
     };
   }, [service]);
 
@@ -355,7 +341,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       rateCardId: rateCard.id,
       rateCardName: rateCard.name,
       validity: service.profile.seasonality,
-      status: service.status === "draft" ? "Draft" : "Active",
     }));
   }, [directoryService.id, service]);
 
@@ -367,13 +352,11 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
     [testPriceConnections],
   );
   const linkedRateCardCount = new Set(testPriceConnections.map((connection) => connection.rateCardId)).size;
-  const activeConnectionCount = testPriceConnections.filter((connection) => connection.status === "Active").length;
-  const attentionConnectionCount = testPriceConnections.length - activeConnectionCount;
   const primaryMediaCount = mediaItems.filter((item) => item.usedInBanner).length;
   const tabs: TabItem[] = [
     { id: "overview", label: "Overview" },
-    { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
-    { id: "vendors", label: "Vendors", count: linkedVendors.length },
+    { id: "rate-details", label: "Rate details" },
+    { id: "vendors", label: "Vendors" },
     { id: "test-rate", label: "Test rate" },
     { id: "policies", label: "Policies" },
   ];
@@ -389,7 +372,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       id: "vendors",
       label: "Vendor coverage",
       value: linkedVendors.length,
-      note: `${activeConnectionCount} active vendor${activeConnectionCount === 1 ? "" : "s"}`,
+      note: "Supplier relationships",
       icon: <IconBuilding size={15} />,
     },
     {
@@ -414,22 +397,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       value: linkedVendors.length,
       note: "Supplier relationships",
       icon: <IconBuilding size={15} />,
-    },
-    {
-      id: "active",
-      label: "Active supply",
-      value: activeConnectionCount,
-      note: "Ready for costing",
-      icon: <IconCheck size={15} />,
-      tone: "ok",
-    },
-    {
-      id: "attention",
-      label: "Needs attention",
-      value: attentionConnectionCount,
-      note: `${attentionConnectionCount} relationship${attentionConnectionCount === 1 ? "" : "s"}`,
-      icon: <IconWarn size={15} />,
-      tone: attentionConnectionCount > 0 ? "warn" : "ok",
     },
     {
       id: "pricing",
@@ -518,9 +485,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
           <div className="service-directory-detail__identity-copy">
             <div className="service-directory-detail__title-row">
               <h1>{service.name}</h1>
-              <StatusChipWithDot tone={SERVICE_STATUS_TONE[service.status]}>
-                {SERVICE_STATUS_LABEL[service.status]}
-              </StatusChipWithDot>
             </div>
             <p>
               <IconPin size={14} />
@@ -588,10 +552,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                     <div className="service-detail-profile__field">
                       <dt>Service ID</dt>
                       <dd className="pt-mono">{service.id.toUpperCase()}</dd>
-                    </div>
-                    <div className="service-detail-profile__field">
-                      <dt>Status</dt>
-                      <dd><StatusChipWithDot tone={SERVICE_STATUS_TONE[service.status]}>{SERVICE_STATUS_LABEL[service.status]}</StatusChipWithDot></dd>
                     </div>
                     <div className="service-detail-profile__field">
                       <dt>Category</dt>
@@ -702,17 +662,12 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
           <div className="service-vendors-overview__summary">
-            <SummaryStrip title="Vendor coverage" columns={4} fields={vendorSummary} />
+            <SummaryStrip title="Vendor coverage" columns={2} fields={vendorSummary} />
           </div>
 
           <section className="service-suppliers" aria-labelledby="vendor-service-suppliers-title">
             <div className="service-section-head">
               <h2 id="vendor-service-suppliers-title">Linked vendors</h2>
-              {linkedVendors.length > 0 ? (
-                <span className="service-suppliers__count">
-                  {activeConnectionCount} active of {linkedVendors.length}
-                </span>
-              ) : null}
             </div>
             {linkedVendors.length === 0 ? (
               <EmptyState
@@ -734,7 +689,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                     <DataSheetCell>Supplier relationship</DataSheetCell>
                     <DataSheetCell>Location</DataSheetCell>
                     <DataSheetCell>Current rate card</DataSheetCell>
-                    <DataSheetCell>Status</DataSheetCell>
                     <DataSheetCell className="service-suppliers-sheet__action">Action</DataSheetCell>
                   </DataSheetHeader>
                   {linkedVendors.map(({ connection, vendor }) => (
@@ -795,9 +749,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                         <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard?.(connection.rateCardId)}>
                           {connection.rateCardName}
                         </button>
-                      </DataSheetCell>
-                      <DataSheetCell>
-                        <StatusChipWithDot tone={serviceConnectionTone(connection.status)}>{connection.status}</StatusChipWithDot>
                       </DataSheetCell>
                       <DataSheetCell className="service-suppliers-sheet__action">
                         <div className="services-sheet__act">
@@ -866,22 +817,22 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
 
 export function ServicesPanel({
   vendorId = "exhosp",
-  vendorName = "Example Hospitality",
   canEdit = false,
+  createdServices = [],
+  onAddService,
   openServiceId = null,
   onOpenServiceIdChange,
   onOpenRateCard,
   onOpenVendor,
-  onNavigationContextChange,
 }: {
   vendorId?: string;
-  vendorName?: string;
   canEdit?: boolean;
+  createdServices?: VendorService[];
+  onAddService?: () => void;
   openServiceId?: string | null;
   onOpenServiceIdChange?: (id: string | null) => void;
   onOpenRateCard?: (id: string) => void;
   onOpenVendor?: (id: string) => void;
-  onNavigationContextChange?: PageNavigationChange;
 }) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -890,8 +841,6 @@ export function ServicesPanel({
   const [mediaOpen, setMediaOpen] = useState<MediaOpen | null>(null);
   const [serviceMenu, setServiceMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [openServiceTab, setOpenServiceTab] = useState<ServiceDetailTab>("overview");
-  const [creatingService, setCreatingService] = useState(false);
-  const [createdServices, setCreatedServices] = useState<VendorService[]>([]);
 
   const vendorServices = useMemo(
     () => [...servicesForVendor(vendorId), ...createdServices.filter((service) => service.vendorId === vendorId)],
@@ -941,24 +890,6 @@ export function ServicesPanel({
     onOpenServiceIdChange?.(id);
   };
 
-  if (creatingService) {
-    return (
-      <CreateVendorServicePage
-        vendorId={vendorId}
-        vendorName={vendorName}
-        initialType={vendorServices[0]?.type ?? "Accommodation"}
-        onCancel={() => setCreatingService(false)}
-        onNavigationContextChange={onNavigationContextChange}
-        onCreate={(service) => {
-          setCreatedServices((current) => [...current, service]);
-          setCreatingService(false);
-          setOpenServiceTab("overview");
-          onOpenServiceIdChange?.(service.id);
-        }}
-      />
-    );
-  }
-
   if (openService) {
     return (
       <ServiceDetail
@@ -1001,7 +932,7 @@ export function ServicesPanel({
         </div>
         <div className="vendor-page__actions">
           <AnchoredImport buttonLabel="Import services" />
-          <Button variant="primary" size="sm" onClick={() => setCreatingService(true)}>
+          <Button variant="primary" size="sm" onClick={onAddService}>
             <IconPlus />
             Add service
           </Button>
@@ -1020,7 +951,6 @@ export function ServicesPanel({
                 <DataSheetCell>Important details</DataSheetCell>
                 <DataSheetCell>Media</DataSheetCell>
                 <DataSheetCell>Current pricing</DataSheetCell>
-                <DataSheetCell>Status</DataSheetCell>
                 <DataSheetCell className="services-sheet__action">Action</DataSheetCell>
               </DataSheetHeader>
               {filtered.map((svc) => (
@@ -1094,11 +1024,6 @@ export function ServicesPanel({
                         Rate card{svc.rateCardCount === 1 ? "" : "s"}
                       </StackLine>
                     </StackCell>
-                  </DataSheetCell>
-                  <DataSheetCell>
-                    <StatusChipWithDot tone={SERVICE_STATUS_TONE[svc.status]}>
-                      {SERVICE_STATUS_LABEL[svc.status]}
-                    </StatusChipWithDot>
                   </DataSheetCell>
                   <DataSheetCell className="services-sheet__action">
                     <div className="services-sheet__act">
