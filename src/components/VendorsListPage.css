@@ -69,8 +69,8 @@
   display: grid;
   grid-template-columns: minmax(300px, 1.45fr) minmax(190px, 0.65fr) auto;
   gap: var(--space-2);
-  margin-top: var(--space-4);
-  margin-bottom: var(--space-4);
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .vendors-page__search {
@@ -379,6 +379,11 @@
 
 .vendors-sheet--services .pt-sheet__row {
   min-width: 1012px;
+}
+
+.vendors-sheet--services .pt-sheet__row:not(.pt-sheet__head) .pt-sheet__cell {
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 
 .directory-link:focus-visible {
@@ -1661,11 +1666,11 @@
 
 .service-rate-details__record {
   display: flex;
-  min-height: 72px;
+  min-height: 88px;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 18px;
+  padding: 16px 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md, 8px);
   background: var(--side, #fcfbfa);
@@ -1679,7 +1684,16 @@
 }
 
 .service-rate-details__record-copy {
-  gap: 12px;
+  gap: 14px;
+}
+
+.service-rate-details__record-label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink-3);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.025em;
 }
 
 .service-rate-details__record-title {
@@ -1690,7 +1704,8 @@
 .service-rate-details__record-title > strong {
   overflow: hidden;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 700;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -1698,12 +1713,26 @@
 .service-rate-details__record-actions {
   display: flex;
   flex: none;
-  align-items: flex-end;
-  gap: 10px;
+  align-items: center;
+  gap: 12px;
 }
 
 .service-rate-details__record-actions .service-rate-details__source {
-  width: min(390px, 34vw);
+  width: min(460px, 38vw);
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.service-rate-details__record-actions .service-rate-select__label {
+  flex: none;
+  white-space: nowrap;
+}
+
+.service-rate-details__record-actions .service-rate-select__trigger {
+  min-width: 0;
+  flex: 1;
 }
 
 .service-rate-details__record-icon,
@@ -1713,13 +1742,13 @@
   align-items: center;
   justify-content: center;
   border-radius: 9px;
-  background: var(--teal-50, #e8f4f2);
-  color: var(--brand);
+  background: var(--pink-soft, #fbeaf1);
+  color: var(--pink-ink, var(--pink));
 }
 
 .service-rate-details__record-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
 }
 
 .service-rate-block,
@@ -1727,7 +1756,7 @@
   min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-md, 8px);
-  background: var(--surface);
+  background: transparent;
   overflow: hidden;
 }
 
@@ -1772,7 +1801,7 @@
   min-height: 42px;
   grid-template-columns: minmax(260px, 0.78fr) minmax(0, 2.2fr);
   border-bottom: 1px solid var(--line);
-  background: var(--surface-2, var(--side));
+  background: transparent;
   color: var(--ink-2);
   font-size: 12px;
   font-weight: 650;
@@ -1897,7 +1926,7 @@
 .service-rate-guest--head {
   min-height: 38px;
   padding-block: 9px;
-  background: var(--surface-2, #faf9f8);
+  background: transparent;
   color: var(--ink-3);
   font-size: 12px;
   font-weight: 700;
@@ -1916,11 +1945,15 @@
   color: var(--ink);
 }
 
+.service-rate-guest svg {
+  color: var(--pink-ink, var(--pink));
+}
+
 .service-rate-guest-note {
   margin: 0;
   padding: 11px 18px;
   border-top: 1px solid var(--line-2, var(--line));
-  background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+  background: transparent;
   color: var(--ink-2);
   font-size: 13px;
   line-height: 1.45;
@@ -1936,7 +1969,7 @@
 
 .service-rate-compact {
   min-width: 0;
-  background: var(--surface);
+  background: transparent;
 }
 
 .service-rate-compact + .service-rate-compact {
@@ -2134,6 +2167,25 @@
 
 .service-suppliers .service-directory-detail__sheet {
   border-top: 1px solid var(--line);
+}
+
+@media (max-width: 1220px) {
+  .service-rate-details__record {
+    flex-wrap: wrap;
+  }
+
+  .service-rate-details__record-copy {
+    flex: 1 1 100%;
+  }
+
+  .service-rate-details__record-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .service-rate-details__record-actions .service-rate-details__source {
+    width: min(460px, calc(100% - 140px));
+  }
 }
 
 @media (max-width: 1000px) {

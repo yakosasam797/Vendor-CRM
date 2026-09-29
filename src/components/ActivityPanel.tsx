@@ -191,7 +191,6 @@ export function ActivityPanel({
             </li>)}
           </ol>}
           {selected.length > 0 ? <div className="act-bulk"><span>{selected.length} event{selected.length === 1 ? "" : "s"} selected</span><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></div> : null}
-          {showPagination ? <div className="act-timeline__pagination"><Pagination rangeLabel={`Showing ${filtered.length ? firstRow + 1 : 0}–${Math.min(firstRow + ACTIVITY_PAGE_SIZE, filtered.length)} of ${filtered.length}`} page={currentPage} pageCount={pageCount} onPageChange={setPage} /></div> : null}
         </div> :
         <DataSheet className="act-sheet" aria-label={ariaLabel}>
           <DataSheetHeader>
@@ -226,6 +225,7 @@ export function ActivityPanel({
           <DashboardDataSheetFill columns={6} />
         </DataSheet>}
 
+        {variant === "timeline" && showPagination ? <div className="act-timeline__pagination"><Pagination rangeLabel={`Showing ${filtered.length ? firstRow + 1 : 0}–${Math.min(firstRow + ACTIVITY_PAGE_SIZE, filtered.length)} of ${filtered.length}`} page={currentPage} pageCount={pageCount} onPageChange={setPage} /></div> : null}
         {variant === "sheet" && selected.length > 0 ? <div className="act-bulk"><span>{selected.length} event{selected.length === 1 ? "" : "s"} selected</span><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></div> : null}
         {variant === "sheet" && showPagination ? <Pagination rangeLabel={`Showing ${filtered.length ? firstRow + 1 : 0}–${Math.min(firstRow + ACTIVITY_PAGE_SIZE, filtered.length)} of ${filtered.length}`} page={currentPage} pageCount={pageCount} onPageChange={setPage} /> : null}
       </div>

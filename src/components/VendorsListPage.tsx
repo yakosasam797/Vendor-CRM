@@ -282,6 +282,7 @@ export function ServiceRateDetails({
         <div className="service-rate-details__record-copy">
           <span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span>
           <div>
+            <span className="service-rate-details__record-label">Linked rate card</span>
             <div className="service-rate-details__record-title">
               <strong>{connection.rateCardName}</strong>
               <StatusChipWithDot tone={rateCardStatusTone(card)}>{card.state}</StatusChipWithDot>

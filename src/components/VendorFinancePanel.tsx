@@ -48,10 +48,6 @@ const METRIC_ICONS = {
   settled: <IconCard size={15} />,
   outstanding: <IconCard size={15} />,
   overdue: <IconWarn size={15} />,
-  "credit-limit": <IconCard size={15} />,
-  headroom: <IconCard size={15} />,
-  advance: <IconCard size={15} />,
-  margin: <IconCard size={15} />,
 } as const;
 
 type PayableFilter = "all" | "open" | "overdue" | "part-paid" | "due" | "paid";
@@ -466,16 +462,16 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
       <SummaryStrip
         title="Finance summary"
         columns={4}
+        variant="icon-leading"
         actions={
           <Button variant="brand" size="sm" onClick={() => setStatementOpen(true)}>
             Statement of account
           </Button>
         }
-        fields={FINANCE_METRICS.map((metric) => ({
+        fields={FINANCE_METRICS.slice(0, 4).map((metric) => ({
           id: metric.id,
           label: metric.label,
           value: metric.value,
-          note: metric.note,
           tone: metric.tone,
           icon: METRIC_ICONS[metric.id as keyof typeof METRIC_ICONS],
         }))}
