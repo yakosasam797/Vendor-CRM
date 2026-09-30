@@ -121,9 +121,6 @@ export function NewServicePage({ existingServices, vendors, vendorId = "", onCan
   const [selectedVendorId, setSelectedVendorId] = useState(vendorId);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [inclusions, setInclusions] = useState("");
-  const [exclusions, setExclusions] = useState("");
   const [details, setDetails] = useState<Record<string, string>>({});
   const [attempted, setAttempted] = useState(false);
   const [id] = useState(() => `svc-${crypto.randomUUID().slice(0, 8)}`);
@@ -142,10 +139,7 @@ export function NewServicePage({ existingServices, vendors, vendorId = "", onCan
       name: name.trim(),
       category,
       location: location.trim(),
-      description: description.trim(),
       attributes: fields.map((field) => ({ label: field.label, value: details[`${category}:${field.key}`]?.trim() ?? "" })).filter((field) => field.value),
-      inclusions: inclusions.split("\n").map((line) => line.trim()).filter(Boolean),
-      exclusions: exclusions.split("\n").map((line) => line.trim()).filter(Boolean),
     });
   };
 
@@ -184,14 +178,6 @@ export function NewServicePage({ existingServices, vendors, vendorId = "", onCan
       <Section title={`${category} details`} description={typeDetails[category].description} icon={<ServiceTypeIcon type={category} size={18} />}>
         <div className="new-vendor-grid new-vendor-grid--2">
           {fields.map((field) => <label className="new-vendor-field" key={field.key}><span className="new-vendor-field__label">{field.label}{field.required ? " *" : ""}</span><input value={details[`${category}:${field.key}`] ?? ""} onChange={(event) => setDetails((current) => ({ ...current, [`${category}:${field.key}`]: event.target.value }))} placeholder={field.placeholder} /></label>)}
-        </div>
-      </Section>
-
-      <Section title="Scope & notes" description="Give your team the context to evaluate and use this service." icon={<IconPackages size={18} />}>
-        <label className="new-vendor-field"><span className="new-vendor-field__label">Description</span><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} placeholder="What does this service include and when should it be used?" /></label>
-        <div className="new-vendor-grid new-vendor-grid--2">
-          <label className="new-vendor-field"><span className="new-vendor-field__label">Included</span><textarea value={inclusions} onChange={(event) => setInclusions(event.target.value)} rows={4} placeholder="One item per line" /></label>
-          <label className="new-vendor-field"><span className="new-vendor-field__label">Excluded</span><textarea value={exclusions} onChange={(event) => setExclusions(event.target.value)} rows={4} placeholder="One item per line" /></label>
         </div>
       </Section>
 

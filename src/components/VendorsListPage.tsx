@@ -16,6 +16,7 @@ import {
   type TabItem,
 } from "@paryatech/design-system";
 import { getVendorService } from "../data/services";
+import { findLocationSuggestions, getLocationSuggestions, matchesLocation, type LocationSuggestion } from "../data/locationSuggestions";
 import {
   DIRECTORY_CATEGORIES,
   DIRECTORY_SERVICES,
@@ -53,11 +54,13 @@ import { AnchoredImport } from "./AnchoredImport";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTestRate } from "./ServiceTestRate";
+import { ServiceRateCardTable } from "./ServiceRateCardTable";
 import { TransportRateDetails, TransportTestRate } from "./TransportRateWorkspace";
 import { RegionalTransportRates, RegionalTransportTest } from "./RegionalTransportWorkspace";
 import { ServicePolicies } from "./ServicePolicies";
 import { ServiceTypeIcon, ServiceTypeLabel, ServiceTypeList } from "./ServiceTypeLabel";
 import { NewServicePage } from "./NewServicePage";
+import { VendorLocationSearch } from "./VendorLocationSearch";
 import "./VendorsListPage.css";
 
 type Perspective = "vendors" | "services";
@@ -254,6 +257,8 @@ export function ServiceRateDetails({
     return Array.from(grouped.values());
   }, [card]);
 
+  const linkedCards = <ServiceRateCardTable connections={connections} vendors={vendors} activeId={connection?.id ?? ""} onSelect={(id) => { setConnectionId(id); setSeasonIndex(0); }} onOpenRateCard={onOpenRateCard} />;
+
   if (!connection) {
     return (
       <EmptyState
@@ -266,6 +271,7 @@ export function ServiceRateDetails({
   if (!card) {
     return (
       <section className="service-rate-details service-rate-details--empty">
+        {linkedCards}
         <div>
           <h2>{connection.rateCardName}</h2>
           <p>The rate card is linked, but its detailed pricing structure is not available in this workspace.</p>
@@ -283,12 +289,14 @@ export function ServiceRateDetails({
 
   if (card.regionalTransport) {
     return <div className="service-rate-details">
+      {linkedCards}
       <div className="service-rate-details__record"><div className="service-rate-details__record-copy"><span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span><div><span className="service-rate-details__record-label">Linked rate card</span><div className="service-rate-details__record-title"><strong>{connection.rateCardName}</strong><StatusChipWithDot tone={rateCardStatusTone(card)}>{card.state}</StatusChipWithDot></div></div></div><div className="service-rate-details__record-actions"><Button variant="brand" size="sm" onClick={() => onOpenRateCard(connection.vendorId, connection.rateCardId)}>Open rate card</Button></div></div>
       <RegionalTransportRates card={card} />
     </div>;
   }
   if (card.transport) {
     return <div className="service-rate-details">
+      {linkedCards}
       <div className="service-rate-details__record">
         <div className="service-rate-details__record-copy">
           <span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span>
@@ -305,6 +313,7 @@ export function ServiceRateDetails({
 
   return (
     <div className="service-rate-details">
+      {linkedCards}
       <div className="service-rate-details__record">
         <div className="service-rate-details__record-copy">
           <span className="service-rate-details__record-icon" aria-hidden="true"><IconCard size={16} /></span>
@@ -538,22 +547,6 @@ function ServiceDirectoryDetail({
       icon: <IconImage size={15} />,
     },
   ];
-  const vendorSummary: SummaryField[] = [
-    {
-      id: "connected",
-      label: "Connected vendors",
-      value: connections.length,
-      note: "Supplier relationships",
-      icon: <IconBuilding size={15} />,
-    },
-    {
-      id: "pricing",
-      label: "Rate cards",
-      value: linkedRateCardCount,
-      note: "Current pricing sources",
-      icon: <IconCard size={15} />,
-    },
-  ];
   const vendorHeaderState: CheckboxState = selectedVendorIds.length === 0
     ? "off"
     : selectedVendorIds.length === connectedVendorIds.length
@@ -691,10 +684,6 @@ function ServiceDirectoryDetail({
           : <ServiceTestRate service={service} connections={connections} vendors={vendors} />
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
-          <div className="service-vendors-overview__summary">
-            <SummaryStrip title="Vendor coverage" columns={2} fields={vendorSummary} />
-          </div>
-
           <section className="service-suppliers" aria-labelledby="service-suppliers-title">
             <div className="service-section-head">
               <h2 id="service-suppliers-title">Linked vendors</h2>
@@ -820,6 +809,7 @@ export function VendorsListPage({
   const [categoryFilters, setCategoryFilters] = useState<DirectoryCategory[]>([]);
   const [query, setQuery] = useState("");
   const [locationQuery, setLocationQuery] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<LocationSuggestion | null>(null);
   const [supplierTypes, setSupplierTypes] = useState<SupplierType[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -850,6 +840,8 @@ export function VendorsListPage({
   const activeConnections = useMemo(() => scopedConnections.filter((connection) => supplierTypes.length === 0 || supplierTypes.includes(connection.supplierType)), [scopedConnections, supplierTypes]);
   const visibleServiceIds = useMemo(() => new Set(activeConnections.map((connection) => connection.serviceId)), [activeConnections]);
   const availableServices = useMemo(() => [...createdServices.filter((service) => scopedIds.has(service.profileVendorId)), ...DIRECTORY_SERVICES.filter((service) => visibleServiceIds.has(service.id))], [createdServices, scopedIds, visibleServiceIds]);
+  const locationSuggestions = useMemo(() => getLocationSuggestions(scoped, availableServices), [scoped, availableServices]);
+  const matchingLocations = useMemo(() => findLocationSuggestions(locationSuggestions, locationQuery), [locationSuggestions, locationQuery]);
   const activeService = openServiceId ? availableServices.find((service) => service.id === openServiceId) : undefined;
   const closeServiceDetail = useCallback(() => setOpenServiceId(null), []);
   const closeCreateService = useCallback(() => setCreatingService(false), []);
@@ -889,26 +881,24 @@ export function VendorsListPage({
 
   const vendorRows = useMemo<VendorDirectoryRow[]>(() => {
     const q = query.trim().toLowerCase();
-    const loc = locationQuery.trim().toLowerCase();
     return scoped.flatMap((vendor) => {
       const connections = activeConnections.filter((connection) => connection.vendorId === vendor.id);
       const related = connections.map((connection) => availableServices.find((service) => service.id === connection.serviceId)).filter((service): service is DirectoryService => Boolean(service));
       if (categoryFilters.length > 0 && !related.some((service) => categoryFilters.includes(service.category))) return [];
       if (supplierTypes.length > 0 && connections.length === 0) return [];
-      if (loc && !vendor.location.toLowerCase().includes(loc) && !related.some((service) => service.location.toLowerCase().includes(loc))) return [];
+      if (!matchesLocation(vendor.location, selectedLocation) && !related.some((service) => matchesLocation(service.location, selectedLocation))) return [];
       const directMatch = `${vendor.name} ${vendor.code} ${vendor.owner}`.toLowerCase().includes(q);
       const relatedMatch = q ? related.find((service) => `${service.name} ${service.category} ${service.location}`.toLowerCase().includes(q)) : undefined;
       if (q && !directMatch && !relatedMatch) return [];
       return [{ vendor, connections, regionsServed: [...new Set(related.map((service) => service.location))], matchedThrough: !directMatch && relatedMatch ? relatedMatch.name : undefined }];
     });
-  }, [activeConnections, availableServices, categoryFilters, locationQuery, query, scoped, supplierTypes.length]);
+  }, [activeConnections, availableServices, categoryFilters, query, scoped, selectedLocation, supplierTypes.length]);
 
   const serviceRows = useMemo<ServiceDirectoryRow[]>(() => {
     const q = query.trim().toLowerCase();
-    const loc = locationQuery.trim().toLowerCase();
     return availableServices.flatMap((service) => {
       if (serviceCategory !== "all" && service.category !== serviceCategory) return [];
-      if (loc && !service.location.toLowerCase().includes(loc)) return [];
+      if (!matchesLocation(service.location, selectedLocation)) return [];
       const connections = activeConnections.filter((connection) => connection.serviceId === service.id);
       const relatedVendors = connections.map((connection) => scoped.find((vendor) => vendor.id === connection.vendorId)).filter((vendor): vendor is Vendor => Boolean(vendor));
       const directMatch = `${service.name} ${service.category} ${service.location}`.toLowerCase().includes(q);
@@ -916,7 +906,7 @@ export function VendorsListPage({
       if (q && !directMatch && !vendorMatch) return [];
       return [{ service, connections, providedBy: !directMatch && vendorMatch ? vendorMatch.name : undefined }];
     });
-  }, [activeConnections, availableServices, locationQuery, query, scoped, serviceCategory]);
+  }, [activeConnections, availableServices, query, scoped, selectedLocation, serviceCategory]);
 
   const rows = perspective === "vendors" ? vendorRows : serviceRows;
   const pageCount = Math.max(1, Math.ceil(rows.length / DIRECTORY_PAGE_SIZE));
@@ -981,6 +971,7 @@ export function VendorsListPage({
         setServiceCategory("all");
         setQuery("");
         setLocationQuery("");
+        setSelectedLocation(null);
         setSupplierTypes([]);
         setPage(1);
         setCreatedNotice(`${service.name} created.`);
@@ -1026,7 +1017,7 @@ export function VendorsListPage({
 
       <div className="vendors-page__toolbar">
         <SearchField fullWidth className="vendors-page__search" value={query} onChange={(event) => { setQuery(event.target.value); resetRows(); }} placeholder={perspective === "vendors" ? "Search vendors" : "Search services"} aria-label={perspective === "vendors" ? "Search vendors" : "Search services"} />
-        <label className="vendors-page__location"><span className="vendors-page__location-icon" aria-hidden="true"><IconPin size={16} /></span><span className="vendors-page__location-prompt">Find {perspective === "vendors" ? "vendors" : "services"} in</span><input type="search" value={locationQuery} onChange={(event) => { setLocationQuery(event.target.value); resetRows(); }} placeholder="City or region" aria-label={`Find ${perspective} by city or region`} /></label>
+        <VendorLocationSearch perspective={perspective} query={locationQuery} selected={selectedLocation} suggestions={matchingLocations} onQueryChange={(value) => { setLocationQuery(value); setSelectedLocation(null); resetRows(); }} onSelect={(place) => { setSelectedLocation(place); setLocationQuery(place?.name || ""); resetRows(); }} />
         <div className="directory-filters" ref={filterRef}>
           <Button variant="brand" size="sm" onClick={() => setFiltersOpen((open) => !open)} aria-expanded={filtersOpen}><IconFilter />Filters{activeFilterCount > 0 ? ` ${activeFilterCount}` : ""}</Button>
           {filtersOpen ? (

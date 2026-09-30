@@ -1,5 +1,4 @@
-/* Activity follows new-direction-03 open sheet language:
-   canvas rows + column rules, no outer rectangle card. */
+/* Activity sheet and vendor timeline share the CRM's column rules. */
 
 .act {
   display: flex;
@@ -109,8 +108,30 @@
 }
 
 .act-detail-modal {
-  max-width: 520px;
+  max-width: 560px;
 }
+
+.act-detail-body { display: grid; gap: 20px; }
+.act-detail-hero { display: flex; align-items: flex-start; gap: 12px; }
+.act-detail-hero__icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--pink) 22%, var(--line));
+  border-radius: var(--radius-sm, 8px);
+  background: var(--pink-soft);
+  color: var(--pink-ink, var(--pink));
+}
+.act-detail-hero h3 { margin: 0; color: var(--ink); font-size: 18px; line-height: 1.35; }
+.act-detail-hero p { margin: 5px 0 0; color: var(--ink-3); font-size: 12.5px; }
+.act-detail-section h4 { margin: 0 0 7px; color: var(--ink); font-size: 12px; font-weight: 700; }
+.act-detail-section p { margin: 0; color: var(--ink-2); font-size: 13.5px; line-height: 1.55; }
+.act-detail-meta { display: flex; align-items: center; gap: 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+.act-detail-meta > span { display: grid; gap: 2px; }
+.act-detail-meta strong { color: var(--ink); font-size: 12.5px; }
+.act-detail-meta small { color: var(--ink-3); font-size: 11.5px; }
 
 .act-detail-facts {
   display: grid;
@@ -337,7 +358,8 @@
 .act-timeline__date {
   display: flex;
   flex-direction: column;
-  align-self: center;
+  align-self: stretch;
+  justify-content: center;
   gap: 3px;
   color: var(--ink-3);
   font-size: 11px;
@@ -359,7 +381,15 @@
 }
 
 .act-timeline__context svg { flex: none; color: var(--pink-ink, var(--pink)); }
-.act-timeline__member { align-self: center; gap: 9px; }
+.act-timeline__member { align-self: stretch; gap: 9px; }
+.act-timeline__date,
+.act-timeline__entry,
+.act-timeline__member,
+.act-timeline__actions {
+  border-left: 1px solid var(--line-2, var(--line));
+  margin-left: -7px;
+  padding-left: 13px;
+}
 .act-timeline__member-copy { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .act-timeline__member-copy strong { overflow: hidden; color: var(--ink); font-size: 12px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .act-timeline__member-copy small { color: var(--ink-3); font-size: 11px; }
@@ -379,6 +409,10 @@
 
 @media (max-width: 1000px) {
   .act-timeline__item { grid-template-columns: 24px 40px 88px minmax(150px, 1fr) minmax(130px, 160px) 40px; gap: 10px; }
+  .act-timeline__date,
+  .act-timeline__entry,
+  .act-timeline__member,
+  .act-timeline__actions { margin-left: -5px; padding-left: 10px; }
 }
 
 @media (max-width: 760px) {
@@ -396,4 +430,8 @@
   .act-timeline__entry { grid-column: 3; grid-row: 2; padding: 0; }
   .act-timeline__member { grid-column: 3; grid-row: 3; margin-top: 4px; }
   .act-timeline__actions { grid-column: 4; grid-row: 2; align-self: start; }
+  .act-timeline__date,
+  .act-timeline__entry,
+  .act-timeline__member,
+  .act-timeline__actions { border-left: 0; margin-left: 0; padding-left: 0; }
 }

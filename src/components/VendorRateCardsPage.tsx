@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Button,
   Checkbox,
@@ -22,7 +23,7 @@ import {
 import {
   RATE_CARDS,
   STATUS_LABEL,
-  STATUS_TONE,
+  type RateCard,
   type RateCardStatus,
 } from "../data/rateCards";
 import { getVendor, type Vendor } from "../data/vendors";
@@ -32,13 +33,11 @@ import { VENDOR_CONVERSATIONS } from "../data/communications";
 import { VENDOR_PACKAGES } from "../data/packages";
 import { can, type OrgRole } from "../permissions";
 import type { PageNavigationChange } from "../pageNavigation";
-import { IconCheck, IconFilter, IconPin, IconPlus } from "../icons";
+import { IconCheck, IconFilter, IconMore, IconPin, IconPlus } from "../icons";
 import { AnchoredImport } from "./AnchoredImport";
 import { CommunicationPanel } from "./CommunicationPanel";
-import { RateCardCoverageCell, RateCardValidityCell } from "./rateCardCells";
 import { PackagesPanel } from "./PackagesPanel";
 import { ServicesPanel } from "./ServicesPanel";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import { TasksPanel, type TaskLinkGroup } from "./TasksPanel";
 import { VendorBookingsPanel } from "./VendorBookingsPanel";
 import { VendorActivityPanel } from "./VendorActivityPanel";
@@ -50,7 +49,7 @@ import { VendorOverview } from "./VendorOverview";
 import { VendorProfileHeader } from "./VendorProfileHeader";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import { SERVICE_TYPE_FILTERS, servicesForVendor, type VendorService } from "../data/services";
-import { DIRECTORY_SERVICES, type DirectoryService } from "../data/vendorDirectory";
+import { DIRECTORY_SERVICES, VENDOR_SERVICE_CONNECTIONS, type DirectoryService } from "../data/vendorDirectory";
 import type { DraftLinkedService } from "./AddServicesModal";
 import { NewServicePage } from "./NewServicePage";
 import { ServiceTypeIcon, ServiceTypeLabel, type ServiceTypeName } from "./ServiceTypeLabel";
@@ -405,10 +404,12 @@ export function VendorRateCardsPage({
 }) {
   const vendor = getVendor(vendorId, vendors) ?? getVendor("exhosp", vendors)!;
   const [tab, setTab] = useState("overview");
+  const [financeBookingId, setFinanceBookingId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [rateCardStatusFilter, setRateCardStatusFilter] =
     useState<RateCardStatusFilter>("all");
   const [rateCardFilterOpen, setRateCardFilterOpen] = useState(false);
+  const [rateCardMenu, setRateCardMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
   const [editProfileOpen, setEditProfileOpen] = useState(false);
@@ -420,6 +421,19 @@ export function VendorRateCardsPage({
   } | null>(null);
   const [removedActivityIdsByVendor, setRemovedActivityIdsByVendor] = useState<Record<string, string[]>>({});
   const rateCardFilterRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!rateCardMenu) return;
+    const close = () => setRateCardMenu(null);
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [rateCardMenu]);
   const canEdit = can(orgRole, "vendor.edit");
   const canAddTask = can(orgRole, "vendor.task.add");
   const isDraft = vendor.status === "Draft";
@@ -434,6 +448,20 @@ export function VendorRateCardsPage({
 
   const createdVendorServices = createdServices.filter((service) => service.profileVendorId === vendor.id).map((service) => vendorServiceFromDirectory(service, vendor));
   const vendorServices = [...servicesForVendor(vendor.id), ...createdVendorServices];
+  const vendorRateCardRows = useMemo(() => {
+    const linked = new Map<string, { id: string; card: RateCard; title: string; services: DirectoryService[] }>();
+    VENDOR_SERVICE_CONNECTIONS.filter((connection) => connection.vendorId === vendor.id && connection.rateCardId).forEach((connection) => {
+      const service = DIRECTORY_SERVICES.find((item) => item.id === connection.serviceId);
+      const card = RATE_CARDS.find((item) => item.id === connection.rateCardId);
+      if (!service || !card) return;
+      const id = `${card.id}:${connection.rateCardName}`;
+      const current = linked.get(id);
+      if (current) {
+        if (!current.services.some((item) => item.id === service.id)) current.services.push(service);
+      } else linked.set(id, { id, card, title: connection.rateCardName, services: [service] });
+    });
+    return Array.from(linked.values());
+  }, [vendor.id]);
   const vendorActivity = vendorActivityForVendor(vendor).filter((row) => !removedActivityIdsByVendor[vendor.id]?.includes(row.id));
   const removeActivity = (id: string) => setRemovedActivityIdsByVendor((current) => ({
     ...current,
@@ -472,13 +500,13 @@ export function VendorRateCardsPage({
         id: "bookings",
         label: "Bookings",
         recordLabel: "Booking",
-        options: VENDOR_BOOKINGS.map((booking) => ({ id: booking.id, label: booking.title, meta: booking.ref })),
+        options: VENDOR_BOOKINGS.filter((booking) => booking.vendorId === vendor.id).map((booking) => ({ id: booking.id, label: booking.title, meta: booking.ref })),
       },
       {
         id: "finance",
         label: "Finance",
         recordLabel: "Invoice",
-        options: PAYABLES.map((payable) => ({ id: payable.id, label: payable.invoice, meta: payable.booking })),
+        options: PAYABLES.filter((payable) => payable.vendorId === vendor.id).map((payable) => ({ id: payable.id, label: payable.invoice, meta: payable.booking })),
       },
       {
         id: "docs",
@@ -556,24 +584,23 @@ export function VendorRateCardsPage({
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return RATE_CARDS.filter((card) => {
-      if (rateCardStatusFilter !== "all" && card.status !== rateCardStatusFilter) {
+    return vendorRateCardRows.filter((row) => {
+      if (rateCardStatusFilter !== "all" && row.card.status !== rateCardStatusFilter) {
         return false;
       }
       return (
         !q ||
-        card.title.toLowerCase().includes(q) ||
-        card.property.toLowerCase().includes(q) ||
-        card.category.toLowerCase().includes(q)
+        row.title.toLowerCase().includes(q) ||
+        row.services.some((service) => `${service.name} ${service.location}`.toLowerCase().includes(q))
       );
     });
-  }, [query, rateCardStatusFilter]);
+  }, [query, rateCardStatusFilter, vendorRateCardRows]);
 
   const headerState: CheckboxState =
     selected.length === 0 ? "off" : selected.length === filtered.length && filtered.length > 0 ? "on" : "indeterminate";
 
   const toggleAll = (state: CheckboxState) => {
-    if (state === "on") setSelected(filtered.map((card) => card.id));
+    if (state === "on") setSelected(filtered.map((row) => row.id));
     else setSelected([]);
   };
 
@@ -706,9 +733,12 @@ export function VendorRateCardsPage({
           }}
         />
       ) : tab === "bookings" ? (
-        <VendorBookingsPanel />
+        <VendorBookingsPanel key={vendor.id} vendorId={vendor.id} initialBookingId={financeBookingId} onCloseBooking={() => setFinanceBookingId(null)} />
       ) : tab === "finance" ? (
-        <VendorFinancePanel vendorName={vendor.name} canEdit={canEdit} />
+        <VendorFinancePanel vendorId={vendor.id} vendorName={vendor.name} canEdit={canEdit}
+          onOpenBooking={(id) => { setFinanceBookingId(id); setVendorTab("bookings"); }}
+          onOpenService={(id) => { setVendorTab("services"); onOpenServiceIdChange?.(id); }}
+        />
       ) : tab === "docs" ? (
         <VendorDocsPanel canEdit={canEdit} onRequestDocuments={openDocumentRequest} />
       ) : tab === "tasks" ? (
@@ -733,7 +763,7 @@ export function VendorRateCardsPage({
         />
       ) : (
         <>
-          <div className="vendor-page__toolbar">
+          <div className="vendor-page__toolbar rate-card-toolbar">
             <SearchField
               fullWidth
               value={query}
@@ -742,8 +772,8 @@ export function VendorRateCardsPage({
                 setPage(1);
                 setSelected([]);
               }}
-              placeholder="Search card name or property"
-              aria-label="Search card name or property"
+              placeholder="Search rate cards or services"
+              aria-label="Search rate cards or services"
             />
             <div className="vendor-page__tools">
               <div className="rate-card-filter" ref={rateCardFilterRef}>
@@ -818,7 +848,7 @@ export function VendorRateCardsPage({
             {filtered.length === 0 ? (
               <EmptyState
                 title="No rate cards match this view"
-                description="Try another card name, property, or status filter."
+                description="Try another rate card, service, or status filter."
               />
             ) : (
               <>
@@ -828,73 +858,52 @@ export function VendorRateCardsPage({
                     <Checkbox state={headerState} onCheckedChange={toggleAll} label="Select all rate cards" />
                   </DataSheetCell>
                   <DataSheetCell>Rate card</DataSheetCell>
-                  <DataSheetCell>Property</DataSheetCell>
-                  <DataSheetCell>Stay validity</DataSheetCell>
-                  <DataSheetCell>Status</DataSheetCell>
-                  <DataSheetCell>Coverage</DataSheetCell>
+                  <DataSheetCell>Services</DataSheetCell>
+                  <DataSheetCell>Regions served</DataSheetCell>
+                  <DataSheetCell className="rate-card-sheet__action">Action</DataSheetCell>
                 </DataSheetHeader>
-                {filtered.map((card) => (
+                {filtered.map((row) => (
                   <DataSheetRow
-                    key={card.id}
+                    key={row.id}
                     className="data-row--interactive"
                     role="link"
                     tabIndex={0}
-                    aria-label={`Open ${card.title}`}
+                    aria-label={`Open ${row.title}`}
                     onClick={(event) => {
                       const target = event.target as HTMLElement;
                       if (target.closest("button, a, input, select, textarea")) return;
-                      onOpenCard(card.id);
+                      onOpenCard(row.card.id);
                     }}
                     onKeyDown={(event) => {
                       if (event.target !== event.currentTarget) return;
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        onOpenCard(card.id);
+                        onOpenCard(row.card.id);
                       }
                     }}
                   >
                     <DataSheetCell check>
                       <Checkbox
-                        state={selected.includes(card.id) ? "on" : "off"}
-                        onCheckedChange={(state) => toggleRow(card.id, state)}
-                        label={`Select ${card.title}`}
+                        state={selected.includes(row.id) ? "on" : "off"}
+                        onCheckedChange={(state) => toggleRow(row.id, state)}
+                        label={`Select ${row.title}`}
                       />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <LeadCell icon={<IconPin />} title={card.title} subtitle={card.ref} />
+                      <LeadCell icon={<IconPin />} title={row.title} subtitle={row.card.ref} />
                     </DataSheetCell>
-                    <DataSheetCell>
-                      <div className="rate-card-sheet__property">
-                        <img
-                          className="rate-card-sheet__property-thumb"
-                          src={card.propertyImageUrl}
-                          alt={card.propertyImageAlt}
-                          width={36}
-                          height={36}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <span className="rate-card-sheet__property-name">{card.property}</span>
-                      </div>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <RateCardValidityCell range={card.validity} note={card.validityNote} />
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <StatusChipWithDot tone={STATUS_TONE[card.status]}>
-                        {STATUS_LABEL[card.status]}
-                      </StatusChipWithDot>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <RateCardCoverageCell
-                        count={card.coverageCount}
-                        unit={card.coverageUnit}
-                        detail={card.coverageDetail}
-                      />
-                    </DataSheetCell>
+                    <DataSheetCell><div className="rate-card-sheet__services">
+                      <span className="rate-card-sheet__service-icon" aria-hidden="true"><ServiceTypeIcon type={row.services[0].category as ServiceTypeName} size={18} /></span>
+                      <span>{row.services.map((service) => service.name).join(" · ")}</span>
+                    </div></DataSheetCell>
+                    <DataSheetCell><span className="rate-card-sheet__regions"><IconPin size={15} />{[...new Set(row.services.map((service) => service.location))].join(" · ")}</span></DataSheetCell>
+                    <DataSheetCell className="rate-card-sheet__action"><IconButton label={`More actions for ${row.title}`} aria-haspopup="menu" aria-expanded={rateCardMenu?.id === row.id} onClick={(event) => {
+                      const rect = event.currentTarget.getBoundingClientRect();
+                      setRateCardMenu((current) => current?.id === row.id ? null : { id: row.id, top: rect.bottom + 6, left: Math.max(12, Math.min(window.innerWidth - 184, rect.right - 172)) });
+                    }}><IconMore /></IconButton></DataSheetCell>
                   </DataSheetRow>
                 ))}
-                <DashboardDataSheetFill columns={6} />
+                <DashboardDataSheetFill columns={5} />
               </DataSheet>
                 <Pagination
                   rangeLabel={`Showing 1–${filtered.length} of ${filtered.length} rate cards`}
@@ -905,6 +914,10 @@ export function VendorRateCardsPage({
               </>
             )}
           </div>
+          {rateCardMenu ? createPortal(<div className="rate-card-sheet__menu" role="menu" aria-label="Rate card actions" style={{ top: rateCardMenu.top, left: rateCardMenu.left }} onPointerDown={(event) => event.stopPropagation()}>
+            <button type="button" role="menuitem" onClick={() => { const row = vendorRateCardRows.find((item) => item.id === rateCardMenu.id); if (row) onOpenCard(row.card.id); setRateCardMenu(null); }}>Open rate card</button>
+            <button type="button" role="menuitem" onClick={() => { const row = vendorRateCardRows.find((item) => item.id === rateCardMenu.id); if (row) void navigator.clipboard?.writeText(row.card.ref); setRateCardMenu(null); }}>Copy rate card ID</button>
+          </div>, document.body) : null}
         </>
       )}
 

@@ -55,12 +55,13 @@ export interface VendorContact {
   primary?: boolean;
 }
 
-export type VendorBookingStatus = "upcoming" | "on-trip" | "completed" | "at-risk" | "cancelled";
+export type VendorBookingStatus = "upcoming" | "on-trip" | "completed";
 
 export type VendorBookingFinance = "settled" | "to-collect" | "overdue" | "part-paid";
 
 export interface VendorBooking {
   id: string;
+  vendorId: string;
   title: string;
   ref: string;
   travel: string;
@@ -231,16 +232,12 @@ export const BOOKING_STATUS_LABEL: Record<VendorBookingStatus, string> = {
   upcoming: "Upcoming",
   "on-trip": "On trip",
   completed: "Completed",
-  "at-risk": "At risk",
-  cancelled: "Cancelled",
 };
 
 export const BOOKING_STATUS_TONE: Record<VendorBookingStatus, StatusTone> = {
   upcoming: "open",
   "on-trip": "progress",
   completed: "done",
-  "at-risk": "blocked",
-  cancelled: "blocked",
 };
 
 export const BOOKING_FINANCE_LABEL: Record<VendorBookingFinance, string> = {
@@ -261,13 +258,14 @@ export const BOOKING_FINANCE_TONE: Record<VendorBookingFinance, StatusTone> = {
 export const VENDOR_BOOKINGS: VendorBooking[] = [
   {
     id: "vb1",
+    vendorId: "exhosp",
     title: "XYZ Family · Dubai",
     ref: "BK-2026-000003",
     travel: "18–22 Aug",
     party: "3N · 3 pax",
     service: "Lake View Suite",
     serviceDetail: "2 rooms · MAP",
-    status: "at-risk",
+    status: "completed",
     amount: "₹1,65,000",
     finance: "overdue",
     ownerName: "Vrushabh Jain",
@@ -275,6 +273,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb2",
+    vendorId: "exhosp",
     title: "Kapoor group · Alleppey",
     ref: "BK-2026-000010",
     travel: "12–19 Sep",
@@ -289,6 +288,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb3",
+    vendorId: "exhosp",
     title: "Mehta honeymoon",
     ref: "BK-2026-000014",
     travel: "02–06 Oct",
@@ -303,6 +303,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb4",
+    vendorId: "coastal",
     title: "Singh family · Kochi",
     ref: "BK-2026-000018",
     travel: "10–12 Oct",
@@ -317,6 +318,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb5",
+    vendorId: "exhosp",
     title: "Corporate retreat · Munnar",
     ref: "BK-2026-000021",
     travel: "20–23 Oct",
@@ -331,6 +333,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb6",
+    vendorId: "exhosp",
     title: "Nair anniversary",
     ref: "BK-2026-000025",
     travel: "28–30 Oct",
@@ -345,6 +348,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb7",
+    vendorId: "spice-route",
     title: "Desai group · Thekkady",
     ref: "BK-2026-000028",
     travel: "05–07 Nov",
@@ -359,6 +363,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb8",
+    vendorId: "coastal",
     title: "Iyer family · Varkala",
     ref: "BK-2026-000031",
     travel: "14–17 Nov",
@@ -373,6 +378,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb9",
+    vendorId: "coastal",
     title: "Sharma Family · Goa",
     ref: "BK-2026-000004",
     travel: "02–06 Aug",
@@ -387,6 +393,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb10",
+    vendorId: "wanderlust",
     title: "Patel Family · Manali",
     ref: "BK-2026-000006",
     travel: "24–28 Jul",
@@ -401,6 +408,7 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb11",
+    vendorId: "exhosp",
     title: "Banerjee wedding party",
     ref: "BK-2026-000001",
     travel: "10–14 Jun",
@@ -415,26 +423,72 @@ export const VENDOR_BOOKINGS: VendorBooking[] = [
   },
   {
     id: "vb12",
-    title: "Thomas family · cancelled",
+    vendorId: "coastal",
+    title: "Thomas family · Kochi",
     ref: "BK-2026-000009",
-    travel: "01–04 Sep",
-    party: "3N · 3 pax",
+    travel: "29 Sep–03 Oct",
+    party: "4N · 3 pax",
     service: "Garden Villa",
     serviceDetail: "1 room · CP",
-    status: "cancelled",
+    status: "on-trip",
     amount: "₹18,400",
     finance: "settled",
     ownerName: "Rahul Sharma",
     ownerInitials: "RS",
   },
+  {
+    id: "vb13",
+    vendorId: "trailmakers",
+    title: "Rao family · Munnar",
+    ref: "BK-2026-000041",
+    travel: "18–20 Oct",
+    party: "2N · 4 pax",
+    service: "Munnar ridge trek",
+    serviceDetail: "Guided · 4 guests",
+    status: "upcoming",
+    amount: "₹18,000",
+    finance: "to-collect",
+    ownerName: "Vrushabh Jain",
+    ownerInitials: "VJ",
+  },
+  {
+    id: "vb14",
+    vendorId: "trailmakers",
+    title: "Patel group · Alleppey",
+    ref: "BK-2026-000037",
+    travel: "04–06 Oct",
+    party: "2N · 6 pax",
+    service: "Backwater kayak",
+    serviceDetail: "Guided · 6 guests",
+    status: "upcoming",
+    amount: "₹24,000",
+    finance: "part-paid",
+    ownerName: "Anjali Menon",
+    ownerInitials: "AM",
+  },
+  {
+    id: "vb15",
+    vendorId: "trailmakers",
+    title: "Mehta team · Munnar",
+    ref: "BK-2026-000032",
+    travel: "20–22 Aug",
+    party: "2N · 8 pax",
+    service: "Munnar ridge trek",
+    serviceDetail: "Guided · 8 guests",
+    status: "completed",
+    amount: "₹36,000",
+    finance: "settled",
+    ownerName: "Meera Iyer",
+    ownerInitials: "MI",
+  },
 ];
 
-/** At-risk first, then upcoming / on-trip — for Overview preview. */
+/** On-trip first, then upcoming — for Overview preview. */
 export function overviewBookingsPreview(limit = 5): VendorBooking[] {
   const rank = (s: VendorBookingStatus) =>
-    s === "at-risk" ? 0 : s === "on-trip" ? 1 : s === "upcoming" ? 2 : 9;
+    s === "on-trip" ? 0 : s === "upcoming" ? 1 : 9;
   return [...VENDOR_BOOKINGS]
-    .filter((b) => b.status === "at-risk" || b.status === "upcoming" || b.status === "on-trip")
+    .filter((b) => b.status === "upcoming" || b.status === "on-trip")
     .sort((a, b) => rank(a.status) - rank(b.status))
     .slice(0, limit);
 }
@@ -563,6 +617,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "Contact details updated",
     module: "Vendor",
     context: "Vendor profile",
+    description: "The vendor contact record was updated in the profile.",
+    details: [{ label: "Primary contact", value: "Anitha Roy" }, { label: "Contact email", value: "anitha.roy@examplehosp.in" }],
   },
   {
     id: "vendor-act-2",
@@ -575,6 +631,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "Booking marked at risk",
     module: "Bookings",
     context: "Bookings · BK-2026-000003",
+    description: "The linked booking was flagged for the operations team to review.",
+    details: [{ label: "Booking", value: "BK-2026-000003" }],
   },
   {
     id: "vendor-act-3",
@@ -587,6 +645,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "Partial settlement recorded",
     module: "Finance",
     context: "Finance · September statement",
+    description: "A partial settlement was recorded against the September statement.",
+    details: [{ label: "Statement", value: "September statement" }],
   },
   {
     id: "vendor-act-4",
@@ -599,6 +659,7 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "GST certificate renewed",
     module: "Docs",
     context: "Docs",
+    description: "The vendor's GST certificate was renewed in the document record.",
   },
   {
     id: "vendor-act-5",
@@ -611,6 +672,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "Rate card published",
     module: "Rate cards",
     context: "Rate cards · Accommodation 2026–27",
+    description: "The accommodation rate card was published for use in quoting.",
+    details: [{ label: "Rate card", value: "Accommodation 2026–27" }],
   },
   {
     id: "vendor-act-6",
@@ -624,6 +687,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     module: "Services",
     context: "Services · Example Lake Resort",
     relatedServiceId: "svc-lake",
+    description: "A blackout window was added to the linked accommodation service.",
+    details: [{ label: "Service", value: "Example Lake Resort" }],
   },
   {
     id: "vendor-act-7",
@@ -636,6 +701,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "Supplier handoff completed",
     module: "Bookings",
     context: "Bookings · Kapoor group",
+    description: "The supplier handoff for the Kapoor group booking was marked complete.",
+    details: [{ label: "Booking group", value: "Kapoor group" }],
   },
   {
     id: "vendor-act-8",
@@ -648,6 +715,8 @@ const EXAMPLE_VENDOR_ACTIVITY: ActivityRow[] = [
     event: "Inventory request sent",
     module: "Communications",
     context: "Communications · WhatsApp",
+    description: "An inventory request was sent to the vendor through WhatsApp.",
+    details: [{ label: "Channel", value: "WhatsApp" }],
   },
 ];
 
@@ -666,6 +735,8 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       event: "Coverage reviewed",
       module: "Services",
       context: `Services · ${primaryCategory}`,
+      description: `${vendor.owner} reviewed the service coverage recorded for ${vendor.name}.`,
+      details: [{ label: "Service categories", value: vendor.categories.join(" · ") }, { label: "Base location", value: vendor.location }],
     },
     {
       id: `${vendor.id}-activity-location`,
@@ -678,6 +749,8 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       event: "Base location confirmed",
       module: "Vendor",
       context: `Vendor profile · ${vendor.city}`,
+      description: `The base location on ${vendor.name}'s vendor profile was confirmed.`,
+      details: [{ label: "Base location", value: vendor.location }, { label: "Country", value: vendor.country }],
     },
     {
       id: `${vendor.id}-activity-owner`,
@@ -690,6 +763,8 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       event: "Internal owner assigned",
       module: "Vendor",
       context: `Vendor profile · ${vendor.owner}`,
+      description: `${vendor.owner} was assigned as the internal owner for this vendor relationship.`,
+      details: [{ label: "Assigned owner", value: vendor.owner }, { label: "Vendor ID", value: vendor.code }],
     },
     {
       id: `${vendor.id}-activity-contact`,
@@ -702,6 +777,8 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       event: "Contact routing verified",
       module: "Communications",
       context: "Communications",
+      description: `The contact route recorded for ${vendor.name} was checked by the vendor desk.`,
+      details: [{ label: "Primary contact", value: vendor.contactName }, { label: "Contact email", value: vendor.email }],
     },
     {
       id: `${vendor.id}-activity-directory`,
@@ -714,6 +791,8 @@ function standardVendorActivity(vendor: Vendor): ActivityRow[] {
       event: "Directory listing added",
       module: "Services",
       context: `Services · ${primaryCategory}`,
+      description: `${vendor.name} was added to the service directory.`,
+      details: [{ label: "Vendor ID", value: vendor.code }, { label: "Service categories", value: vendor.categories.join(" · ") }],
     },
   ];
 }

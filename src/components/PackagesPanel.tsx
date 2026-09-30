@@ -21,7 +21,6 @@ import {
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import {
   PACKAGE_STATUS_LABEL,
-  PACKAGE_STATUS_TONE,
   VENDOR_PACKAGES,
   type PackageStatus,
   type VendorPackage,
@@ -38,7 +37,6 @@ import {
 } from "../icons";
 import { PackageDetailPage } from "./PackageDetailPage";
 import { ServiceTypeList } from "./ServiceTypeLabel";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import "./VendorFormModal.css";
 import "./PackagesPanel.css";
 
@@ -311,7 +309,6 @@ export function PackagesPanel({
                 <DataSheetCell>Services</DataSheetCell>
                 <DataSheetCell>Priced from</DataSheetCell>
                 <DataSheetCell>Sell</DataSheetCell>
-                <DataSheetCell>Status</DataSheetCell>
                 <DataSheetCell className="packages-sheet__action">Action</DataSheetCell>
               </DataSheetHeader>
               {filtered.map((pkg) => (
@@ -356,7 +353,6 @@ export function PackagesPanel({
                     <StackCell><StackLine icon={<IconCard size={13} />}>{pkg.pricedFrom}</StackLine><StackLine muted>{pkg.pricedFromKind}</StackLine></StackCell>
                   </DataSheetCell>
                   <DataSheetCell><span className="packages-sheet__price pt-mono">{pkg.sellPrice}</span></DataSheetCell>
-                  <DataSheetCell><StatusChipWithDot tone={PACKAGE_STATUS_TONE[pkg.status]}>{PACKAGE_STATUS_LABEL[pkg.status]}</StatusChipWithDot></DataSheetCell>
                   <DataSheetCell className="packages-sheet__action">
                     {canEdit ? <div className="packages-sheet__act">
                       <Tooltip tip="More actions">
@@ -381,7 +377,7 @@ export function PackagesPanel({
                   </DataSheetCell>
                 </DataSheetRow>
               ))}
-              <DashboardDataSheetFill columns={7} />
+              <DashboardDataSheetFill columns={6} />
             </DataSheet>
             {canEdit && selected.length > 0 ? (
               <ListBulkBar label={`${selected.length} package${selected.length === 1 ? "" : "s"} selected`}>

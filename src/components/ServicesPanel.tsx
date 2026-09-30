@@ -403,22 +403,6 @@ function ServiceDetail({ service, vendors, canEdit, initialTab = "overview", onO
       icon: <IconImage size={15} />,
     },
   ];
-  const vendorSummary: SummaryField[] = [
-    {
-      id: "connected",
-      label: "Connected vendors",
-      value: linkedVendors.length,
-      note: "Supplier relationships",
-      icon: <IconBuilding size={15} />,
-    },
-    {
-      id: "pricing",
-      label: "Rate cards",
-      value: linkedRateCardCount,
-      note: "Current pricing sources",
-      icon: <IconCard size={15} />,
-    },
-  ];
   const linkedVendorIds = linkedVendors.map(({ vendor }) => vendor.id);
   const vendorHeaderState: CheckboxState = selectedVendorIds.length === 0
     ? "off"
@@ -678,10 +662,6 @@ function ServiceDetail({ service, vendors, canEdit, initialTab = "overview", onO
         />
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
-          <div className="service-vendors-overview__summary">
-            <SummaryStrip title="Vendor coverage" columns={2} fields={vendorSummary} />
-          </div>
-
           <section className="service-suppliers" aria-labelledby="vendor-service-suppliers-title">
             <div className="service-section-head">
               <h2 id="vendor-service-suppliers-title">Linked vendors</h2>

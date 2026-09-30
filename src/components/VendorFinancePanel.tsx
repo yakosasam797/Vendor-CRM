@@ -10,11 +10,8 @@ import {
   EmptyState,
   FilterSelect,
   IconButton,
-  LeadCell,
   Pagination,
   SearchField,
-  StackCell,
-  StackLine,
   StatusChip,
   Tooltip,
   type CheckboxState,
@@ -34,7 +31,7 @@ import {
   IconCopy,
   IconDownload,
   IconFinance,
-  IconPin,
+  IconMore,
   IconPlus,
   IconPencil,
   IconWarn,
@@ -50,7 +47,7 @@ const METRIC_ICONS = {
   overdue: <IconWarn size={15} />,
 } as const;
 
-type PayableFilter = "all" | "open" | "overdue" | "part-paid" | "due" | "paid";
+type PayableFilter = "all" | "unpaid" | "part-paid" | "paid";
 
 type BankAccount = {
   id: string;
@@ -114,10 +111,8 @@ function normalizedAccountNumber(value: string) {
 
 const PAYABLE_FILTER_OPTIONS = [
   { value: "all", label: "All statuses" },
-  { value: "open", label: "Open balance" },
-  { value: "overdue", label: "Overdue" },
+  { value: "unpaid", label: "Unpaid" },
   { value: "part-paid", label: "Part-paid" },
-  { value: "due", label: "Due" },
   { value: "paid", label: "Paid" },
 ];
 
@@ -149,7 +144,7 @@ function downloadCsv(filename: string, rows: Array<Array<string | number>>) {
   URL.revokeObjectURL(url);
 }
 
-export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string; canEdit: boolean }) {
+export function VendorFinancePanel({ vendorId, vendorName, canEdit, onOpenBooking, onOpenService }: { vendorId: string; vendorName: string; canEdit: boolean; onOpenBooking: (id: string) => void; onOpenService: (id: string) => void }) {
   const bankDialogRef = useRef<HTMLDivElement>(null);
   const bankReturnFocusRef = useRef<HTMLElement | null>(null);
   const [payQuery, setPayQuery] = useState("");
@@ -158,6 +153,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
   const [payPage, setPayPage] = useState(1);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [payExported, setPayExported] = useState(false);
+  const [payMenu, setPayMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [statementOpen, setStatementOpen] = useState(false);
   const [statementStart, setStatementStart] = useState("2026-04-01");
   const [statementEnd, setStatementEnd] = useState("2026-09-23");
@@ -268,17 +264,33 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
   const payables = useMemo(() => {
     const q = payQuery.trim().toLowerCase();
     return PAYABLES.filter((row) => {
+      if (row.vendorId !== vendorId) return false;
       const matchesQuery =
         !q ||
         row.invoice.toLowerCase().includes(q) ||
         row.booking.toLowerCase().includes(q) ||
-        row.bookingDetail.toLowerCase().includes(q);
+        row.bookingDetail.toLowerCase().includes(q) ||
+        row.serviceName.toLowerCase().includes(q);
       const matchesStatus =
         payFilter === "all" ||
-        (payFilter === "open" ? row.status !== "paid" : row.status === payFilter);
+        (payFilter === "unpaid" ? row.status === "due" || row.status === "overdue" : row.status === payFilter);
       return matchesQuery && matchesStatus;
     });
-  }, [payFilter, payQuery]);
+  }, [payFilter, payQuery, vendorId]);
+
+  useEffect(() => {
+    if (!payMenu) return;
+    const close = () => setPayMenu(null);
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [payMenu]);
 
   const openingBalance = useMemo(
     () =>
@@ -419,16 +431,13 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
     const selectedRows = paySelected.length
       ? payables.filter((row) => paySelected.includes(row.id))
       : payables;
-    downloadCsv(`trailmakers-payables-${statementEnd}.csv`, [
-      ["Invoice", "Booking", "Booking detail", "Invoiced", "Due", "Amount", "Balance", "Status"],
+    downloadCsv(`${vendorId}-payables-${statementEnd}.csv`, [
+      ["Booking", "Service", "Vendor invoice", "Total payable", "Status"],
       ...selectedRows.map((row) => [
-        row.invoice,
         row.booking,
-        row.bookingDetail,
-        row.invoiced,
-        row.due,
+        row.serviceName,
+        row.invoice,
         row.amount,
-        row.balance,
         PAYABLE_STATUS_LABEL[row.status],
       ]),
     ]);
@@ -582,8 +591,8 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
               setPayPage(1);
               setPaySelected([]);
             }}
-            placeholder="Search invoice or booking"
-            aria-label="Search invoice or booking"
+            placeholder="Search booking, service, or invoice"
+            aria-label="Search booking, service, or invoice"
           />
           <div className="vendor-finance__tools">
             <FilterSelect
@@ -613,7 +622,7 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
           {payables.length === 0 ? (
             <EmptyState
               title="No invoices match this search"
-              description="Try another invoice number or booking name."
+              description="Try another booking, service, or invoice number."
             />
           ) : (
             <>
@@ -626,12 +635,12 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
                       label="Select all invoices"
                     />
                   </DataSheetCell>
-                  <DataSheetCell>Invoice</DataSheetCell>
-                  <DataSheetCell>Against booking</DataSheetCell>
-                  <DataSheetCell>Invoiced</DataSheetCell>
-                  <DataSheetCell>Due</DataSheetCell>
-                  <DataSheetCell>Amount</DataSheetCell>
+                  <DataSheetCell>Booking</DataSheetCell>
+                  <DataSheetCell>Service</DataSheetCell>
+                  <DataSheetCell>Vendor invoice</DataSheetCell>
+                  <DataSheetCell>Total payable</DataSheetCell>
                   <DataSheetCell>Status</DataSheetCell>
+                  <DataSheetCell className="payables-sheet__action">Action</DataSheetCell>
                 </DataSheetHeader>
                 {payables.map((row) => (
                   <DataSheetRow key={row.id}>
@@ -643,61 +652,34 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
                       />
                     </DataSheetCell>
                     <DataSheetCell>
-                      <LeadCell
-                        icon={<IconCard size={15} />}
-                        title={row.invoice}
-                      />
+                      <button type="button" className="payables-sheet__link" onClick={() => onOpenBooking(row.bookingId)}>
+                        <strong>{row.booking}</strong>
+                        <small>{row.bookingDetail}</small>
+                      </button>
                     </DataSheetCell>
                     <DataSheetCell>
-                      <LeadCell
-                        align="start"
-                        icon={<IconPin size={15} />}
-                        title={row.booking}
-                        subtitle={row.bookingDetail}
-                      />
+                      {row.serviceId ? <button type="button" className="payables-sheet__link" onClick={() => onOpenService(row.serviceId!)}>{row.serviceName}</button> : <span>{row.serviceName}</span>}
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span className="payables-sheet__date">
-                        <IconCalendar size={13} />
-                        {row.invoiced}
-                      </span>
+                      <span className="payables-sheet__invoice pt-mono">{row.invoice}</span>
                     </DataSheetCell>
                     <DataSheetCell>
-                      <span
-                        className={
-                          row.dueTone === "bad"
-                            ? "payables-sheet__date payables-sheet__date--bad"
-                            : row.dueTone === "warn"
-                              ? "payables-sheet__date payables-sheet__date--warn"
-                              : "payables-sheet__date"
-                        }
-                      >
-                        <IconCalendar size={13} />
-                        {row.due}
-                      </span>
-                    </DataSheetCell>
-                    <DataSheetCell>
-                      <StackCell>
-                        <StackLine mono>{row.amount}</StackLine>
-                        <StackLine muted>
-                          <span
-                            className={
-                              row.balanceTone === "bad"
-                                ? "payables-sheet__bal--bad"
-                                : row.balanceTone === "warn"
-                                  ? "payables-sheet__bal--warn"
-                                  : undefined
-                            }
-                          >
-                            {row.balance}
-                          </span>
-                        </StackLine>
-                      </StackCell>
+                      <strong className="payables-sheet__amount pt-mono">{row.amount}</strong>
                     </DataSheetCell>
                     <DataSheetCell>
                       <StatusChipWithDot tone={PAYABLE_STATUS_TONE[row.status]}>
                         {PAYABLE_STATUS_LABEL[row.status]}
                       </StatusChipWithDot>
+                    </DataSheetCell>
+                    <DataSheetCell className="payables-sheet__action">
+                      <IconButton label={`More actions for ${row.invoice}`} aria-haspopup="menu" aria-expanded={payMenu?.id === row.id} onClick={(event) => {
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        setPayMenu((current) => current?.id === row.id ? null : {
+                          id: row.id,
+                          top: Math.min(rect.bottom + 6, window.innerHeight - 122),
+                          left: Math.max(12, Math.min(window.innerWidth - 202, rect.right - 190)),
+                        });
+                      }}><IconMore /></IconButton>
                     </DataSheetCell>
                   </DataSheetRow>
                 ))}
@@ -712,6 +694,12 @@ export function VendorFinancePanel({ vendorName, canEdit }: { vendorName: string
           )}
         </div>
       </section>
+
+      {payMenu ? createPortal(<div className="payables-sheet__menu" role="menu" aria-label="Payable actions" style={{ top: payMenu.top, left: payMenu.left }} onPointerDown={(event) => event.stopPropagation()}>
+        <button type="button" role="menuitem" onClick={() => { const row = PAYABLES.find((item) => item.id === payMenu.id); setPayMenu(null); if (row) onOpenBooking(row.bookingId); }}>Open booking</button>
+        {PAYABLES.find((item) => item.id === payMenu.id)?.serviceId ? <button type="button" role="menuitem" onClick={() => { const row = PAYABLES.find((item) => item.id === payMenu.id); setPayMenu(null); if (row?.serviceId) onOpenService(row.serviceId); }}>Open service</button> : null}
+        <button type="button" role="menuitem" onClick={() => { const row = PAYABLES.find((item) => item.id === payMenu.id); if (row) void navigator.clipboard?.writeText(row.invoice); setPayMenu(null); }}>Copy invoice number</button>
+      </div>, document.body) : null}
 
       {bankEditor
         ? createPortal(

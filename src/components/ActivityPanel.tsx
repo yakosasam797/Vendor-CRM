@@ -47,6 +47,8 @@ export type ActivityRow = {
   module: string;
   context?: string;
   relatedServiceId?: string;
+  description?: string;
+  details?: { label: string; value: string }[];
 };
 
 const ACTIVITY_PAGE_SIZE = 5;
@@ -236,16 +238,13 @@ export function ActivityPanel({
       </div>, document.body) : null}
 
       {viewing ? createPortal(<div className="pt-modal-overlay open" role="presentation" onClick={() => setViewing(null)}><div className="pt-modal act-detail-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(event) => event.stopPropagation()}>
-        <header className="pt-modal__head"><h2 className="pt-modal__title" id={titleId}>{viewing.event}</h2><IconButton label="Close activity details" onClick={() => setViewing(null)}><IconClose /></IconButton></header>
-        <div className="pt-modal__body"><dl className="act-detail-facts">
-          <div><dt>Activity</dt><dd>{viewing.event}</dd></div>
-          <div><dt>Date and time</dt><dd>{viewing.date} · {viewing.time}</dd></div>
-          <div><dt>Related to</dt><dd>{viewing.context ?? viewing.module}</dd></div>
-          {vendorName ? <div><dt>Vendor</dt><dd>{vendorName}</dd></div> : null}
-          <div><dt>Member</dt><dd>{viewing.member}</dd></div>
-          <div><dt>Role</dt><dd>{viewing.role}</dd></div>
-          <div><dt>Activity ID</dt><dd className="pt-mono">{viewing.id}</dd></div>
-        </dl></div>
+        <header className="pt-modal__head"><h2 className="pt-modal__title" id={titleId}>Activity details</h2><IconButton label="Close activity details" onClick={() => setViewing(null)}><IconClose /></IconButton></header>
+        <div className="pt-modal__body act-detail-body">
+          <div className="act-detail-hero"><span className="act-detail-hero__icon" aria-hidden="true"><ActivityModuleIcon module={viewing.module} size={19} /></span><div><h3>{viewing.event}</h3><p>{viewing.date} · {viewing.time} · {viewing.context ?? viewing.module}</p></div></div>
+          <div className="act-detail-section"><h4>What happened</h4><p>{viewing.description ?? "No additional notes were recorded for this activity."}</p></div>
+          {viewing.details?.length ? <dl className="act-detail-facts">{viewing.details.map((detail) => <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl> : null}
+          <div className="act-detail-meta"><Avatar tone={viewing.avatarTone === "pink" ? "pink" : "default"} size={32}>{viewing.initials}</Avatar><span><strong>{viewing.member}</strong><small>{viewing.role} · {vendorName ?? viewing.module}</small></span></div>
+        </div>
         <footer className="pt-modal__foot"><Button variant="ghost" size="sm" onClick={() => setViewing(null)}>Close</Button>{onOpenRelated ? <Button variant="primary" size="sm" onClick={() => { onOpenRelated(viewing); setViewing(null); }}>{relatedActivityLabel(viewing)}</Button> : null}</footer>
       </div></div>, document.body) : null}
 
