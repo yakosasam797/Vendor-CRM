@@ -47,7 +47,11 @@ export type ActivityRow = {
   module: string;
   context?: string;
   relatedServiceId?: string;
+  description?: string;
+  details?: { label: string; value: string }[];
 };
+
+const ACTIVITY_PAGE_SIZE = 5;
 
 function ActivityModuleIcon({ module, size = 15 }: { module: string; size?: number }) {
   const key = module.trim().toLowerCase();
@@ -87,6 +91,7 @@ export function ActivityPanel({
   onRemoveActivity,
   onOpenRelated,
   showPagination = true,
+  variant = "sheet",
 }: {
   rows: ActivityRow[];
   searchPlaceholder?: string;
@@ -95,6 +100,7 @@ export function ActivityPanel({
   onRemoveActivity?: (id: string) => void;
   onOpenRelated?: (row: ActivityRow) => void;
   showPagination?: boolean;
+  variant?: "sheet" | "timeline";
 }) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -110,7 +116,11 @@ export function ActivityPanel({
       !q || `${row.date} ${row.time} ${row.event} ${row.member} ${row.role} ${row.module} ${row.context ?? ""}`.toLowerCase().includes(q),
     );
   }, [rows, query]);
-  const visibleIds = filtered.map((row) => row.id);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / ACTIVITY_PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const firstRow = (currentPage - 1) * ACTIVITY_PAGE_SIZE;
+  const visibleRows = showPagination ? filtered.slice(firstRow, firstRow + ACTIVITY_PAGE_SIZE) : filtered;
+  const visibleIds = visibleRows.map((row) => row.id);
   const visibleSelected = visibleIds.filter((id) => selected.includes(id));
   const headerState: CheckboxState = visibleSelected.length === 0 ? "off" : visibleSelected.length === visibleIds.length ? "on" : "indeterminate";
 
@@ -120,11 +130,13 @@ export function ActivityPanel({
     const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
     document.addEventListener("pointerdown", close);
     document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("scroll", close, true);
+    document.addEventListener("wheel", close, { passive: true });
+    document.addEventListener("touchmove", close, { passive: true });
     return () => {
       document.removeEventListener("pointerdown", close);
       document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("scroll", close, true);
+      document.removeEventListener("wheel", close);
+      document.removeEventListener("touchmove", close);
     };
   }, [openMenu]);
 
@@ -155,7 +167,7 @@ export function ActivityPanel({
   };
 
   return (
-    <div className="act dashboard-table-panel">
+    <div className={`act dashboard-table-panel${variant === "timeline" ? " act--timeline" : ""}`}>
       <div className="act-toolbar">
         <SearchField fullWidth value={query} onChange={(event) => {
           setQuery(event.target.value);
@@ -165,6 +177,25 @@ export function ActivityPanel({
       </div>
 
       <div className="act-sheet-wrap dashboard-table-end">
+        {variant === "timeline" ? <div className="act-timeline" role="region" aria-label={ariaLabel}>
+          <div className="act-timeline__select-all"><Checkbox state={headerState} label="Select all activity" onCheckedChange={toggleAll} /><span>Select all</span></div>
+          {filtered.length === 0 ? <p className="act-timeline__empty">No activity matches this search.</p> : <ol className="act-timeline__list">
+            {visibleRows.map((row) => <li className="act-timeline__item" key={row.id}>
+              <div className="act-timeline__select"><Checkbox state={selected.includes(row.id) ? "on" : "off"} label={`Select ${row.event}`} onCheckedChange={(state) => toggleRow(row.id, state)} /></div>
+              <div className="act-timeline__when">
+                <span className="act-timeline__rail" aria-hidden="true"><span className="act-timeline__icon"><ActivityModuleIcon module={row.module} size={16} /></span></span>
+                <span className="act-timeline__date pt-mono"><span>{row.date}</span><span>{row.time}</span></span>
+              </div>
+              <div className="act-timeline__entry">
+                <div className="act-timeline__heading"><strong>{row.event}</strong></div>
+                <span className="act-timeline__context"><ActivityModuleIcon module={row.module} size={13} />{row.context ?? row.module}</span>
+              </div>
+              <span className="act-timeline__member"><Avatar tone={row.avatarTone === "pink" ? "pink" : "default"} size={28}>{row.initials}</Avatar><span className="act-timeline__member-copy"><strong>{row.member}</strong><small>{row.role}</small></span></span>
+              <div className="act-timeline__actions"><IconButton label={`More actions for ${row.event}`} aria-haspopup="menu" aria-expanded={openMenu?.id === row.id} onClick={(event) => showMenu(row.id, event.currentTarget)}><IconMore /></IconButton></div>
+            </li>)}
+          </ol>}
+          {selected.length > 0 ? <div className="act-bulk"><span>{selected.length} event{selected.length === 1 ? "" : "s"} selected</span><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></div> : null}
+        </div> :
         <DataSheet className="act-sheet" aria-label={ariaLabel}>
           <DataSheetHeader>
             <DataSheetCell check><Checkbox state={headerState} label="Select all activity" onCheckedChange={toggleAll} /></DataSheetCell>
@@ -176,7 +207,7 @@ export function ActivityPanel({
           </DataSheetHeader>
           {filtered.length === 0 ? (
             <DataSheetRow><DataSheetCell className="act-empty-cell">No activity matches this search.</DataSheetCell></DataSheetRow>
-          ) : filtered.map((row) => (
+          ) : visibleRows.map((row) => (
             <DataSheetRow key={row.id}>
               <DataSheetCell check><Checkbox state={selected.includes(row.id) ? "on" : "off"} label={`Select ${row.event}`} onCheckedChange={(state) => toggleRow(row.id, state)} /></DataSheetCell>
               <DataSheetCell><StackCell>
@@ -196,10 +227,11 @@ export function ActivityPanel({
             </DataSheetRow>
           ))}
           <DashboardDataSheetFill columns={6} />
-        </DataSheet>
+        </DataSheet>}
 
-        {selected.length > 0 ? <div className="act-bulk"><span>{selected.length} event{selected.length === 1 ? "" : "s"} selected</span><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></div> : null}
-        {showPagination ? <Pagination rangeLabel={`Showing ${filtered.length ? 1 : 0}–${filtered.length} of ${filtered.length}`} page={page} pageCount={1} onPageChange={setPage} /> : null}
+        {variant === "timeline" && showPagination ? <div className="act-timeline__pagination"><Pagination rangeLabel={`Showing ${filtered.length ? firstRow + 1 : 0}–${Math.min(firstRow + ACTIVITY_PAGE_SIZE, filtered.length)} of ${filtered.length}`} page={currentPage} pageCount={pageCount} onPageChange={setPage} /></div> : null}
+        {variant === "sheet" && selected.length > 0 ? <div className="act-bulk"><span>{selected.length} event{selected.length === 1 ? "" : "s"} selected</span><Button variant="ghost" size="sm" onClick={() => setSelected([])}>Clear</Button></div> : null}
+        {variant === "sheet" && showPagination ? <Pagination rangeLabel={`Showing ${filtered.length ? firstRow + 1 : 0}–${Math.min(firstRow + ACTIVITY_PAGE_SIZE, filtered.length)} of ${filtered.length}`} page={currentPage} pageCount={pageCount} onPageChange={setPage} /> : null}
       </div>
 
       {openMenu ? createPortal(<div className="act-menu" role="menu" aria-label="Activity actions" style={{ top: openMenu.top, left: openMenu.left }} onPointerDown={(event) => event.stopPropagation()}>
@@ -208,16 +240,13 @@ export function ActivityPanel({
       </div>, document.body) : null}
 
       {viewing ? createPortal(<div className="pt-modal-overlay open" role="presentation" onClick={() => setViewing(null)}><div className="pt-modal act-detail-modal" role="dialog" aria-modal="true" aria-labelledby={titleId} onClick={(event) => event.stopPropagation()}>
-        <header className="pt-modal__head"><h2 className="pt-modal__title" id={titleId}>{viewing.event}</h2><IconButton label="Close activity details" onClick={() => setViewing(null)}><IconClose /></IconButton></header>
-        <div className="pt-modal__body"><dl className="act-detail-facts">
-          <div><dt>Activity</dt><dd>{viewing.event}</dd></div>
-          <div><dt>Date and time</dt><dd>{viewing.date} · {viewing.time}</dd></div>
-          <div><dt>Related to</dt><dd>{viewing.context ?? viewing.module}</dd></div>
-          {vendorName ? <div><dt>Vendor</dt><dd>{vendorName}</dd></div> : null}
-          <div><dt>Member</dt><dd>{viewing.member}</dd></div>
-          <div><dt>Role</dt><dd>{viewing.role}</dd></div>
-          <div><dt>Activity ID</dt><dd className="pt-mono">{viewing.id}</dd></div>
-        </dl></div>
+        <header className="pt-modal__head"><h2 className="pt-modal__title" id={titleId}>Activity details</h2><IconButton label="Close activity details" onClick={() => setViewing(null)}><IconClose /></IconButton></header>
+        <div className="pt-modal__body act-detail-body">
+          <div className="act-detail-hero"><span className="act-detail-hero__icon" aria-hidden="true"><ActivityModuleIcon module={viewing.module} size={19} /></span><div><h3>{viewing.event}</h3><p>{viewing.date} · {viewing.time} · {viewing.context ?? viewing.module}</p></div></div>
+          <div className="act-detail-section"><h4>What happened</h4><p>{viewing.description ?? "No additional notes were recorded for this activity."}</p></div>
+          {viewing.details?.length ? <dl className="act-detail-facts">{viewing.details.map((detail) => <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl> : null}
+          <div className="act-detail-meta"><Avatar tone={viewing.avatarTone === "pink" ? "pink" : "default"} size={32}>{viewing.initials}</Avatar><span><strong>{viewing.member}</strong><small>{viewing.role} · {vendorName ?? viewing.module}</small></span></div>
+        </div>
         <footer className="pt-modal__foot"><Button variant="ghost" size="sm" onClick={() => setViewing(null)}>Close</Button>{onOpenRelated ? <Button variant="primary" size="sm" onClick={() => { onOpenRelated(viewing); setViewing(null); }}>{relatedActivityLabel(viewing)}</Button> : null}</footer>
       </div></div>, document.body) : null}
 

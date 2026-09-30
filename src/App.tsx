@@ -777,7 +777,7 @@ export default function App() {
             setVendors((previous) => [created, ...previous]);
             openVendor(
               created.id,
-              "Vendor added. Complete the profile or add services when ready.",
+              "Vendor saved as a draft. Add services when you are ready to build the record.",
             );
           }}
         />
@@ -785,6 +785,8 @@ export default function App() {
         <VendorRateCardsPage
           vendorId={crmRoute.id}
           vendors={vendors}
+          createdServices={createdDirectoryServices}
+          onCreatedServicesChange={setCreatedDirectoryServices}
           orgRole={orgRole}
           flash={flash}
           onClearFlash={() => setFlash(null)}
@@ -796,7 +798,7 @@ export default function App() {
             setVendors(next);
             setFlash("Vendor details updated successfully.");
           }}
-          onOpenCard={(id) => openCard(id, crmRoute.id)}
+          onOpenCard={(id, vendorId) => openCard(id, vendorId ?? crmRoute.id)}
           onNewCard={() => setCreateCardOpen(true)}
         />
       ) : (

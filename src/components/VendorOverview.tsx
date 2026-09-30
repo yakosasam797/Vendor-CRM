@@ -1,4 +1,4 @@
-import { Avatar, EmptyState } from "@paryatech/design-system";
+import { Avatar, Button, EmptyState } from "@paryatech/design-system";
 import {
   KEY_CONTACTS,
   operatingHistoryForVendor,
@@ -13,6 +13,7 @@ import {
   IconGlobe,
   IconMail,
   IconPhone,
+  IconPlus,
   IconRefresh,
   IconWarn,
 } from "../icons";
@@ -86,6 +87,77 @@ export function VendorOverview({
     ) : null;
   }
 
+  if (vendor.status === "Draft") {
+    const draftFields = [
+      ["Service categories", vendor.categories.join(" · ")],
+      ["Base location", vendor.location],
+      ["Internal owner", vendor.owner],
+      ["Primary contact", vendor.contactName],
+      ["Phone", vendor.phone],
+      ["WhatsApp", vendor.whatsapp],
+      ["Email", vendor.email],
+      ["Labels", vendor.labels.join(" · ")],
+      ["Legal name", vendor.legalName],
+      ["GSTIN", vendor.gstin],
+      ["PAN", vendor.pan],
+      [
+        "Address",
+        vendor.address || vendor.state || vendor.postalCode
+          ? [vendor.address, vendor.city, vendor.state, vendor.postalCode, vendor.country]
+              .filter(Boolean)
+              .join(", ")
+          : "",
+      ],
+      ["DMC scope", vendor.dmcScope],
+      ["Specialisations", vendor.specializations],
+      ["Reservations email", vendor.reservationsEmail],
+      ["Emergency phone", vendor.emergencyPhone],
+      ["Confirmation SLA", vendor.confirmationSla],
+      ["Confirmation channel", vendor.confirmationChannel],
+      ["Payment terms", vendor.paymentTerms],
+      ["Internal notes", vendor.internalNotes],
+    ].filter((field): field is [string, string] => Boolean(field[1]));
+
+    return (
+      <div className="vendor-overview vendor-overview--draft">
+        {flash ? <div className="vendor-setup__flash" role="status">{flash}</div> : null}
+
+        <section className="vo-panel vo-draft-profile" aria-labelledby="vo-draft-profile-title">
+          <div className="vo-panel__head">
+            <div>
+              <h2 id="vo-draft-profile-title" className="vo-panel__title">Profile details</h2>
+              <p className="vo-draft-profile__note">Saved from Add vendor</p>
+            </div>
+          </div>
+          <div className="vo-panel__body">
+            <dl className="vo-profile">
+              {draftFields.map(([label, value]) => (
+                <div className="vo-profile__field" key={label}>
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        <EmptyState
+          className="vendor-draft-overview__empty"
+          title="No services yet"
+          description="Add the first service to start building this vendor record."
+          action={
+            canEdit ? (
+              <Button variant="primary" size="sm" onClick={() => onJumpTab("services")}>
+                <IconPlus />
+                Add services
+              </Button>
+            ) : undefined
+          }
+        />
+      </div>
+    );
+  }
+
   const contacts = contactsForVendor(vendor);
   const recentActivity = activity.slice(0, 4);
   const operatingHistory = operatingHistoryForVendor(vendor).map((field) => ({
@@ -149,10 +221,6 @@ export function VendorOverview({
                 <div className="vo-profile__field">
                   <dt>Country</dt>
                   <dd>{vendor.country}</dd>
-                </div>
-                <div className="vo-profile__field">
-                  <dt>Last updated</dt>
-                  <dd>{vendor.updated}</dd>
                 </div>
               </dl>
             </div>
@@ -250,6 +318,7 @@ export function VendorOverview({
           rows={recentActivity}
           vendorName={vendor.name}
           ariaLabel="Recent vendor activity in overview"
+          variant="timeline"
           searchPlaceholder="Search recent activity"
           onRemoveActivity={onRemoveActivity}
           onOpenRelated={onOpenRelated}

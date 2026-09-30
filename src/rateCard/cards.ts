@@ -1,4 +1,4 @@
-import { DEFAULT_ACTIVITIES, type PolicyRow, type RateCardDetail } from "./types";
+import { DEFAULT_ACTIVITIES, type PolicyRow, type RateCardDetail, type RegionalTransportTariff } from "./types";
 
 function policy(
   id: string,
@@ -222,6 +222,26 @@ const blankVisa = (): RateCardDetail => ({
 });
 
 export const DETAIL_CARDS: Record<string, RateCardDetail> = {
+  "rc-taj-goa-wanderlust": {
+    ...blankHotel(),
+    id: "rc-taj-goa-wanderlust",
+    name: "Taj Goa contracted rates",
+    ref: "RC-TAJ-WANDERLUST",
+    vendor: "Wanderlust Trails",
+    property: "Taj Exotica Resort & Spa",
+    validity: "01 Oct 2026 – 30 Sep 2027",
+    ready: "Supplier prices pending",
+  },
+  "rc-taj-goa-coastal": {
+    ...blankHotel(),
+    id: "rc-taj-goa-coastal",
+    name: "Winter FIT tariff",
+    ref: "RC-TAJ-COASTAL",
+    vendor: "Coastal Stay Properties",
+    property: "Taj Exotica Resort & Spa",
+    validity: "01 Oct 2026 – 31 Mar 2027",
+    ready: "Supplier prices pending",
+  },
   "rc-new-hotel": blankHotel(),
   "rc-new-visa": blankVisa(),
   "rc-acc-2627": {
@@ -831,17 +851,48 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
     id: "rc-air-2026",
     name: "Airport transfer rates · 2026",
     ref: "RC-2026-0301",
-    vendor: "Example Hospitality",
-    property: "Fleet — Kochi",
+    vendor: "BlueWave Transfers",
+    property: "Kochi transfer fleet",
     service: "Transport",
     currency: "INR",
     validity: "01 Jan – 31 Dec 2026",
-    state: "Published",
-    tone: "success",
-    ready: "Usable in proposals",
-    readyTone: "success",
+    state: "Draft",
+    tone: "warning",
+    ready: "Confirm transport terms before quoting",
+    readyTone: "warning",
     taxConfirmed: true,
     markupPercent: 15,
+    transport: {
+      serviceType: "airport-transfer",
+      pricingMethod: "fixed-per-vehicle",
+      timezone: "Asia/Kolkata",
+      validFrom: "2026-01-01",
+      validTo: "2026-12-31",
+      distanceBasis: "Airport pickup to final city drop; route limit is 40 km. Garage travel and detours need supplier confirmation.",
+      availability: "not-held",
+      quoteValidUntil: null,
+      taxPresentation: "included",
+      offerings: [
+        { id: "SEDAN", label: "Sedan", passengerSeats: null, luggageBags: null, modelOrEquivalent: "Supplier-confirmed category or equivalent" },
+        { id: "SUV", label: "SUV", passengerSeats: null, luggageBags: null, modelOrEquivalent: "Supplier-confirmed category or equivalent" },
+        { id: "TEMPO", label: "Tempo traveller", passengerSeats: null, luggageBags: null, modelOrEquivalent: "Supplier-confirmed category or equivalent" },
+      ],
+      routes: [
+        { id: "cok-city", label: "COK → City", from: "Cochin International Airport (COK)", to: "Kochi city", includedKm: 40, prices: { SEDAN: 2200, SUV: 3200, TEMPO: 4500 } },
+        { id: "city-cok", label: "City → COK", from: "Kochi city", to: "Cochin International Airport (COK)", includedKm: 40, prices: { SEDAN: 2200, SUV: 3200, TEMPO: 4500 } },
+      ],
+      waitingIncludedMinutes: 45,
+      waitingRatePerHour: 300,
+      waitingRounding: "Unconfirmed — enter supplier-confirmed billable hours",
+      charges: [
+        { id: "driver", label: "Driver allowance", treatment: "unconfirmed", amount: null, unit: "transfer", paidBy: "unconfirmed", collectedBy: "unconfirmed", note: "Confirm whether included in the fixed fare." },
+        { id: "fuel", label: "Fuel", treatment: "unconfirmed", amount: null, unit: "transfer", paidBy: "unconfirmed", collectedBy: "unconfirmed", note: "Confirm whether included in the fixed fare." },
+        { id: "tolls", label: "Tolls and permits", treatment: "unconfirmed", amount: null, unit: "transfer", paidBy: "unconfirmed", collectedBy: "unconfirmed", note: "Confirm inclusion and who collects any actuals." },
+        { id: "parking", label: "Airport parking", treatment: "unconfirmed", amount: null, unit: "transfer", paidBy: "unconfirmed", collectedBy: "unconfirmed", note: "Confirm inclusion and who collects any actuals." },
+        { id: "night", label: "Night or early pickup", treatment: "unconfirmed", amount: null, unit: "transfer", paidBy: "unconfirmed", collectedBy: "unconfirmed", note: "Confirm applicable time window and charge." },
+        { id: "stops", label: "Additional stops", treatment: "unconfirmed", amount: null, unit: "transfer", paidBy: "unconfirmed", collectedBy: "unconfirmed", note: "Quoted route covers the agreed pickup and drop only." },
+      ],
+    },
     mealBasis: "Tax included",
     mealLabel: "Vehicle class",
     meals: [
@@ -904,8 +955,211 @@ export const DETAIL_CARDS: Record<string, RateCardDetail> = {
   },
 };
 
+const regionalVehicles: RegionalTransportTariff["vehicles"] = [
+  { id: "sedan", label: "Sedan", passengerSeats: 4, luggageBags: 2, modelOrEquivalent: "Supplier capacity to confirm" },
+  { id: "muv", label: "MUV", passengerSeats: 6, luggageBags: 4, modelOrEquivalent: "Supplier capacity to confirm" },
+  { id: "van", label: "Van", passengerSeats: 17, luggageBags: 12, modelOrEquivalent: "Supplier capacity to confirm" },
+  { id: "coach", label: "Coach", passengerSeats: 35, luggageBags: 30, modelOrEquivalent: "Supplier capacity to confirm" },
+];
+const regionalPackages = [
+  { id: "4h40", name: "4 hours / 40 km", hours: 4, km: 40, sharedExcess: true },
+  { id: "8h80", name: "8 hours / 80 km", hours: 8, km: 80, sharedExcess: true },
+  { id: "12h120", name: "12 hours / 120 km", hours: 12, km: 120, sharedExcess: true },
+];
+const regionalLocalPrices: Record<string, [number, number, number, number, number]> = {
+  sedan: [1800, 3000, 4200, 20, 300], muv: [2500, 4200, 6000, 25, 400],
+  van: [4000, 6500, 8500, 30, 500], coach: [7000, 11000, 15000, 50, 800],
+};
+const regionalOutstation: Record<string, [number, number, number]> = {
+  sedan: [14, 250, 400], muv: [20, 250, 500], van: [22, 250, 500], coach: [45, 300, 800],
+};
+const regionalDaily: Record<string, [number, number, number, number, number]> = {
+  sedan: [5000, 150, 10, 20, 300], muv: [6500, 150, 10, 25, 400],
+  van: [10000, 200, 10, 30, 500], coach: [16000, 200, 10, 50, 800],
+};
+const regionalTransferPrices: Record<string, number[]> = {
+  "airport-city": [1800, 2600, 4500, 8000], "city-airport": [1700, 2500, 4300, 7800],
+};
+const regionalSeasonId = "standard-2026-27";
+const regionalPrivateHire: RegionalTransportTariff = {
+  schemaVersion: 2,
+  coverage: "Kochi and selected Kerala circuits",
+  source: "Supplier tariff pending confirmation",
+  sourceDocument: "No vendor tariff uploaded",
+  sourceStatus: "illustrative",
+  taxPresentation: "additional",
+  timezone: "Asia/Kolkata",
+  seasons: [{ id: regionalSeasonId, name: "Standard", start: "2026-10-01", end: "2027-03-31" }],
+  enabledMethods: ["local", "outstation", "one-way", "daily", "whole-trip"],
+  operatingAreas: [{ id: "kochi", name: "Kochi local area" }, { id: "kerala-circuit", name: "Kerala circuit" }],
+  activeAreaIds: ["kochi", "kerala-circuit"],
+  routes: [
+    { id: "airport-city", name: "Kochi Airport → City Zone A", from: "Kochi Airport", to: "City Zone A", areaId: "kochi" },
+    { id: "city-airport", name: "City Zone A → Kochi Airport", from: "City Zone A", to: "Kochi Airport", areaId: "kochi" },
+    { id: "kerala-circuit", name: "3-day Kerala circuit", from: "Kochi", to: "Kochi", areaId: "kerala-circuit" },
+  ],
+  localPackages: regionalPackages,
+  vehicles: regionalVehicles,
+  fares: [
+    ...regionalVehicles.flatMap((vehicle) => regionalPackages.map((pkg, index) => ({
+      id: `local-${pkg.id}-${vehicle.id}`, service: "local" as const, label: pkg.name, basis: "hours-km" as const,
+      vehicleId: vehicle.id, seasonId: regionalSeasonId, packageId: pkg.id, amount: regionalLocalPrices[vehicle.id][index],
+      includedHours: pkg.hours, includedKm: pkg.km, extraKm: regionalLocalPrices[vehicle.id][3], extraHour: regionalLocalPrices[vehicle.id][4],
+      routeScope: "Kochi local area", fuelIncluded: true, driverIncluded: true, taxProfileId: "approved-transport", taxPresentation: "additional" as const,
+    }))),
+    ...regionalVehicles.map((vehicle) => ({
+      id: `outstation-${vehicle.id}`, service: "outstation" as const, label: "Outstation per kilometre", basis: "per-km" as const,
+      vehicleId: vehicle.id, seasonId: regionalSeasonId, amount: regionalOutstation[vehicle.id][0],
+      minKmPerDay: regionalOutstation[vehicle.id][1], minDays: 1, driverAllowancePerDay: regionalOutstation[vehicle.id][2],
+      allowedRouteIds: ["kerala-circuit"],
+      tripType: "round-trip" as const,
+      minimumRule: "pooled" as const, billableDayMethod: "calendar" as const, distanceRounding: "whole-km" as const,
+      additionalGarageKm: 0, additionalReturnKm: 0, crossSeasonPolicy: "pickup" as const, routeScope: "Kerala circuit",
+      fuelIncluded: true, driverIncluded: false, taxProfileId: "approved-transport", taxPresentation: "additional" as const,
+    })),
+    ...Object.entries(regionalTransferPrices).flatMap(([routeId, prices]) => regionalVehicles.map((vehicle, index) => ({
+      id: `transfer-${routeId}-${vehicle.id}`, service: "one-way" as const, label: routeId === "airport-city" ? "Airport to city" : "City to airport",
+      basis: "fixed" as const, routeId, vehicleId: vehicle.id, seasonId: regionalSeasonId, amount: prices[index],
+      includedKm: 40, includedHours: 2, includedWaitingMinutes: 30, extraKm: regionalLocalPrices[vehicle.id][3],
+      extraHour: regionalLocalPrices[vehicle.id][4], waitingRatePerHour: 200, timeIncrementMinutes: 15,
+      includedStops: 0, extraStop: 150, chargeExcessBoth: true, routeScope: "Defined one-way route",
+      fuelIncluded: true, driverIncluded: true, taxProfileId: "approved-transport", taxPresentation: "additional" as const,
+    }))),
+    ...regionalVehicles.map((vehicle) => ({
+      id: `daily-${vehicle.id}`, service: "daily" as const, label: "Daily hire", basis: "per-day" as const,
+      vehicleId: vehicle.id, seasonId: regionalSeasonId, amount: regionalDaily[vehicle.id][0],
+      includedKm: regionalDaily[vehicle.id][1], includedHours: regionalDaily[vehicle.id][2],
+      extraKm: regionalDaily[vehicle.id][3], extraHour: regionalDaily[vehicle.id][4], carryUnusedUsage: false,
+      routeScope: "Kochi local area", fuelIncluded: true, driverIncluded: true,
+      taxProfileId: "approved-transport", taxPresentation: "additional" as const,
+    })),
+    { id: "whole-kerala-van", service: "whole-trip", label: "3-day Kerala circuit", basis: "whole-trip", routeId: "kerala-circuit",
+      vehicleId: "van", seasonId: regionalSeasonId, amount: 21000, includedDays: 3, includedKm: 750, dutyHoursPerDay: 12,
+      extraKm: 30, extraHour: 500, extraDayRate: 7000, routeScope: "Defined Kerala circuit", fuelIncluded: true,
+      driverIncluded: true, taxProfileId: "approved-transport", taxPresentation: "additional" },
+  ],
+  charges: [
+    { id: "night-pickup", label: "Night pickup", treatment: "fixed", amount: 500, unit: "pickup", paidBy: "agency", collectedBy: "supplier", note: "22:00–06:00", fareIds: [], routeIds: ["airport-city", "city-airport"], trigger: "night-pickup", triggerStart: "22:00", triggerEnd: "06:00", taxProfileId: "approved-transport", taxPresentation: "additional" },
+    { id: "circuit-tolls", label: "Circuit tolls", treatment: "fixed", amount: 900, unit: "vehicle", paidBy: "agency", collectedBy: "supplier", note: "Van circuit only", routeIds: ["kerala-circuit"], vehicleIds: ["van"], taxProfileId: "approved-transport", taxPresentation: "additional" },
+    { id: "circuit-parking", label: "Circuit parking", treatment: "fixed", amount: 300, unit: "vehicle", paidBy: "agency", collectedBy: "supplier", note: "Van circuit only", routeIds: ["kerala-circuit"], vehicleIds: ["van"], taxProfileId: "approved-transport", taxPresentation: "additional" },
+    { id: "circuit-permit", label: "Circuit permit", treatment: "not-applicable", amount: null, unit: "hire", paidBy: "agency", collectedBy: "supplier", note: "Van circuit only", routeIds: ["kerala-circuit"], vehicleIds: ["van"] },
+  ],
+  adjustments: [
+    { id: "festival-transfer", name: "Christmas transfer surcharge", trigger: "dates", dates: [], startDate: "2026-12-24", endDate: "2026-12-26", fareIds: [], methods: ["one-way"], vehicleIds: [], amount: 500, valueType: "fixed", treatment: "additional", stacking: "combine" },
+  ],
+  taxProfiles: [{ id: "approved-transport", name: "Transport tax profile pending approval", rate: 0, approved: false }],
+  distanceBasis: "Customer pickup to final drop",
+  availability: "not-held",
+};
+
+const regionalCard = (): RateCardDetail => ({
+  ...blankHotel(),
+  id: "rc-kerala-private-hire",
+  name: "Kerala private hire rates",
+  ref: "RC-KERALA-HIRE",
+  vendor: "BlueWave Transfers",
+  property: "Kerala private transport",
+  service: "Transport",
+  validity: "01 Oct 2026 – 31 Mar 2027",
+  ready: "Confirm rates, capacity and terms with supplier",
+  supplements: [], services: [], activities: [], rules: [], cancel: [], policies: [], activity: [],
+  seasons: [{ name: "Standard", colorToken: "accent", dates: "01 Oct 2026 – 31 Mar 2027", summary: "Supplier confirmation pending", nights: 182, priority: "Base" }],
+  regionalTransport: regionalPrivateHire,
+});
+
+DETAIL_CARDS["rc-kerala-private-hire"] = regionalCard();
+
+function focusedTransportCard(id: string, name: string, methods: RegionalTransportTariff["enabledMethods"], vendor: string, property: string): RateCardDetail {
+  const card = structuredClone(regionalCard());
+  const selected = methods || [];
+  const tariff = card.regionalTransport!;
+  card.id = id;
+  card.ref = id === "rc-kochi-local-transfers" ? "RC-KOCHI-LOCAL" : "RC-KERALA-KM";
+  card.name = name;
+  card.vendor = vendor;
+  card.property = property;
+  card.regionalTransport = {
+    ...tariff,
+    enabledMethods: selected,
+    fares: tariff.fares.filter((fare) => selected.includes(fare.service)).map((fare) => ({ ...fare, allowedRouteIds: selected.includes("one-way") ? fare.allowedRouteIds : [] })),
+    routes: selected.includes("one-way") ? tariff.routes?.filter((route) => route.id !== "kerala-circuit") : [],
+    localPackages: selected.includes("local") ? tariff.localPackages : [],
+    operatingAreas: selected.includes("one-way") ? [{ id: "kochi", name: "Kochi local area" }] : [{ id: "kerala-circuit", name: "Kerala circuit" }],
+    activeAreaIds: selected.includes("one-way") ? ["kochi"] : ["kerala-circuit"],
+    coverage: selected.includes("one-way") ? "Kochi airport and local area" : "Kerala outstation routes",
+    startingHub: selected.includes("outstation") ? "Kochi" : undefined,
+    charges: tariff.charges.filter((charge) => selected.includes("one-way") ? charge.id === "night-pickup" : charge.id !== "night-pickup").map((charge) => selected.includes("one-way") ? charge : { ...charge, routeIds: [] }),
+    adjustments: [],
+    source: "Illustrative supplier terms; confirm before quoting",
+    sourceDocument: "Reference card",
+  };
+  return card;
+}
+
+DETAIL_CARDS["rc-kochi-local-transfers"] = focusedTransportCard("rc-kochi-local-transfers", "Kochi airport and local transfers", ["one-way", "local"], "BlueWave Transfers", "Kochi airport and local transport");
+DETAIL_CARDS["rc-kerala-km-tariff"] = focusedTransportCard("rc-kerala-km-tariff", "Kerala outstation kilometre tariff", ["outstation", "daily"], "Trailmakers Experiences", "Kerala outstation transport");
+
+function airportTransferWorkbook(card: RateCardDetail): RegionalTransportTariff | undefined {
+  const old = card.transport;
+  if (!old) return undefined;
+  const seasonId = "airport-2026";
+  return {
+    schemaVersion: 2,
+    coverage: "Kochi airport and city transfer routes",
+    source: "Supplier transfer tariff; ancillary terms need confirmation",
+    sourceDocument: "Transfer tariff on file",
+    sourceStatus: "supplier-confirmed",
+    taxPresentation: old.taxPresentation,
+    timezone: old.timezone,
+    seasons: [{ id: seasonId, name: "2026", start: old.validFrom, end: old.validTo }],
+    enabledMethods: ["one-way"],
+    operatingAreas: [{ id: "kochi", name: "Kochi airport area" }],
+    activeAreaIds: ["kochi"],
+    routes: old.routes.map((route) => ({ id: route.id, name: route.label, from: route.from, to: route.to, areaId: "kochi" })),
+    localPackages: [],
+    vehicles: old.offerings,
+    fares: old.routes.flatMap((route) => old.offerings.map((vehicle) => ({
+      id: `transfer-${route.id}-${vehicle.id}`, service: "one-way" as const, label: route.label, basis: "fixed" as const,
+      vehicleId: vehicle.id, routeId: route.id, seasonId, amount: route.prices[vehicle.id] ?? null,
+      includedKm: route.includedKm, includedHours: null, includedWaitingMinutes: old.waitingIncludedMinutes,
+      extraKm: null, extraHour: null, waitingRatePerHour: old.waitingRatePerHour, timeIncrementMinutes: undefined,
+      includedStops: 0, extraStop: null, routeScope: route.label, fuelIncluded: false, driverIncluded: false,
+      taxPresentation: old.taxPresentation === "included" ? "included" as const : "additional" as const,
+      taxProfileId: "airport-tax",
+    }))),
+    charges: old.charges,
+    adjustments: [],
+    taxProfiles: [{ id: "airport-tax", name: "Airport transfer tax profile pending approval", rate: 0, approved: false }],
+    distanceBasis: "Customer pickup to final drop",
+    availability: old.availability,
+  };
+}
+
+const airportCard = DETAIL_CARDS["rc-air-2026"];
+if (airportCard?.transport) airportCard.regionalTransport = airportTransferWorkbook(airportCard);
+
 export function getDetailCard(id: string): RateCardDetail | undefined {
-  return DETAIL_CARDS[id];
+  const seed = DETAIL_CARDS[id];
+  if ((!seed?.transport && !seed?.regionalTransport) || typeof window === "undefined") return seed;
+  try {
+    const stored = window.localStorage.getItem(`paryatech:transport-rate:v2:${id}`);
+    if (!stored) return seed;
+    const parsed = JSON.parse(stored) as RateCardDetail;
+    if (parsed.id !== id || !(parsed.transport?.routes && parsed.transport?.offerings || parsed.regionalTransport?.fares && parsed.regionalTransport?.seasons)) return seed;
+    if (parsed.regionalTransport && parsed.regionalTransport.schemaVersion !== 2) return seed;
+    return seed?.regionalTransport && parsed.transport && !parsed.regionalTransport ? { ...parsed, regionalTransport: airportTransferWorkbook(parsed) } : parsed;
+  } catch {
+    return seed;
+  }
+}
+
+export function saveTransportCard(card: RateCardDetail): void {
+  if ((!card.transport && !card.regionalTransport) || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(`paryatech:transport-rate:v2:${card.id}`, JSON.stringify(card));
+  } catch {
+    // The on-screen draft still works when browser storage is unavailable.
+  }
 }
 
 export function listDetailCards(): RateCardDetail[] {
@@ -914,13 +1168,15 @@ export function listDetailCards(): RateCardDetail[] {
 
 /** Fresh draft from an enabled template, stamped with the current vendor. */
 export function createBlankCard(templateId: string, vendorName: string): RateCardDetail {
-  const base = structuredClone(templateId === "visa" ? blankVisa() : blankHotel());
+  const base = structuredClone(templateId === "visa" ? blankVisa() : templateId === "transport" ? regionalCard() : blankHotel());
   const stamp = Date.now().toString(36);
   return {
     ...base,
     id: `rc-draft-${templateId}-${stamp}`,
     vendor: vendorName,
-    property: templateId === "visa" ? "Untitled visa product" : "Untitled property",
+    property: templateId === "visa" ? "Untitled visa product" : templateId === "transport" ? "Untitled transport service" : "Untitled property",
+    name: templateId === "transport" ? "New transport rate card" : base.name,
+    regionalTransport: templateId === "transport" && base.regionalTransport ? { ...base.regionalTransport, source: "No supplier source attached", sourceDocument: "No vendor tariff uploaded", sourceStatus: "illustrative", enabledMethods: [], fares: base.regionalTransport.fares.map((fare) => ({ ...fare, amount: null })) } : base.regionalTransport,
   };
 }
 

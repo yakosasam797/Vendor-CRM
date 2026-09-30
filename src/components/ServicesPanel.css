@@ -19,11 +19,11 @@
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--svc-cols);
-  min-width: 880px;
+  min-width: 980px;
 }
 
 .services-sheet .pt-sheet__row.services-sheet__empty-row {
-  grid-template-columns: minmax(880px, 1fr);
+  grid-template-columns: minmax(980px, 1fr);
 }
 
 .services-sheet .pt-sheet__cell.services-sheet__empty-cell {

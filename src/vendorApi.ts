@@ -158,6 +158,13 @@ export function categoryConflicts(
 export function validateVendorForm(values: VendorFormValues): string[] {
   const errors: string[] = [];
   if (!values.name.trim()) errors.push("Vendor/business name is required.");
+  if (values.categories.length === 0) errors.push("Select at least one service category.");
+  if (!values.country.trim()) errors.push("Country is required.");
+  if (!values.city.trim()) errors.push("City is required.");
+  if (!values.owner.trim()) errors.push("Internal owner is required.");
+  if (!values.phone.trim() && !values.email.trim()) {
+    errors.push("Add at least one contact method — phone or email.");
+  }
   if (values.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
     errors.push("Enter a valid email address.");
   }
@@ -191,7 +198,7 @@ export function createVendor(
     roles: categoriesToRoles(values.categories),
     country: values.country.trim(),
     city: values.city.trim(),
-    location: [values.city.trim(), values.country.trim()].filter(Boolean).join(", ") || "Not set",
+    location: `${values.city.trim()}, ${values.country.trim()}`,
     contactName: values.contactName.trim(),
     phone: values.phone.trim(),
     email: values.email.trim(),
@@ -214,16 +221,16 @@ export function createVendor(
     updated: nowStamp(),
     owner: values.owner,
     ownerInitials: ownerInitials(values.owner),
-    status: "Active",
+    status: "Draft",
     setup: {
-      profileComplete: Boolean(values.categories.length && values.city.trim() && (values.phone.trim() || values.email.trim())),
+      profileComplete: true,
       hasService: false,
       hasContactsDocs: false,
       hasRateCard: false,
       activated: false,
     },
     activity: [
-      activityEvent(id, actor, "Added vendor", "Vendor"),
+      activityEvent(id, actor, "Created vendor draft", "Vendor"),
     ],
     assignedMemberIds: [],
   };
@@ -391,6 +398,6 @@ export function emptyVendorFormValues(): VendorFormValues {
     paymentTerms: "",
     internalNotes: "",
     owner: "Anjali Menon",
-    status: "Active",
+    status: "Draft",
   };
 }

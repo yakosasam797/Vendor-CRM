@@ -12,6 +12,10 @@ export type PayableStatus = "overdue" | "part-paid" | "due" | "paid";
 
 export interface PayableRow {
   id: string;
+  vendorId: string;
+  bookingId: string;
+  serviceId?: string;
+  serviceName: string;
   invoice: string;
   booking: string;
   bookingDetail: string;
@@ -109,9 +113,9 @@ export const FINANCE_METRICS: FinanceMetric[] = [
 ];
 
 export const PAYABLE_STATUS_LABEL: Record<PayableStatus, string> = {
-  overdue: "Overdue",
+  overdue: "Unpaid",
   "part-paid": "Part-paid",
-  due: "Due",
+  due: "Unpaid",
   paid: "Paid",
 };
 
@@ -132,6 +136,10 @@ export const PAYABLE_ACTION_LABEL: Record<PayableRow["action"], string> = {
 export const PAYABLES: PayableRow[] = [
   {
     id: "p1",
+    vendorId: "exhosp",
+    bookingId: "vb1",
+    serviceId: "svc-lake",
+    serviceName: "Example Lake Resort",
     invoice: "INV-2026-0412",
     booking: "XYZ Family · Dubai",
     bookingDetail: "Lake Resort · 2 rooms · 3N",
@@ -146,6 +154,9 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p2",
+    vendorId: "exhosp",
+    bookingId: "vb2",
+    serviceName: "Premium houseboat",
     invoice: "INV-2026-0398",
     booking: "Kapoor group · Alleppey",
     bookingDetail: "Houseboat · 1 cabin · 2N",
@@ -160,6 +171,10 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p3",
+    vendorId: "exhosp",
+    bookingId: "vb3",
+    serviceId: "svc-hill",
+    serviceName: "Hill Retreat",
     invoice: "INV-2026-0381",
     booking: "Mehta honeymoon",
     bookingDetail: "Hill Retreat · 1 suite · 4N",
@@ -174,6 +189,9 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p4",
+    vendorId: "coastal",
+    bookingId: "vb4",
+    serviceName: "Garden Villa",
     invoice: "INV-2026-0355",
     booking: "Singh family · Kochi",
     bookingDetail: "Lake Resort · 3 rooms · 2N",
@@ -187,6 +205,10 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p5",
+    vendorId: "exhosp",
+    bookingId: "vb5",
+    serviceId: "svc-hill",
+    serviceName: "Hill Retreat",
     invoice: "INV-2026-0330",
     booking: "Corporate retreat · Munnar",
     bookingDetail: "Hill Retreat · 8 rooms · 3N",
@@ -200,6 +222,10 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p6",
+    vendorId: "exhosp",
+    bookingId: "vb6",
+    serviceId: "svc-lake",
+    serviceName: "Example Lake Resort",
     invoice: "INV-2026-0294",
     booking: "Nair anniversary",
     bookingDetail: "Lake Resort · 1 suite · 2N",
@@ -213,6 +239,9 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p7",
+    vendorId: "spice-route",
+    bookingId: "vb7",
+    serviceName: "Spice lodge",
     invoice: "INV-2026-0261",
     booking: "Desai group · Thekkady",
     bookingDetail: "Spice lodge · 4 rooms · 2N",
@@ -226,6 +255,9 @@ export const PAYABLES: PayableRow[] = [
   },
   {
     id: "p8",
+    vendorId: "coastal",
+    bookingId: "vb8",
+    serviceName: "Cliff stay",
     invoice: "INV-2026-0218",
     booking: "Iyer family · Varkala",
     bookingDetail: "Cliff stay · 2 rooms · 3N",
@@ -234,6 +266,54 @@ export const PAYABLES: PayableRow[] = [
     amount: "₹33,600",
     balance: "settled",
     balanceTone: "muted",
+    status: "paid",
+    action: "receipt",
+  },
+  {
+    id: "p9",
+    vendorId: "trailmakers",
+    bookingId: "vb13",
+    serviceId: "svc-trek-munnar",
+    serviceName: "Munnar ridge trek",
+    invoice: "TM-INV-2026-104",
+    booking: "Rao family · Munnar",
+    bookingDetail: "Guided ridge trek · 4 guests",
+    invoiced: "15 Sep 2026",
+    due: "15 Oct 2026",
+    amount: "₹18,000",
+    balance: "₹18,000 due",
+    status: "due",
+    action: "pay-now",
+  },
+  {
+    id: "p10",
+    vendorId: "trailmakers",
+    bookingId: "vb14",
+    serviceId: "svc-kayak",
+    serviceName: "Backwater kayak",
+    invoice: "TM-INV-2026-097",
+    booking: "Patel group · Alleppey",
+    bookingDetail: "Backwater kayak · 6 guests",
+    invoiced: "03 Sep 2026",
+    due: "03 Oct 2026",
+    amount: "₹24,000",
+    balance: "₹12,000 due",
+    status: "part-paid",
+    action: "pay-balance",
+  },
+  {
+    id: "p11",
+    vendorId: "trailmakers",
+    bookingId: "vb15",
+    serviceId: "svc-trek-munnar",
+    serviceName: "Munnar ridge trek",
+    invoice: "TM-INV-2026-082",
+    booking: "Mehta team · Munnar",
+    bookingDetail: "Guided ridge trek · 8 guests",
+    invoiced: "12 Aug 2026",
+    due: "11 Sep 2026",
+    amount: "₹36,000",
+    balance: "settled",
     status: "paid",
     action: "receipt",
   },

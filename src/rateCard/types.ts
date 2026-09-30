@@ -95,6 +95,151 @@ export interface RateCardNote {
   when: string;
 }
 
+export type TransportChargeTreatment = "included" | "fixed" | "estimated" | "actuals" | "not-applicable" | "unconfirmed";
+
+export interface TransportCharge {
+  id: string;
+  label: string;
+  treatment: TransportChargeTreatment;
+  amount: number | null;
+  unit: "transfer" | "vehicle" | "hour" | "day" | "pickup" | "hire";
+  paidBy: "agency" | "customer" | "unconfirmed";
+  collectedBy: "agency" | "supplier" | "driver" | "unconfirmed";
+  note: string;
+  fareIds?: string[];
+  routeIds?: string[];
+  vehicleIds?: string[];
+  trigger?: "always" | "night-pickup";
+  triggerStart?: string;
+  triggerEnd?: string;
+  taxProfileId?: string;
+  taxPresentation?: "included" | "additional";
+}
+
+export interface TransportOffering {
+  id: string;
+  label: string;
+  passengerSeats: number | null;
+  luggageBags: number | null;
+  modelOrEquivalent: string;
+}
+
+export interface TransportRoute {
+  id: string;
+  label: string;
+  from: string;
+  to: string;
+  includedKm: number;
+  prices: Record<string, number | null>;
+}
+
+export interface TransportTariff {
+  serviceType: "airport-transfer";
+  pricingMethod: "fixed-per-vehicle";
+  timezone: string;
+  validFrom: string;
+  validTo: string;
+  offerings: TransportOffering[];
+  routes: TransportRoute[];
+  waitingIncludedMinutes: number;
+  waitingRatePerHour: number;
+  waitingRounding: string;
+  charges: TransportCharge[];
+  availability: "not-held" | "held" | "confirmed";
+  quoteValidUntil: string | null;
+  distanceBasis: string;
+  taxPresentation: "included" | "additional" | "unconfirmed";
+}
+
+/** Supplier worksheet for a regional private-hire service. Prices are per vehicle. */
+export interface RegionalFare {
+  id: string;
+  service: "one-way" | "local" | "outstation" | "daily" | "whole-trip";
+  label: string;
+  basis: "fixed" | "hours-km" | "per-km" | "per-day" | "whole-trip";
+  vehicleId: string;
+  seasonId: string;
+  amount: number | null;
+  includedHours?: number | null;
+  includedKm?: number | null;
+  extraHour?: number | null;
+  extraKm?: number | null;
+  minKmPerDay?: number | null;
+  tripType?: "round-trip" | "one-way";
+  minimumRule?: "pooled" | "daily" | "none";
+  routeScope: string;
+  from?: string;
+  to?: string;
+  routeId?: string;
+  allowedRouteIds?: string[];
+  packageId?: string;
+  minDays?: number;
+  driverAllowancePerDay?: number | null;
+  additionalGarageKm?: number;
+  additionalReturnKm?: number;
+  billableDayMethod?: "calendar" | "24-hour";
+  distanceRounding?: "whole-km" | "exact";
+  crossSeasonPolicy?: "pickup" | "split";
+  includedWaitingMinutes?: number;
+  waitingRatePerHour?: number | null;
+  timeIncrementMinutes?: number;
+  includedStops?: number;
+  extraStop?: number | null;
+  chargeExcessBoth?: boolean;
+  includedDays?: number;
+  dutyHoursPerDay?: number;
+  extraDayRate?: number | null;
+  carryUnusedUsage?: boolean;
+  fuelIncluded?: boolean;
+  driverIncluded?: boolean;
+  taxProfileId?: string;
+  taxPresentation?: "included" | "additional";
+}
+
+export interface RegionalRoute { id: string; name: string; from: string; to: string; areaId: string; }
+export interface RegionalPackage { id: string; name: string; hours: number; km: number; sharedExcess?: boolean; }
+export interface RegionalTaxProfile { id: string; name: string; rate: number; approved: boolean; }
+export interface RegionalAdjustment {
+  id: string;
+  name: string;
+  trigger: "weekend" | "dates";
+  dates: string[];
+  startDate?: string;
+  endDate?: string;
+  vehicleIds?: string[];
+  valueType?: "fixed" | "percent" | "replacement";
+  fareIds: string[];
+  methods?: RegionalFare["service"][];
+  seasonIds?: string[];
+  amount: number;
+  treatment: "additional" | "unavailable";
+  stacking: "combine" | "replace";
+}
+
+export interface RegionalTransportTariff {
+  schemaVersion?: number;
+  coverage: string;
+  startingHub?: string;
+  source: string;
+  sourceDocument?: string;
+  sourceStatus: "illustrative" | "supplier-confirmed";
+  taxPresentation: "included" | "additional" | "unconfirmed";
+  timezone: string;
+  seasons: { id: string; name: string; start: string; end: string }[];
+  enabledMethods?: RegionalFare["service"][];
+  operatingAreas?: { id: string; name: string }[];
+  activeAreaIds?: string[];
+  routes?: RegionalRoute[];
+  localPackages?: RegionalPackage[];
+  taxProfiles?: RegionalTaxProfile[];
+  adjustments?: RegionalAdjustment[];
+  vehicles: TransportOffering[];
+  fares: RegionalFare[];
+  charges: TransportCharge[];
+  distanceBasis: string;
+  availability: "not-held" | "held" | "confirmed";
+}
+
 export interface RateCardDetail {
   id: string;
   name: string;
@@ -131,6 +276,8 @@ export interface RateCardDetail {
   activity: ActivityEvent[];
   notes: RateCardNote[];
   catLabels?: Partial<Record<string, string>>;
+  transport?: TransportTariff;
+  regionalTransport?: RegionalTransportTariff;
 }
 
 export const TEMPLATES = [
@@ -172,7 +319,7 @@ export const TEMPLATES = [
   {
     id: "transport",
     label: "Transport",
-    enabled: false,
+    enabled: true,
     blurb: "Vehicles on point-to-point routes, hourly hire or per-day disposal.",
     detail: "Journey date × vehicle class × route, per-vehicle quoting.",
   },

@@ -170,7 +170,6 @@ export function CreateVendorServicePage({
       pricingLabel: "No pricing linked",
       rateCardCount: 0,
       rateCards: [],
-      status: "active",
       imageUrl: primaryMedia?.imageUrl ?? "",
       imageAlt: primaryMedia?.imageAlt ?? `${draft.name.trim()} service image`,
       media,

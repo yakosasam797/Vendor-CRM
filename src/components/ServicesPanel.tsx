@@ -18,7 +18,6 @@ import {
   StatusChip,
   TabBar,
   type CheckboxState,
-  type StatusTone,
   type TabItem,
 } from "@paryatech/design-system";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
@@ -35,8 +34,7 @@ import {
   type DirectoryService,
   type VendorServiceConnection,
 } from "../data/vendorDirectory";
-import { VENDORS } from "../data/vendors";
-import type { PageNavigationChange } from "../pageNavigation";
+import type { Vendor } from "../data/vendors";
 import {
   IconCard,
   IconBuilding,
@@ -49,16 +47,14 @@ import {
   IconPlay,
   IconPlus,
   IconTrash,
-  IconWarn,
 } from "../icons";
 import { AnchoredImport } from "./AnchoredImport";
-import { CreateVendorServicePage } from "./CreateVendorServicePage";
 import { ServiceTestRate } from "./ServiceTestRate";
+import { RegionalTransportTest } from "./RegionalTransportWorkspace";
+import { getDetailCard } from "../rateCard/cards";
 import { ServicePolicies } from "./ServicePolicies";
-import { StatusChipWithDot } from "./StatusChipWithDot";
 import { SummaryStrip, type SummaryField } from "./SummaryStrip";
 import { ServiceTypeLabel } from "./ServiceTypeLabel";
-import { ServiceRateDetails } from "./VendorsListPage";
 import "./ServicesPanel.css";
 
 type MediaOpen = {
@@ -289,19 +285,14 @@ function ServiceMediaImage({ item }: { item: ServiceMedia }) {
   );
 }
 
-type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
+type ServiceDetailTab = "overview" | "vendors" | "test-rate" | "policies";
 
-function serviceConnectionTone(status: VendorServiceConnection["status"]): StatusTone {
-  if (status === "Active") return "done";
-  if (status === "Expiring soon") return "progress";
-  return "open";
-}
-
-function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCard, onOpenVendor }: {
+function ServiceDetail({ service, vendors, canEdit, initialTab = "overview", onOpenRateCard, onOpenVendor }: {
   service: VendorService;
+  vendors: Vendor[];
   canEdit: boolean;
   initialTab?: ServiceDetailTab;
-  onOpenRateCard?: (id: string) => void;
+  onOpenRateCard?: (id: string, vendorId?: string) => void;
   onOpenVendor?: (id: string) => void;
 }) {
   const [profile, setProfile] = useState<ServiceDraft>(() => draftFromService(service));
@@ -329,13 +320,12 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
     const existing = DIRECTORY_SERVICES.find((item) => item.serviceId === service.id);
     if (existing) return existing;
     return {
-      id: service.id.replace(/^svc-/, ""),
+      id: service.id,
       serviceId: service.id,
       profileVendorId: service.vendorId,
       name: service.name,
       category: directoryCategoryForServiceType(service.type) ?? "Activities",
       location: service.location,
-      status: service.status === "draft" ? "Draft" : "Active",
     };
   }, [service]);
 
@@ -344,6 +334,16 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       (connection) => connection.serviceId === directoryService.id,
     );
     if (linked.length) return linked;
+    if (!service.rateCards.length) return [{
+      id: `${service.vendorId}-${directoryService.id}`,
+      vendorId: service.vendorId,
+      serviceId: directoryService.id,
+      supplierType: "Direct supplier" as const,
+      productsCovered: service.details,
+      rateCardId: "",
+      rateCardName: "No rate card linked",
+      validity: "Not set",
+    }];
     return service.rateCards.map((rateCard, index) => ({
       id: `${service.vendorId}-${directoryService.id}-${index + 1}`,
       vendorId: service.vendorId,
@@ -353,25 +353,21 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       rateCardId: rateCard.id,
       rateCardName: rateCard.name,
       validity: service.profile.seasonality,
-      status: service.status === "draft" ? "Draft" : "Active",
     }));
   }, [directoryService.id, service]);
 
   const linkedVendors = useMemo(
     () => testPriceConnections.flatMap((connection) => {
-      const vendor = VENDORS.find((item) => item.id === connection.vendorId);
+      const vendor = vendors.find((item) => item.id === connection.vendorId);
       return vendor ? [{ connection, vendor }] : [];
     }),
-    [testPriceConnections],
+    [testPriceConnections, vendors],
   );
-  const linkedRateCardCount = new Set(testPriceConnections.map((connection) => connection.rateCardId)).size;
-  const activeConnectionCount = testPriceConnections.filter((connection) => connection.status === "Active").length;
-  const attentionConnectionCount = testPriceConnections.length - activeConnectionCount;
+  const linkedRateCardCount = new Set(testPriceConnections.map((connection) => connection.rateCardId).filter(Boolean)).size;
   const primaryMediaCount = mediaItems.filter((item) => item.usedInBanner).length;
   const tabs: TabItem[] = [
     { id: "overview", label: "Overview" },
-    { id: "rate-details", label: "Rate details", count: linkedRateCardCount },
-    { id: "vendors", label: "Vendors", count: linkedVendors.length },
+    { id: "vendors", label: "Vendors" },
     { id: "test-rate", label: "Test rate" },
     { id: "policies", label: "Policies" },
   ];
@@ -387,7 +383,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       id: "vendors",
       label: "Vendor coverage",
       value: linkedVendors.length,
-      note: `${activeConnectionCount} active vendor${activeConnectionCount === 1 ? "" : "s"}`,
+      note: "Supplier relationships",
       icon: <IconBuilding size={15} />,
     },
     {
@@ -403,38 +399,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
       value: mediaItems.length,
       note: `${primaryMediaCount} primary banner${primaryMediaCount === 1 ? "" : "s"}`,
       icon: <IconImage size={15} />,
-    },
-  ];
-  const vendorSummary: SummaryField[] = [
-    {
-      id: "connected",
-      label: "Connected vendors",
-      value: linkedVendors.length,
-      note: "Supplier relationships",
-      icon: <IconBuilding size={15} />,
-    },
-    {
-      id: "active",
-      label: "Active supply",
-      value: activeConnectionCount,
-      note: "Ready for costing",
-      icon: <IconCheck size={15} />,
-      tone: "ok",
-    },
-    {
-      id: "attention",
-      label: "Needs attention",
-      value: attentionConnectionCount,
-      note: `${attentionConnectionCount} relationship${attentionConnectionCount === 1 ? "" : "s"}`,
-      icon: <IconWarn size={15} />,
-      tone: attentionConnectionCount > 0 ? "warn" : "ok",
-    },
-    {
-      id: "pricing",
-      label: "Rate cards",
-      value: linkedRateCardCount,
-      note: "Current pricing sources",
-      icon: <IconCard size={15} />,
     },
   ];
   const linkedVendorIds = linkedVendors.map(({ vendor }) => vendor.id);
@@ -678,32 +642,21 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
             </div>
           </div>
         </div>
-      ) : tab === "rate-details" ? (
-        <ServiceRateDetails
-          connections={testPriceConnections}
-          vendors={VENDORS}
-          onOpenRateCard={(_, rateCardId) => onOpenRateCard?.(rateCardId)}
-        />
+      ) : tab === "test-rate" && getDetailCard(testPriceConnections[0]?.rateCardId)?.regionalTransport ? (
+        <RegionalTransportTest card={getDetailCard(testPriceConnections[0].rateCardId)!} />
+      ) : tab === "test-rate" && !testPriceConnections.some((connection) => connection.rateCardId) ? (
+        <EmptyState title="No rate card linked" description="Add a supplier rate card before testing this service's price." />
       ) : tab === "test-rate" ? (
         <ServiceTestRate
           service={directoryService}
           connections={testPriceConnections}
-          vendors={VENDORS}
+          vendors={vendors}
         />
       ) : tab === "vendors" ? (
         <div className="service-vendors-overview">
-          <div className="service-vendors-overview__summary">
-            <SummaryStrip title="Vendor coverage" columns={4} fields={vendorSummary} />
-          </div>
-
           <section className="service-suppliers" aria-labelledby="vendor-service-suppliers-title">
             <div className="service-section-head">
               <h2 id="vendor-service-suppliers-title">Linked vendors</h2>
-              {linkedVendors.length > 0 ? (
-                <span className="service-suppliers__count">
-                  {activeConnectionCount} active of {linkedVendors.length}
-                </span>
-              ) : null}
             </div>
             {linkedVendors.length === 0 ? (
               <EmptyState
@@ -724,8 +677,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                     <DataSheetCell>Vendor</DataSheetCell>
                     <DataSheetCell>Supplier relationship</DataSheetCell>
                     <DataSheetCell>Location</DataSheetCell>
-                    <DataSheetCell>Current rate card</DataSheetCell>
-                    <DataSheetCell>Status</DataSheetCell>
+                    <DataSheetCell>Rate card</DataSheetCell>
                     <DataSheetCell className="service-suppliers-sheet__action">Action</DataSheetCell>
                   </DataSheetHeader>
                   {linkedVendors.map(({ connection, vendor }) => (
@@ -783,12 +735,7 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                         <span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span>
                       </DataSheetCell>
                       <DataSheetCell>
-                        <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard?.(connection.rateCardId)}>
-                          {connection.rateCardName}
-                        </button>
-                      </DataSheetCell>
-                      <DataSheetCell>
-                        <StatusChipWithDot tone={serviceConnectionTone(connection.status)}>{connection.status}</StatusChipWithDot>
+                        {connection.rateCardId ? <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard?.(connection.rateCardId, vendor.id)} aria-label={`Open ${connection.rateCardName} for ${vendor.name}`}><IconCard size={16} aria-hidden="true" /><span>{connection.rateCardName}</span></button> : <span>No rate card linked</span>}
                       </DataSheetCell>
                       <DataSheetCell className="service-suppliers-sheet__action">
                         <div className="services-sheet__act">
@@ -857,22 +804,24 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
 
 export function ServicesPanel({
   vendorId = "exhosp",
-  vendorName = "Example Hospitality",
+  vendors,
   canEdit = false,
+  createdServices = [],
+  onAddService,
   openServiceId = null,
   onOpenServiceIdChange,
   onOpenRateCard,
   onOpenVendor,
-  onNavigationContextChange,
 }: {
   vendorId?: string;
-  vendorName?: string;
+  vendors: Vendor[];
   canEdit?: boolean;
+  createdServices?: VendorService[];
+  onAddService?: () => void;
   openServiceId?: string | null;
   onOpenServiceIdChange?: (id: string | null) => void;
-  onOpenRateCard?: (id: string) => void;
+  onOpenRateCard?: (id: string, vendorId?: string) => void;
   onOpenVendor?: (id: string) => void;
-  onNavigationContextChange?: PageNavigationChange;
 }) {
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -881,8 +830,6 @@ export function ServicesPanel({
   const [mediaOpen, setMediaOpen] = useState<MediaOpen | null>(null);
   const [serviceMenu, setServiceMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const [openServiceTab, setOpenServiceTab] = useState<ServiceDetailTab>("overview");
-  const [creatingService, setCreatingService] = useState(false);
-  const [createdServices, setCreatedServices] = useState<VendorService[]>([]);
 
   const vendorServices = useMemo(
     () => [...servicesForVendor(vendorId), ...createdServices.filter((service) => service.vendorId === vendorId)],
@@ -932,29 +879,12 @@ export function ServicesPanel({
     onOpenServiceIdChange?.(id);
   };
 
-  if (creatingService) {
-    return (
-      <CreateVendorServicePage
-        vendorId={vendorId}
-        vendorName={vendorName}
-        initialType={vendorServices[0]?.type ?? "Accommodation"}
-        onCancel={() => setCreatingService(false)}
-        onNavigationContextChange={onNavigationContextChange}
-        onCreate={(service) => {
-          setCreatedServices((current) => [...current, service]);
-          setCreatingService(false);
-          setOpenServiceTab("overview");
-          onOpenServiceIdChange?.(service.id);
-        }}
-      />
-    );
-  }
-
   if (openService) {
     return (
       <ServiceDetail
         key={openService.id}
         service={openService}
+        vendors={vendors}
         canEdit={canEdit}
         initialTab={openServiceTab}
         onOpenRateCard={onOpenRateCard}
@@ -992,7 +922,7 @@ export function ServicesPanel({
         </div>
         <div className="vendor-page__actions">
           <AnchoredImport buttonLabel="Import services" />
-          <Button variant="primary" size="sm" onClick={() => setCreatingService(true)}>
+          <Button variant="primary" size="sm" onClick={onAddService}>
             <IconPlus />
             Add service
           </Button>
@@ -1120,7 +1050,7 @@ export function ServicesPanel({
                   </DataSheetCell>
                 </DataSheetRow>
               ) : null}
-              <DashboardDataSheetFill columns={7} />
+              <DashboardDataSheetFill columns={8} />
             </DataSheet>
             <Pagination
               rangeLabel={filtered.length ? `Showing 1–${filtered.length} of ${filtered.length} services` : "Showing 0 of 0 services"}
@@ -1141,7 +1071,6 @@ export function ServicesPanel({
             onClick={(event) => event.stopPropagation()}
           >
             <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "test-rate")}>Test rate</button>
-            <button type="button" role="menuitem" onClick={() => openServiceAt(serviceMenu.id, "rate-details")}>Open rate details</button>
           </div>
         </div>,
         document.body,

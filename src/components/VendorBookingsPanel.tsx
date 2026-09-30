@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Avatar,
   Button,
@@ -20,14 +21,12 @@ import {
 } from "@paryatech/design-system";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import {
-  BOOKING_FINANCE_LABEL,
-  BOOKING_FINANCE_TONE,
   BOOKING_STATUS_LABEL,
   BOOKING_STATUS_TONE,
   VENDOR_BOOKINGS,
   type VendorBookingStatus,
 } from "../data/vendorOverview";
-import { IconCalendar, IconCheck, IconFilter, IconImport, IconPin } from "../icons";
+import { IconCalendar, IconCheck, IconFilter, IconImport, IconMore, IconPin } from "../icons";
 import { BookingViewModal } from "./BookingViewModal";
 import { StatusChipWithDot } from "./StatusChipWithDot";
 import "./VendorOverview.css";
@@ -38,21 +37,20 @@ const BOOKING_STATUS_FILTERS: Array<{ value: BookingStatusFilter; label: string 
   { value: "all", label: "All bookings" },
   { value: "upcoming", label: BOOKING_STATUS_LABEL.upcoming },
   { value: "on-trip", label: BOOKING_STATUS_LABEL["on-trip"] },
-  { value: "at-risk", label: BOOKING_STATUS_LABEL["at-risk"] },
   { value: "completed", label: BOOKING_STATUS_LABEL.completed },
-  { value: "cancelled", label: BOOKING_STATUS_LABEL.cancelled },
 ];
 
 /**
  * Full searchable bookings table for this vendor — lives on the Bookings tab.
  */
-export function VendorBookingsPanel() {
+export function VendorBookingsPanel({ vendorId, initialBookingId, onCloseBooking }: { vendorId: string; initialBookingId?: string | null; onCloseBooking?: () => void }) {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<BookingStatusFilter>("all");
   const [filterOpen, setFilterOpen] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [page, setPage] = useState(1);
-  const [viewBooking, setViewBooking] = useState<(typeof VENDOR_BOOKINGS)[number] | null>(null);
+  const [viewBooking, setViewBooking] = useState<(typeof VENDOR_BOOKINGS)[number] | null>(() => VENDOR_BOOKINGS.find((booking) => booking.id === initialBookingId && booking.vendorId === vendorId) ?? null);
+  const [actionMenu, setActionMenu] = useState<{ id: string; top: number; left: number } | null>(null);
   const filterRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -73,9 +71,24 @@ export function VendorBookingsPanel() {
     };
   }, [filterOpen]);
 
+  useEffect(() => {
+    if (!actionMenu) return;
+    const close = () => setActionMenu(null);
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") close(); };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("scroll", close, true);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("scroll", close, true);
+    };
+  }, [actionMenu]);
+
   const bookings = useMemo(() => {
     const q = query.trim().toLowerCase();
     return VENDOR_BOOKINGS.filter((row) => {
+      if (row.vendorId !== vendorId) return false;
       if (statusFilter !== "all" && row.status !== statusFilter) return false;
       if (!q) return true;
       return (
@@ -85,7 +98,8 @@ export function VendorBookingsPanel() {
         row.ownerName.toLowerCase().includes(q)
       );
     });
-  }, [query, statusFilter]);
+  }, [query, statusFilter, vendorId]);
+  const vendorHasBookings = VENDOR_BOOKINGS.some((row) => row.vendorId === vendorId);
 
   const headerState: CheckboxState =
     selected.length === 0
@@ -171,8 +185,8 @@ export function VendorBookingsPanel() {
       <div className="vendor-overview__sheet dashboard-table-end">
         {bookings.length === 0 ? (
           <EmptyState
-            title="No bookings match this view"
-            description="Clear the filter or try another booking name, reference, service, or owner."
+            title={vendorHasBookings ? "No bookings match this view" : "No bookings for this vendor yet"}
+            description={vendorHasBookings ? "Clear the filter or try another booking name, reference, service, or owner." : "Bookings linked to this vendor will appear here."}
           />
         ) : (
           <>
@@ -191,8 +205,8 @@ export function VendorBookingsPanel() {
                 <DataSheetCell>Travel</DataSheetCell>
                 <DataSheetCell>Service</DataSheetCell>
                 <DataSheetCell>Status</DataSheetCell>
-                <DataSheetCell>Finance</DataSheetCell>
                 <DataSheetCell>Owner</DataSheetCell>
+                <DataSheetCell>Action</DataSheetCell>
               </DataSheetHeader>
               {bookings.map((row) => (
                 <DataSheetRow
@@ -255,20 +269,27 @@ export function VendorBookingsPanel() {
                     </StatusChipWithDot>
                   </DataSheetCell>
                   <DataSheetCell>
-                    <StackCell>
-                      <StackLine mono>{row.amount}</StackLine>
-                      <StatusChipWithDot tone={BOOKING_FINANCE_TONE[row.finance]}>
-                        {BOOKING_FINANCE_LABEL[row.finance]}
-                      </StatusChipWithDot>
-                    </StackCell>
-                  </DataSheetCell>
-                  <DataSheetCell>
                     <span className="vendor-bookings-sheet__owner">
                       <Avatar tone="pink" size={26}>
                         {row.ownerInitials}
                       </Avatar>
                       <span className="vendor-bookings-sheet__owner-name">{row.ownerName}</span>
                     </span>
+                  </DataSheetCell>
+                  <DataSheetCell className="vendor-bookings-sheet__action">
+                    <IconButton
+                      label={`More actions for ${row.title}`}
+                      aria-haspopup="menu"
+                      aria-expanded={actionMenu?.id === row.id}
+                      onClick={(event) => {
+                        const rect = event.currentTarget.getBoundingClientRect();
+                        setActionMenu((current) => current?.id === row.id ? null : {
+                          id: row.id,
+                          top: Math.min(rect.bottom + 6, window.innerHeight - 90),
+                          left: Math.max(12, Math.min(window.innerWidth - 190, rect.right - 178)),
+                        });
+                      }}
+                    ><IconMore /></IconButton>
                   </DataSheetCell>
                 </DataSheetRow>
               ))}
@@ -297,10 +318,28 @@ export function VendorBookingsPanel() {
         )}
       </div>
 
+      {actionMenu ? createPortal(<div
+        className="vendor-bookings-sheet__menu"
+        role="menu"
+        aria-label="Booking actions"
+        style={{ top: actionMenu.top, left: actionMenu.left }}
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <button type="button" role="menuitem" onClick={() => {
+          setViewBooking(VENDOR_BOOKINGS.find((booking) => booking.id === actionMenu.id) || null);
+          setActionMenu(null);
+        }}>View booking</button>
+        <button type="button" role="menuitem" onClick={() => {
+          const booking = VENDOR_BOOKINGS.find((item) => item.id === actionMenu.id);
+          if (booking) void navigator.clipboard?.writeText(booking.ref);
+          setActionMenu(null);
+        }}>Copy booking reference</button>
+      </div>, document.body) : null}
+
       <BookingViewModal
         open={viewBooking !== null}
         booking={viewBooking}
-        onClose={() => setViewBooking(null)}
+        onClose={() => { setViewBooking(null); onCloseBooking?.(); }}
       />
     </div>
   );

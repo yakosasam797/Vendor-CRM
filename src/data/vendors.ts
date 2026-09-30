@@ -455,7 +455,7 @@ export const SEED_VENDORS: Vendor[] = [
     updated: "Just now",
     owner: "Meera Joseph",
     ownerInitials: "MJ",
-    status: "Active",
+    status: "Draft",
   }),
   seedVendor({
     id: "malabar-transit",
@@ -471,7 +471,7 @@ export const SEED_VENDORS: Vendor[] = [
     updated: "Just now",
     owner: "Nisha Thomas",
     ownerInitials: "NT",
-    status: "Active",
+    status: "Draft",
   }),
   baliExampleVendor("island-wheels-bali", "V-ISLANDWHEELS", "Island Wheels Bali", "IW", ["Transport"], "Denpasar, Indonesia", "photo-1449965408869-eaa3f722e40d"),
   baliExampleVendor("ubud-stay-collective", "V-UBUDSTAY", "Ubud Stay Collective", "US", ["Hotelier"], "Ubud, Indonesia", "photo-1566073771259-6a8506099945"),

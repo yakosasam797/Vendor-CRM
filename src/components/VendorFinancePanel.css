@@ -633,15 +633,92 @@
 
 .payables-sheet {
   --pay-check: calc(var(--page-pad, 16px) + 46px);
-  --pay-cols: var(--pay-check) minmax(120px, 0.9fr) minmax(180px, 1.5fr) minmax(110px, 0.85fr)
-    minmax(110px, 0.85fr) minmax(110px, 0.9fr) 120px;
+  --pay-cols: var(--pay-check) minmax(220px, 1.8fr) minmax(160px, 1.25fr) minmax(150px, 1.1fr)
+    minmax(130px, 0.9fr) minmax(110px, 0.8fr) 76px;
 }
 
 .payables-sheet .pt-sheet__row {
   grid-auto-flow: unset;
   grid-auto-columns: unset;
   grid-template-columns: var(--pay-cols);
-  min-width: 980px;
+  min-width: 1000px;
+}
+
+.payables-sheet__link {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent-ink, var(--accent));
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.payables-sheet__link strong {
+  color: inherit;
+  font-weight: 650;
+}
+
+.payables-sheet__link small {
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 11.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.payables-sheet__link:hover,
+.payables-sheet__link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.payables-sheet__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.payables-sheet__amount {
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.payables-sheet__action {
+  justify-content: center;
+}
+
+.payables-sheet__menu {
+  position: fixed;
+  z-index: 510;
+  display: grid;
+  width: 190px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 10px);
+  background: var(--surface);
+  box-shadow: var(--menuShadow);
+}
+
+.payables-sheet__menu button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--radius-sm, 8px);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.payables-sheet__menu button:hover,
+.payables-sheet__menu button:focus-visible {
+  outline: none;
+  background: var(--surface-2, var(--side));
 }
 
 .payables-sheet__invoice {

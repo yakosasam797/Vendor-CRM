@@ -5,11 +5,9 @@ export type DirectoryCategory =
   | "Transport"
   | "Activities"
   | "Visa"
-  | "Flights"
-  | "DMC/Ground handling";
+  | "Flights";
 
 export type SupplierType = "Direct supplier" | "DMC" | "Wholesaler";
-export type ConnectionStatus = "Active" | "Expiring soon" | "Draft";
 
 export interface DirectoryService {
   id: string;
@@ -18,7 +16,6 @@ export interface DirectoryService {
   name: string;
   category: DirectoryCategory;
   location: string;
-  status: "Active" | "Draft";
   description?: string;
   attributes?: Array<{ label: string; value: string }>;
   inclusions?: string[];
@@ -34,7 +31,6 @@ export interface VendorServiceConnection {
   rateCardId: string;
   rateCardName: string;
   validity: string;
-  status: ConnectionStatus;
 }
 
 export const DIRECTORY_CATEGORIES: Array<"all" | DirectoryCategory> = [
@@ -44,7 +40,6 @@ export const DIRECTORY_CATEGORIES: Array<"all" | DirectoryCategory> = [
   "Activities",
   "Visa",
   "Flights",
-  "DMC/Ground handling",
 ];
 
 export const SUPPLIER_TYPES: SupplierType[] = [
@@ -70,13 +65,34 @@ export function saveCreatedDirectoryServices(services: DirectoryService[]) {
 
 export const DIRECTORY_SERVICES: DirectoryService[] = [
   {
+    id: "kochi-local-transfers", serviceId: "svc-kochi-local", profileVendorId: "bluewave",
+    name: "Kochi airport and local transport", category: "Transport", location: "Kochi",
+    description: "Private airport transfers and local hire within the Kochi operating area.",
+    attributes: [{ label: "Service scope", value: "Fixed transfer, local package" }],
+  },
+  {
+    id: "kerala-outstation-hire", serviceId: "svc-kerala-outstation", profileVendorId: "trailmakers",
+    name: "Kerala outstation transport", category: "Transport", location: "Kerala",
+    description: "Private outstation vehicles hired by kilometre or day from Kochi.",
+    attributes: [{ label: "Service scope", value: "Outstation per km, daily hire" }],
+  },
+  {
+    id: "kerala-private-hire",
+    serviceId: "svc-kerala-private-hire",
+    profileVendorId: "bluewave",
+    name: "Kerala private transport",
+    category: "Transport",
+    location: "Kerala",
+    description: "Private vehicle hire with pickup, drop and route defined for each customer trip.",
+    attributes: [{ label: "Service scope", value: "One-way, local, outstation, daily" }],
+  },
+  {
     id: "taj-exotica",
     serviceId: "svc-taj-exotica",
     profileVendorId: "exhosp",
     name: "Taj Exotica Resort & Spa",
     category: "Accommodation",
     location: "Goa",
-    status: "Active",
   },
   {
     id: "taj-lake-palace",
@@ -85,7 +101,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Taj Lake Palace",
     category: "Accommodation",
     location: "Udaipur",
-    status: "Active",
   },
   {
     id: "taj-bekal",
@@ -94,7 +109,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Taj Bekal Resort & Spa",
     category: "Accommodation",
     location: "Kerala",
-    status: "Active",
   },
   {
     id: "example-lake",
@@ -103,7 +117,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Example Lake Resort",
     category: "Accommodation",
     location: "Alleppey",
-    status: "Active",
   },
   {
     id: "example-hill",
@@ -112,7 +125,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Example Hill Retreat",
     category: "Accommodation",
     location: "Munnar",
-    status: "Draft",
   },
   {
     id: "kochi-transfer",
@@ -121,38 +133,7 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Kochi Airport Transfer",
     category: "Transport",
     location: "Kochi",
-    status: "Active",
   },
-  {
-    id: "bali-airport-transfer",
-    serviceId: "svc-transfer-dps",
-    profileVendorId: "island-wheels-bali",
-    name: "Denpasar airport transfer",
-    category: "Transport",
-    location: "Denpasar, Bali, Indonesia",
-    status: "Active",
-    description: "Private DPS airport pickup or drop-off; route, vehicle and supplier rate to confirm.",
-    attributes: [{ label: "Route", value: "DPS airport to Bali hotels" }, { label: "Pricing", value: "Supplier quote pending" }],
-  },
-  {
-    id: "ubud-private-day-car",
-    serviceId: "svc-ubud-day-car",
-    profileVendorId: "island-wheels-bali",
-    name: "Ubud private day car",
-    category: "Transport",
-    location: "Ubud, Bali, Indonesia",
-    status: "Active",
-    description: "Private vehicle and driver for an Ubud day; route, capacity and supplier rate to confirm.",
-    attributes: [{ label: "Service", value: "Private vehicle with driver" }, { label: "Pricing", value: "Supplier quote pending" }],
-  },
-  { id: "ubud-garden-suites", serviceId: "svc-ubud-garden-suites", profileVendorId: "ubud-stay-collective", name: "Ubud Garden Suites", category: "Accommodation", location: "Ubud, Bali, Indonesia", status: "Active", description: "Garden-facing suites and breakfast options; availability and rates to confirm." },
-  { id: "seminyak-coastal-stay", serviceId: "svc-seminyak-coastal-stay", profileVendorId: "ubud-stay-collective", name: "Seminyak Coastal Stay", category: "Accommodation", location: "Seminyak, Bali, Indonesia", status: "Active", description: "Coastal rooms and family options; availability and rates to confirm." },
-  { id: "tegallalang-rice-walk", serviceId: "svc-tegallalang-rice-walk", profileVendorId: "bali-heritage-studio", name: "Tegallalang rice terrace walk", category: "Activities", location: "Tegallalang, Bali, Indonesia", status: "Active", description: "Hosted rice terrace walk with viewpoint stops; schedule and rate to confirm." },
-  { id: "uluwatu-sunset-visit", serviceId: "svc-uluwatu-sunset-visit", profileVendorId: "bali-heritage-studio", name: "Uluwatu sunset visit", category: "Activities", location: "Uluwatu, Bali, Indonesia", status: "Active", description: "Late-day cultural and coastal visit; admission, guide and rate to confirm." },
-  { id: "penida-coastal-day", serviceId: "svc-penida-coastal-day", profileVendorId: "penida-coast-experiences", name: "Nusa Penida coastal day", category: "Activities", location: "Nusa Penida, Bali, Indonesia", status: "Active", description: "Coastal stops with boat and road segments; supplier quote to confirm." },
-  { id: "denpasar-flight-coordination", serviceId: "svc-denpasar-flight-coordination", profileVendorId: "bali-ground-desk", name: "Denpasar flight coordination", category: "Flights", location: "Denpasar, Bali, Indonesia", status: "Active", description: "Arrival and departure timing coordination; flights and fees to confirm." },
-  { id: "bali-arrival-assistance", serviceId: "svc-bali-arrival-assistance", profileVendorId: "bali-ground-desk", name: "Bali arrival assistance", category: "Visa", location: "Denpasar, Bali, Indonesia", status: "Active", description: "Traveler document and arrival handoff support; eligibility and fees to confirm." },
-  { id: "bali-ground-coordination", serviceId: "svc-bali-ground-coordination", profileVendorId: "bali-ground-desk", name: "Bali ground coordination", category: "DMC/Ground handling", location: "Bali, Indonesia", status: "Active", description: "Hotel, transfer and activity handoffs across a Bali itinerary; operating scope and fee to confirm." },
   {
     id: "munnar-trek",
     serviceId: "svc-trek-munnar",
@@ -160,7 +141,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Munnar Ridge Trek",
     category: "Activities",
     location: "Munnar",
-    status: "Active",
   },
   {
     id: "backwater-kayak",
@@ -169,7 +149,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Backwater Kayak",
     category: "Activities",
     location: "Alleppey",
-    status: "Active",
   },
   {
     id: "cardamom-tour",
@@ -178,7 +157,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Cardamom Plantation Tour",
     category: "Activities",
     location: "Thekkady",
-    status: "Active",
   },
   {
     id: "uae-visa",
@@ -187,7 +165,6 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "UAE Tourist Visa",
     category: "Visa",
     location: "UAE",
-    status: "Active",
   },
   {
     id: "kerala-flights",
@@ -196,54 +173,47 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     name: "Kerala Flight Ticketing",
     category: "Flights",
     location: "India",
-    status: "Active",
   },
 ];
 
 export const VENDOR_SERVICE_CONNECTIONS: VendorServiceConnection[] = [
-  { id: "taj-exotica-exhosp", vendorId: "exhosp", serviceId: "taj-exotica", supplierType: "Direct supplier", productsCovered: "12 room types", rateCardId: "rc-acc-2627", rateCardName: "Accommodation tariff 2026–27", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "taj-exotica-wanderlust", vendorId: "wanderlust", serviceId: "taj-exotica", supplierType: "DMC", productsCovered: "8 room types", rateCardId: "rc-acc-2526", rateCardName: "Taj Goa contracted rates", validity: "01 Oct 26–30 Sep 27", status: "Active" },
-  { id: "taj-exotica-coastal", vendorId: "coastal", serviceId: "taj-exotica", supplierType: "Wholesaler", productsCovered: "5 room types", rateCardId: "rc-hill-2627", rateCardName: "Winter FIT tariff", validity: "01 Oct 26–31 Mar 27", status: "Expiring soon" },
-  { id: "taj-lake-heritage", vendorId: "kerala-heritage", serviceId: "taj-lake-palace", supplierType: "Direct supplier", productsCovered: "9 room types", rateCardId: "rc-acc-2627", rateCardName: "Palace stay tariff 2026–27", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "taj-lake-horizon", vendorId: "horizon", serviceId: "taj-lake-palace", supplierType: "DMC", productsCovered: "6 room types", rateCardId: "rc-acc-2526", rateCardName: "Rajasthan DMC rates", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "taj-bekal-coastal", vendorId: "coastal", serviceId: "taj-bekal", supplierType: "Direct supplier", productsCovered: "10 room types", rateCardId: "rc-acc-2627", rateCardName: "Bekal direct tariff", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "taj-bekal-exhosp", vendorId: "exhosp", serviceId: "taj-bekal", supplierType: "Wholesaler", productsCovered: "7 room types", rateCardId: "rc-acc-2526", rateCardName: "North Kerala FIT rates", validity: "01 Oct 26–31 Mar 27", status: "Active" },
-  { id: "taj-bekal-wanderlust", vendorId: "wanderlust", serviceId: "taj-bekal", supplierType: "DMC", productsCovered: "6 room types", rateCardId: "rc-hill-2627", rateCardName: "Bekal contracted rates", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "taj-bekal-horizon", vendorId: "horizon", serviceId: "taj-bekal", supplierType: "Wholesaler", productsCovered: "4 room types", rateCardId: "rc-acc-2526", rateCardName: "Seasonal hotel allotment", validity: "01 Oct 26–31 Mar 27", status: "Expiring soon" },
-  { id: "lake-exhosp", vendorId: "exhosp", serviceId: "example-lake", supplierType: "Direct supplier", productsCovered: "2 room types", rateCardId: "rc-acc-2627", rateCardName: "Accommodation tariff 2026–27", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "lake-wanderlust", vendorId: "wanderlust", serviceId: "example-lake", supplierType: "DMC", productsCovered: "2 room types", rateCardId: "rc-acc-2526", rateCardName: "Backwater stay rates", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "hill-exhosp", vendorId: "exhosp", serviceId: "example-hill", supplierType: "Direct supplier", productsCovered: "3 room types", rateCardId: "rc-hill-2627", rateCardName: "Hill Retreat tariff 2026–27", validity: "01 Apr 26–31 Mar 27", status: "Draft" },
-  { id: "hill-horizon", vendorId: "horizon", serviceId: "example-hill", supplierType: "DMC", productsCovered: "3 room types", rateCardId: "rc-hill-2627", rateCardName: "Munnar winter rates", validity: "01 Oct 26–31 Mar 27", status: "Draft" },
-  { id: "transfer-bluewave", vendorId: "bluewave", serviceId: "kochi-transfer", supplierType: "Direct supplier", productsCovered: "Sedan · SUV · Tempo", rateCardId: "rc-air-2026", rateCardName: "Airport transfer rates 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "transfer-trailmakers", vendorId: "trailmakers", serviceId: "kochi-transfer", supplierType: "DMC", productsCovered: "Sedan · Tempo", rateCardId: "rc-air-2026", rateCardName: "Kerala transfers 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "transfer-wanderlust", vendorId: "wanderlust", serviceId: "kochi-transfer", supplierType: "DMC", productsCovered: "Sedan · SUV", rateCardId: "rc-air-2026", rateCardName: "Kochi ground rates", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "transfer-spice", vendorId: "spice-route", serviceId: "kochi-transfer", supplierType: "Wholesaler", productsCovered: "Sedan", rateCardId: "rc-air-2026", rateCardName: "Airport FIT transfers", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "bali-airport-island-wheels", vendorId: "island-wheels-bali", serviceId: "bali-airport-transfer", supplierType: "Direct supplier", productsCovered: "Private airport pickup and drop-off", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "ubud-day-car-island-wheels", vendorId: "island-wheels-bali", serviceId: "ubud-private-day-car", supplierType: "Direct supplier", productsCovered: "Private day car with driver", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "ubud-suites-stay-collective", vendorId: "ubud-stay-collective", serviceId: "ubud-garden-suites", supplierType: "Direct supplier", productsCovered: "Garden suites", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "seminyak-stay-collective", vendorId: "ubud-stay-collective", serviceId: "seminyak-coastal-stay", supplierType: "Direct supplier", productsCovered: "Coastal and family rooms", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "rice-walk-heritage", vendorId: "bali-heritage-studio", serviceId: "tegallalang-rice-walk", supplierType: "Direct supplier", productsCovered: "Hosted terrace walk", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "uluwatu-heritage", vendorId: "bali-heritage-studio", serviceId: "uluwatu-sunset-visit", supplierType: "Direct supplier", productsCovered: "Sunset cultural visit", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "penida-coast-day", vendorId: "penida-coast-experiences", serviceId: "penida-coastal-day", supplierType: "Direct supplier", productsCovered: "Boat and coastal day", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "denpasar-flights-ground-desk", vendorId: "bali-ground-desk", serviceId: "denpasar-flight-coordination", supplierType: "Direct supplier", productsCovered: "Flight timing and handoff", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "bali-arrival-ground-desk", vendorId: "bali-ground-desk", serviceId: "bali-arrival-assistance", supplierType: "Direct supplier", productsCovered: "Arrival document support", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "bali-coordination-ground-desk", vendorId: "bali-ground-desk", serviceId: "bali-ground-coordination", supplierType: "Direct supplier", productsCovered: "Multi-service handoffs", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
-  { id: "trek-trailmakers", vendorId: "trailmakers", serviceId: "munnar-trek", supplierType: "Direct supplier", productsCovered: "Half day · max 12", rateCardId: "rc-acc-2627", rateCardName: "Activity tariff 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "trek-summit", vendorId: "summit", serviceId: "munnar-trek", supplierType: "Direct supplier", productsCovered: "Half day · max 10", rateCardId: "rc-acc-2526", rateCardName: "Guided trek rates", validity: "01 Oct 26–31 Mar 27", status: "Active" },
-  { id: "trek-spice", vendorId: "spice-route", serviceId: "munnar-trek", supplierType: "DMC", productsCovered: "Private groups", rateCardId: "rc-hill-2627", rateCardName: "Munnar experiences", validity: "01 Oct 26–31 Mar 27", status: "Active" },
-  { id: "kayak-trailmakers", vendorId: "trailmakers", serviceId: "backwater-kayak", supplierType: "Direct supplier", productsCovered: "Single · tandem kayak", rateCardId: "rc-acc-2627", rateCardName: "Activity tariff 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "kayak-spice", vendorId: "spice-route", serviceId: "backwater-kayak", supplierType: "DMC", productsCovered: "Private groups", rateCardId: "rc-acc-2526", rateCardName: "Backwater experiences", validity: "01 Oct 26–31 Mar 27", status: "Active" },
-  { id: "cardamom-exhosp", vendorId: "exhosp", serviceId: "cardamom-tour", supplierType: "DMC", productsCovered: "Half day tour", rateCardId: "rc-hill-2627", rateCardName: "Hill Retreat tariff 2026–27", validity: "01 Apr 26–31 Mar 27", status: "Active" },
-  { id: "cardamom-spice", vendorId: "spice-route", serviceId: "cardamom-tour", supplierType: "Direct supplier", productsCovered: "Private · shared", rateCardId: "rc-acc-2627", rateCardName: "Spice plantation rates", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "visa-atlas", vendorId: "atlas-visa", serviceId: "uae-visa", supplierType: "Direct supplier", productsCovered: "30 · 60 · 90 days", rateCardId: "rc-visa-uae", rateCardName: "Visa services tariff · UAE", validity: "01 Apr–30 Sep 26", status: "Active" },
-  { id: "visa-horizon", vendorId: "horizon", serviceId: "uae-visa", supplierType: "DMC", productsCovered: "30 · 60 days", rateCardId: "rc-visa-uae", rateCardName: "UAE visa handling", validity: "01 Apr–30 Sep 26", status: "Expiring soon" },
-  { id: "flights-trailmakers", vendorId: "trailmakers", serviceId: "kerala-flights", supplierType: "Wholesaler", productsCovered: "Domestic · international", rateCardId: "rc-air-2026", rateCardName: "Air ticketing fees 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "flights-wanderlust", vendorId: "wanderlust", serviceId: "kerala-flights", supplierType: "Direct supplier", productsCovered: "Domestic · regional", rateCardId: "rc-air-2026", rateCardName: "Flight desk contract 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
-  { id: "flights-horizon", vendorId: "horizon", serviceId: "kerala-flights", supplierType: "DMC", productsCovered: "Domestic · international", rateCardId: "rc-air-2026", rateCardName: "Air consolidation rates 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
+  { id: "kochi-local-bluewave", vendorId: "bluewave", serviceId: "kochi-local-transfers", supplierType: "Direct supplier", productsCovered: "Fixed transfer · Local package", rateCardId: "rc-kochi-local-transfers", rateCardName: "Kochi airport and local transfers", validity: "01 Oct 26–31 Mar 27" },
+  { id: "kerala-km-trailmakers", vendorId: "trailmakers", serviceId: "kerala-outstation-hire", supplierType: "Direct supplier", productsCovered: "Outstation per km · Daily hire", rateCardId: "rc-kerala-km-tariff", rateCardName: "Kerala outstation kilometre tariff", validity: "01 Oct 26–31 Mar 27" },
+  { id: "kerala-hire-bluewave", vendorId: "bluewave", serviceId: "kerala-private-hire", supplierType: "Direct supplier", productsCovered: "Sedan · MUV · Van · Coach", rateCardId: "rc-kerala-private-hire", rateCardName: "Kerala private hire rates", validity: "01 Oct 26–31 Mar 27" },
+  { id: "taj-exotica-exhosp", vendorId: "exhosp", serviceId: "taj-exotica", supplierType: "Direct supplier", productsCovered: "12 room types", rateCardId: "rc-acc-2627", rateCardName: "Accommodation tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
+  { id: "taj-exotica-wanderlust", vendorId: "wanderlust", serviceId: "taj-exotica", supplierType: "DMC", productsCovered: "8 room types", rateCardId: "rc-taj-goa-wanderlust", rateCardName: "Taj Goa contracted rates", validity: "01 Oct 26–30 Sep 27" },
+  { id: "taj-exotica-coastal", vendorId: "coastal", serviceId: "taj-exotica", supplierType: "Wholesaler", productsCovered: "5 room types", rateCardId: "rc-taj-goa-coastal", rateCardName: "Winter FIT tariff", validity: "01 Oct 26–31 Mar 27" },
+  { id: "taj-lake-heritage", vendorId: "kerala-heritage", serviceId: "taj-lake-palace", supplierType: "Direct supplier", productsCovered: "9 room types", rateCardId: "rc-acc-2627", rateCardName: "Palace stay tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
+  { id: "taj-lake-horizon", vendorId: "horizon", serviceId: "taj-lake-palace", supplierType: "DMC", productsCovered: "6 room types", rateCardId: "rc-acc-2526", rateCardName: "Rajasthan DMC rates", validity: "01 Apr 26–31 Mar 27" },
+  { id: "taj-bekal-coastal", vendorId: "coastal", serviceId: "taj-bekal", supplierType: "Direct supplier", productsCovered: "10 room types", rateCardId: "rc-acc-2627", rateCardName: "Bekal direct tariff", validity: "01 Apr 26–31 Mar 27" },
+  { id: "taj-bekal-exhosp", vendorId: "exhosp", serviceId: "taj-bekal", supplierType: "Wholesaler", productsCovered: "7 room types", rateCardId: "rc-acc-2526", rateCardName: "North Kerala FIT rates", validity: "01 Oct 26–31 Mar 27" },
+  { id: "taj-bekal-wanderlust", vendorId: "wanderlust", serviceId: "taj-bekal", supplierType: "DMC", productsCovered: "6 room types", rateCardId: "rc-hill-2627", rateCardName: "Bekal contracted rates", validity: "01 Apr 26–31 Mar 27" },
+  { id: "taj-bekal-horizon", vendorId: "horizon", serviceId: "taj-bekal", supplierType: "Wholesaler", productsCovered: "4 room types", rateCardId: "rc-acc-2526", rateCardName: "Seasonal hotel allotment", validity: "01 Oct 26–31 Mar 27" },
+  { id: "lake-exhosp", vendorId: "exhosp", serviceId: "example-lake", supplierType: "Direct supplier", productsCovered: "2 room types", rateCardId: "rc-acc-2627", rateCardName: "Accommodation tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
+  { id: "lake-wanderlust", vendorId: "wanderlust", serviceId: "example-lake", supplierType: "DMC", productsCovered: "2 room types", rateCardId: "rc-acc-2526", rateCardName: "Backwater stay rates", validity: "01 Apr 26–31 Mar 27" },
+  { id: "hill-exhosp", vendorId: "exhosp", serviceId: "example-hill", supplierType: "Direct supplier", productsCovered: "3 room types", rateCardId: "rc-hill-2627", rateCardName: "Hill Retreat tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
+  { id: "hill-horizon", vendorId: "horizon", serviceId: "example-hill", supplierType: "DMC", productsCovered: "3 room types", rateCardId: "rc-hill-2627", rateCardName: "Munnar winter rates", validity: "01 Oct 26–31 Mar 27" },
+  { id: "transfer-bluewave", vendorId: "bluewave", serviceId: "kochi-transfer", supplierType: "Direct supplier", productsCovered: "Sedan · SUV · Tempo", rateCardId: "rc-air-2026", rateCardName: "Airport transfer rates 2026", validity: "01 Jan–31 Dec 26" },
+  { id: "transfer-trailmakers", vendorId: "trailmakers", serviceId: "kochi-transfer", supplierType: "DMC", productsCovered: "Sedan · Tempo", rateCardId: "rc-air-2026", rateCardName: "Kerala transfers 2026", validity: "01 Jan–31 Dec 26" },
+  { id: "transfer-wanderlust", vendorId: "wanderlust", serviceId: "kochi-transfer", supplierType: "DMC", productsCovered: "Sedan · SUV", rateCardId: "rc-air-2026", rateCardName: "Kochi ground rates", validity: "01 Jan–31 Dec 26" },
+  { id: "transfer-spice", vendorId: "spice-route", serviceId: "kochi-transfer", supplierType: "Wholesaler", productsCovered: "Sedan", rateCardId: "rc-air-2026", rateCardName: "Airport FIT transfers", validity: "01 Jan–31 Dec 26" },
+  { id: "trek-trailmakers", vendorId: "trailmakers", serviceId: "munnar-trek", supplierType: "Direct supplier", productsCovered: "Half day · max 12", rateCardId: "rc-acc-2627", rateCardName: "Activity tariff 2026", validity: "01 Jan–31 Dec 26" },
+  { id: "trek-summit", vendorId: "summit", serviceId: "munnar-trek", supplierType: "Direct supplier", productsCovered: "Half day · max 10", rateCardId: "rc-acc-2526", rateCardName: "Guided trek rates", validity: "01 Oct 26–31 Mar 27" },
+  { id: "trek-spice", vendorId: "spice-route", serviceId: "munnar-trek", supplierType: "DMC", productsCovered: "Private groups", rateCardId: "rc-hill-2627", rateCardName: "Munnar experiences", validity: "01 Oct 26–31 Mar 27" },
+  { id: "kayak-trailmakers", vendorId: "trailmakers", serviceId: "backwater-kayak", supplierType: "Direct supplier", productsCovered: "Single · tandem kayak", rateCardId: "rc-acc-2627", rateCardName: "Activity tariff 2026", validity: "01 Jan–31 Dec 26" },
+  { id: "kayak-spice", vendorId: "spice-route", serviceId: "backwater-kayak", supplierType: "DMC", productsCovered: "Private groups", rateCardId: "rc-acc-2526", rateCardName: "Backwater experiences", validity: "01 Oct 26–31 Mar 27" },
+  { id: "cardamom-exhosp", vendorId: "exhosp", serviceId: "cardamom-tour", supplierType: "DMC", productsCovered: "Half day tour", rateCardId: "rc-hill-2627", rateCardName: "Hill Retreat tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
+  { id: "cardamom-spice", vendorId: "spice-route", serviceId: "cardamom-tour", supplierType: "Direct supplier", productsCovered: "Private · shared", rateCardId: "rc-acc-2627", rateCardName: "Spice plantation rates", validity: "01 Jan–31 Dec 26" },
+  { id: "visa-atlas", vendorId: "atlas-visa", serviceId: "uae-visa", supplierType: "Direct supplier", productsCovered: "30 · 60 · 90 days", rateCardId: "rc-visa-uae", rateCardName: "Visa services tariff · UAE", validity: "01 Apr–30 Sep 26" },
+  { id: "visa-horizon", vendorId: "horizon", serviceId: "uae-visa", supplierType: "DMC", productsCovered: "30 · 60 days", rateCardId: "rc-visa-uae", rateCardName: "UAE visa handling", validity: "01 Apr–30 Sep 26" },
+  { id: "flights-trailmakers", vendorId: "trailmakers", serviceId: "kerala-flights", supplierType: "Wholesaler", productsCovered: "Domestic · international", rateCardId: "rc-air-2026", rateCardName: "Air ticketing fees 2026", validity: "01 Jan–31 Dec 26" },
+  { id: "flights-wanderlust", vendorId: "wanderlust", serviceId: "kerala-flights", supplierType: "Direct supplier", productsCovered: "Domestic · regional", rateCardId: "rc-air-2026", rateCardName: "Flight desk contract 2026", validity: "01 Jan–31 Dec 26" },
+  { id: "flights-horizon", vendorId: "horizon", serviceId: "kerala-flights", supplierType: "DMC", productsCovered: "Domestic · international", rateCardId: "rc-air-2026", rateCardName: "Air consolidation rates 2026", validity: "01 Jan–31 Dec 26" },
 ];
 
 export function directoryCategoryForServiceType(type: ServiceType): DirectoryCategory | null {
   if (type === "Activity") return "Activities";
+  if (type === "DMC/Ground handling") return null;
   return type;
 }
 
