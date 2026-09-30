@@ -182,8 +182,10 @@ export function ActivityPanel({
           {filtered.length === 0 ? <p className="act-timeline__empty">No activity matches this search.</p> : <ol className="act-timeline__list">
             {visibleRows.map((row) => <li className="act-timeline__item" key={row.id}>
               <div className="act-timeline__select"><Checkbox state={selected.includes(row.id) ? "on" : "off"} label={`Select ${row.event}`} onCheckedChange={(state) => toggleRow(row.id, state)} /></div>
-              <span className="act-timeline__rail" aria-hidden="true"><span className="act-timeline__icon"><ActivityModuleIcon module={row.module} size={16} /></span></span>
-              <span className="act-timeline__date pt-mono"><span>{row.date}</span><span>{row.time}</span></span>
+              <div className="act-timeline__when">
+                <span className="act-timeline__rail" aria-hidden="true"><span className="act-timeline__icon"><ActivityModuleIcon module={row.module} size={16} /></span></span>
+                <span className="act-timeline__date pt-mono"><span>{row.date}</span><span>{row.time}</span></span>
+              </div>
               <div className="act-timeline__entry">
                 <div className="act-timeline__heading"><strong>{row.event}</strong></div>
                 <span className="act-timeline__context"><ActivityModuleIcon module={row.module} size={13} />{row.context ?? row.module}</span>

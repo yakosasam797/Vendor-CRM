@@ -798,7 +798,7 @@ export default function App() {
             setVendors(next);
             setFlash("Vendor details updated successfully.");
           }}
-          onOpenCard={(id) => openCard(id, crmRoute.id)}
+          onOpenCard={(id, vendorId) => openCard(id, vendorId ?? crmRoute.id)}
           onNewCard={() => setCreateCardOpen(true)}
         />
       ) : (

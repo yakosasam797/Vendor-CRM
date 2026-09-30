@@ -65,7 +65,7 @@ import "./VendorsListPage.css";
 
 type Perspective = "vendors" | "services";
 const DIRECTORY_PAGE_SIZE = 6;
-type ServiceDetailTab = "overview" | "rate-details" | "vendors" | "test-rate" | "policies";
+type ServiceDetailTab = "overview" | "vendors" | "test-rate" | "policies";
 
 type VendorDirectoryRow = {
   vendor: Vendor;
@@ -554,7 +554,6 @@ function ServiceDirectoryDetail({
       : "indeterminate";
   const tabs: TabItem[] = [
     { id: "overview", label: "Overview" },
-    { id: "rate-details", label: "Rate details" },
     { id: "vendors", label: "Vendors" },
     { id: "test-rate", label: "Test rate" },
     { id: "policies", label: "Policies" },
@@ -668,12 +667,6 @@ function ServiceDirectoryDetail({
             </div>
           </div>
         </div>
-      ) : tab === "rate-details" ? (
-        <ServiceRateDetails
-          connections={connections}
-          vendors={vendors}
-          onOpenRateCard={onOpenRateCard}
-        />
       ) : tab === "test-rate" ? (
         !connections.some((connection) => connection.rateCardId)
           ? <EmptyState title="No rate card linked" description="Add a supplier rate card before testing this service's price." />
@@ -698,7 +691,7 @@ function ServiceDirectoryDetail({
               <DataSheetCell>Vendor</DataSheetCell>
               <DataSheetCell>Supplier relationship</DataSheetCell>
               <DataSheetCell>Location</DataSheetCell>
-              <DataSheetCell>Current rate card</DataSheetCell>
+              <DataSheetCell>Rate card</DataSheetCell>
               <DataSheetCell className="service-suppliers-sheet__action">Action</DataSheetCell>
             </DataSheetHeader>
             {connections.map((connection) => {
@@ -728,7 +721,7 @@ function ServiceDirectoryDetail({
                   <DataSheetCell><DirectoryEntity vendor={vendor} title={vendor.name} subtitle={vendor.code} onClick={() => onOpenVendor(vendor.id)} /></DataSheetCell>
                   <DataSheetCell><span className="directory-relationship"><strong>{connection.supplierType}</strong><span>{connection.productsCovered}</span></span></DataSheetCell>
                   <DataSheetCell><span className="vendors-sheet__location"><IconPin size={14} />{vendor.location}</span></DataSheetCell>
-                  <DataSheetCell>{connection.rateCardId ? <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)}>{connection.rateCardName}</button> : <span>No rate card linked</span>}</DataSheetCell>
+                  <DataSheetCell>{connection.rateCardId ? <button type="button" className="directory-link service-suppliers-sheet__rate-card" onClick={() => onOpenRateCard(vendor.id, connection.rateCardId)} aria-label={`Open ${connection.rateCardName} for ${vendor.name}`}><IconCard size={16} aria-hidden="true" /><span>{connection.rateCardName}</span></button> : <span>No rate card linked</span>}</DataSheetCell>
                   <DataSheetCell className="service-suppliers-sheet__action">
                     <div
                       className="vendors-sheet__more"

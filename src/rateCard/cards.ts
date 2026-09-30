@@ -222,6 +222,26 @@ const blankVisa = (): RateCardDetail => ({
 });
 
 export const DETAIL_CARDS: Record<string, RateCardDetail> = {
+  "rc-taj-goa-wanderlust": {
+    ...blankHotel(),
+    id: "rc-taj-goa-wanderlust",
+    name: "Taj Goa contracted rates",
+    ref: "RC-TAJ-WANDERLUST",
+    vendor: "Wanderlust Trails",
+    property: "Taj Exotica Resort & Spa",
+    validity: "01 Oct 2026 – 30 Sep 2027",
+    ready: "Supplier prices pending",
+  },
+  "rc-taj-goa-coastal": {
+    ...blankHotel(),
+    id: "rc-taj-goa-coastal",
+    name: "Winter FIT tariff",
+    ref: "RC-TAJ-COASTAL",
+    vendor: "Coastal Stay Properties",
+    property: "Taj Exotica Resort & Spa",
+    validity: "01 Oct 2026 – 31 Mar 2027",
+    ready: "Supplier prices pending",
+  },
   "rc-new-hotel": blankHotel(),
   "rc-new-visa": blankVisa(),
   "rc-acc-2627": {

@@ -394,7 +394,7 @@ export function VendorRateCardsPage({
   orgRole: OrgRole;
   flash?: string | null;
   onClearFlash?: () => void;
-  onOpenCard: (id: string) => void;
+  onOpenCard: (id: string, vendorId?: string) => void;
   onNewCard?: () => void;
   onVendorsChange: (next: Vendor[]) => void;
   onOpenVendor: (id: string) => void;

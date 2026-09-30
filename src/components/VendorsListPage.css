@@ -1010,8 +1010,19 @@
 }
 
 .service-suppliers-sheet__rate-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+}
+
+.service-suppliers-sheet__rate-card svg {
+  flex: none;
+  color: var(--pink-ink, var(--pink));
+}
+
+.service-suppliers-sheet__rate-card span {
   overflow: hidden;
-  width: 100%;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
