@@ -777,7 +777,7 @@ export default function App() {
             setVendors((previous) => [created, ...previous]);
             openVendor(
               created.id,
-              "Vendor saved as a draft. Add services when you are ready to build the record.",
+              "Vendor added. Complete the profile or add services when ready.",
             );
           }}
         />

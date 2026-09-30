@@ -54,6 +54,14 @@ const typeDetails: Record<DirectoryCategory, { description: string; fields: Fiel
       { key: "baggage", label: "Baggage", placeholder: "e.g. 20 kg checked" },
     ],
   },
+  "DMC/Ground handling": {
+    description: "Record the on-ground coordination and operating scope.",
+    fields: [
+      { key: "coverage", label: "Coverage", placeholder: "Areas and services handled", required: true },
+      { key: "handoffs", label: "Supplier handoffs", placeholder: "Hotels, transfers, activities…" },
+      { key: "contact", label: "Operations contact", placeholder: "Local desk or coordinator" },
+    ],
+  },
 };
 
 function Section({ title, description, icon, children }: { title: string; description: string; icon: ReactNode; children: ReactNode }) {
@@ -93,7 +101,7 @@ export function NewServicePage({ existingServices, onCancel, onCreated }: {
       name: name.trim(),
       category,
       location: location.trim(),
-      status: "Draft",
+      status: "Active",
       description: description.trim(),
       attributes: fields.map((field) => ({ label: field.label, value: details[`${category}:${field.key}`]?.trim() ?? "" })).filter((field) => field.value),
       inclusions: inclusions.split("\n").map((line) => line.trim()).filter(Boolean),
@@ -141,10 +149,10 @@ export function NewServicePage({ existingServices, onCancel, onCreated }: {
           <label className="new-vendor-field"><span className="new-vendor-field__label">Included</span><textarea value={inclusions} onChange={(event) => setInclusions(event.target.value)} rows={4} placeholder="One item per line" /></label>
           <label className="new-vendor-field"><span className="new-vendor-field__label">Excluded</span><textarea value={exclusions} onChange={(event) => setExclusions(event.target.value)} rows={4} placeholder="One item per line" /></label>
         </div>
-        <p className="new-service-page__hint">The service starts as a draft. Vendors and rate cards can be linked after creation.</p>
+        <p className="new-service-page__hint">Vendors and rate cards can be linked after creation.</p>
       </Section>
 
-      <footer className="new-vendor-actions"><div><Button variant="ghost" size="sm" type="button" onClick={onCancel}>Cancel</Button><Button variant="primary" size="sm" type="submit">Create draft service</Button></div></footer>
+      <footer className="new-vendor-actions"><div><Button variant="ghost" size="sm" type="button" onClick={onCancel}>Cancel</Button><Button variant="primary" size="sm" type="submit">Add service</Button></div></footer>
     </form>
   </div>;
 }

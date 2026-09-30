@@ -267,6 +267,15 @@ function seedVendor(
   };
 }
 
+function baliExampleVendor(id: string, code: string, name: string, initials: string, roles: VendorRole[], location: string, imageId: string): Vendor {
+  const vendor = seedVendor({
+    id, code, name, initials, roles, location,
+    imageUrl: `https://images.unsplash.com/${imageId}?auto=format&fit=crop&w=160&h=160&q=80`,
+    labels: ["Bali example"], updated: "Just now", owner: "Vendor desk", ownerInitials: "VD", status: "Setup incomplete",
+  });
+  return { ...vendor, setup: { profileComplete: true, hasService: true, hasContactsDocs: false, hasRateCard: false, activated: false } };
+}
+
 export const SEED_VENDORS: Vendor[] = [
   seedVendor({
     id: "trailmakers",
@@ -446,7 +455,7 @@ export const SEED_VENDORS: Vendor[] = [
     updated: "Just now",
     owner: "Meera Joseph",
     ownerInitials: "MJ",
-    status: "Draft",
+    status: "Active",
   }),
   seedVendor({
     id: "malabar-transit",
@@ -462,8 +471,13 @@ export const SEED_VENDORS: Vendor[] = [
     updated: "Just now",
     owner: "Nisha Thomas",
     ownerInitials: "NT",
-    status: "Draft",
+    status: "Active",
   }),
+  baliExampleVendor("island-wheels-bali", "V-ISLANDWHEELS", "Island Wheels Bali", "IW", ["Transport"], "Denpasar, Indonesia", "photo-1449965408869-eaa3f722e40d"),
+  baliExampleVendor("ubud-stay-collective", "V-UBUDSTAY", "Ubud Stay Collective", "US", ["Hotelier"], "Ubud, Indonesia", "photo-1566073771259-6a8506099945"),
+  baliExampleVendor("bali-heritage-studio", "V-BALITHERITAGE", "Bali Heritage Studio", "BH", ["Activity"], "Ubud, Indonesia", "photo-1544735716-392fe2489ffa"),
+  baliExampleVendor("penida-coast-experiences", "V-PENIDACOAST", "Penida Coast Experiences", "PC", ["Activity", "Transport"], "Nusa Penida, Indonesia", "photo-1506905925346-21bda4d32df4"),
+  baliExampleVendor("bali-ground-desk", "V-BALIGROUND", "Bali Ground Desk", "BG", ["DMC", "Airline", "Visa"], "Denpasar, Indonesia", "photo-1436491865332-7a61a109cc05"),
 ];
 
 /** Mutable working copy — App owns React state seeded from this */

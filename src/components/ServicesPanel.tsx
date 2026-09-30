@@ -23,8 +23,6 @@ import {
 } from "@paryatech/design-system";
 import { DashboardDataSheetFill } from "./DashboardDataSheet";
 import {
-  SERVICE_STATUS_LABEL,
-  SERVICE_STATUS_TONE,
   SERVICE_TYPE_FILTERS,
   servicesForVendor,
   type ServiceMedia,
@@ -518,9 +516,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
           <div className="service-directory-detail__identity-copy">
             <div className="service-directory-detail__title-row">
               <h1>{service.name}</h1>
-              <StatusChipWithDot tone={SERVICE_STATUS_TONE[service.status]}>
-                {SERVICE_STATUS_LABEL[service.status]}
-              </StatusChipWithDot>
             </div>
             <p>
               <IconPin size={14} />
@@ -588,10 +583,6 @@ function ServiceDetail({ service, canEdit, initialTab = "overview", onOpenRateCa
                     <div className="service-detail-profile__field">
                       <dt>Service ID</dt>
                       <dd className="pt-mono">{service.id.toUpperCase()}</dd>
-                    </div>
-                    <div className="service-detail-profile__field">
-                      <dt>Status</dt>
-                      <dd><StatusChipWithDot tone={SERVICE_STATUS_TONE[service.status]}>{SERVICE_STATUS_LABEL[service.status]}</StatusChipWithDot></dd>
                     </div>
                     <div className="service-detail-profile__field">
                       <dt>Category</dt>
@@ -1020,7 +1011,6 @@ export function ServicesPanel({
                 <DataSheetCell>Important details</DataSheetCell>
                 <DataSheetCell>Media</DataSheetCell>
                 <DataSheetCell>Current pricing</DataSheetCell>
-                <DataSheetCell>Status</DataSheetCell>
                 <DataSheetCell className="services-sheet__action">Action</DataSheetCell>
               </DataSheetHeader>
               {filtered.map((svc) => (
@@ -1095,11 +1085,6 @@ export function ServicesPanel({
                       </StackLine>
                     </StackCell>
                   </DataSheetCell>
-                  <DataSheetCell>
-                    <StatusChipWithDot tone={SERVICE_STATUS_TONE[svc.status]}>
-                      {SERVICE_STATUS_LABEL[svc.status]}
-                    </StatusChipWithDot>
-                  </DataSheetCell>
                   <DataSheetCell className="services-sheet__action">
                     <div className="services-sheet__act">
                       <IconButton
@@ -1135,7 +1120,7 @@ export function ServicesPanel({
                   </DataSheetCell>
                 </DataSheetRow>
               ) : null}
-              <DashboardDataSheetFill columns={8} />
+              <DashboardDataSheetFill columns={7} />
             </DataSheet>
             <Pagination
               rangeLabel={filtered.length ? `Showing 1–${filtered.length} of ${filtered.length} services` : "Showing 0 of 0 services"}

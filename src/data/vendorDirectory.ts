@@ -5,7 +5,8 @@ export type DirectoryCategory =
   | "Transport"
   | "Activities"
   | "Visa"
-  | "Flights";
+  | "Flights"
+  | "DMC/Ground handling";
 
 export type SupplierType = "Direct supplier" | "DMC" | "Wholesaler";
 export type ConnectionStatus = "Active" | "Expiring soon" | "Draft";
@@ -43,6 +44,7 @@ export const DIRECTORY_CATEGORIES: Array<"all" | DirectoryCategory> = [
   "Activities",
   "Visa",
   "Flights",
+  "DMC/Ground handling",
 ];
 
 export const SUPPLIER_TYPES: SupplierType[] = [
@@ -122,6 +124,36 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
     status: "Active",
   },
   {
+    id: "bali-airport-transfer",
+    serviceId: "svc-transfer-dps",
+    profileVendorId: "island-wheels-bali",
+    name: "Denpasar airport transfer",
+    category: "Transport",
+    location: "Denpasar, Bali, Indonesia",
+    status: "Active",
+    description: "Private DPS airport pickup or drop-off; route, vehicle and supplier rate to confirm.",
+    attributes: [{ label: "Route", value: "DPS airport to Bali hotels" }, { label: "Pricing", value: "Supplier quote pending" }],
+  },
+  {
+    id: "ubud-private-day-car",
+    serviceId: "svc-ubud-day-car",
+    profileVendorId: "island-wheels-bali",
+    name: "Ubud private day car",
+    category: "Transport",
+    location: "Ubud, Bali, Indonesia",
+    status: "Active",
+    description: "Private vehicle and driver for an Ubud day; route, capacity and supplier rate to confirm.",
+    attributes: [{ label: "Service", value: "Private vehicle with driver" }, { label: "Pricing", value: "Supplier quote pending" }],
+  },
+  { id: "ubud-garden-suites", serviceId: "svc-ubud-garden-suites", profileVendorId: "ubud-stay-collective", name: "Ubud Garden Suites", category: "Accommodation", location: "Ubud, Bali, Indonesia", status: "Active", description: "Garden-facing suites and breakfast options; availability and rates to confirm." },
+  { id: "seminyak-coastal-stay", serviceId: "svc-seminyak-coastal-stay", profileVendorId: "ubud-stay-collective", name: "Seminyak Coastal Stay", category: "Accommodation", location: "Seminyak, Bali, Indonesia", status: "Active", description: "Coastal rooms and family options; availability and rates to confirm." },
+  { id: "tegallalang-rice-walk", serviceId: "svc-tegallalang-rice-walk", profileVendorId: "bali-heritage-studio", name: "Tegallalang rice terrace walk", category: "Activities", location: "Tegallalang, Bali, Indonesia", status: "Active", description: "Hosted rice terrace walk with viewpoint stops; schedule and rate to confirm." },
+  { id: "uluwatu-sunset-visit", serviceId: "svc-uluwatu-sunset-visit", profileVendorId: "bali-heritage-studio", name: "Uluwatu sunset visit", category: "Activities", location: "Uluwatu, Bali, Indonesia", status: "Active", description: "Late-day cultural and coastal visit; admission, guide and rate to confirm." },
+  { id: "penida-coastal-day", serviceId: "svc-penida-coastal-day", profileVendorId: "penida-coast-experiences", name: "Nusa Penida coastal day", category: "Activities", location: "Nusa Penida, Bali, Indonesia", status: "Active", description: "Coastal stops with boat and road segments; supplier quote to confirm." },
+  { id: "denpasar-flight-coordination", serviceId: "svc-denpasar-flight-coordination", profileVendorId: "bali-ground-desk", name: "Denpasar flight coordination", category: "Flights", location: "Denpasar, Bali, Indonesia", status: "Active", description: "Arrival and departure timing coordination; flights and fees to confirm." },
+  { id: "bali-arrival-assistance", serviceId: "svc-bali-arrival-assistance", profileVendorId: "bali-ground-desk", name: "Bali arrival assistance", category: "Visa", location: "Denpasar, Bali, Indonesia", status: "Active", description: "Traveler document and arrival handoff support; eligibility and fees to confirm." },
+  { id: "bali-ground-coordination", serviceId: "svc-bali-ground-coordination", profileVendorId: "bali-ground-desk", name: "Bali ground coordination", category: "DMC/Ground handling", location: "Bali, Indonesia", status: "Active", description: "Hotel, transfer and activity handoffs across a Bali itinerary; operating scope and fee to confirm." },
+  {
     id: "munnar-trek",
     serviceId: "svc-trek-munnar",
     profileVendorId: "trailmakers",
@@ -186,6 +218,16 @@ export const VENDOR_SERVICE_CONNECTIONS: VendorServiceConnection[] = [
   { id: "transfer-trailmakers", vendorId: "trailmakers", serviceId: "kochi-transfer", supplierType: "DMC", productsCovered: "Sedan · Tempo", rateCardId: "rc-air-2026", rateCardName: "Kerala transfers 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
   { id: "transfer-wanderlust", vendorId: "wanderlust", serviceId: "kochi-transfer", supplierType: "DMC", productsCovered: "Sedan · SUV", rateCardId: "rc-air-2026", rateCardName: "Kochi ground rates", validity: "01 Jan–31 Dec 26", status: "Active" },
   { id: "transfer-spice", vendorId: "spice-route", serviceId: "kochi-transfer", supplierType: "Wholesaler", productsCovered: "Sedan", rateCardId: "rc-air-2026", rateCardName: "Airport FIT transfers", validity: "01 Jan–31 Dec 26", status: "Active" },
+  { id: "bali-airport-island-wheels", vendorId: "island-wheels-bali", serviceId: "bali-airport-transfer", supplierType: "Direct supplier", productsCovered: "Private airport pickup and drop-off", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "ubud-day-car-island-wheels", vendorId: "island-wheels-bali", serviceId: "ubud-private-day-car", supplierType: "Direct supplier", productsCovered: "Private day car with driver", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "ubud-suites-stay-collective", vendorId: "ubud-stay-collective", serviceId: "ubud-garden-suites", supplierType: "Direct supplier", productsCovered: "Garden suites", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "seminyak-stay-collective", vendorId: "ubud-stay-collective", serviceId: "seminyak-coastal-stay", supplierType: "Direct supplier", productsCovered: "Coastal and family rooms", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "rice-walk-heritage", vendorId: "bali-heritage-studio", serviceId: "tegallalang-rice-walk", supplierType: "Direct supplier", productsCovered: "Hosted terrace walk", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "uluwatu-heritage", vendorId: "bali-heritage-studio", serviceId: "uluwatu-sunset-visit", supplierType: "Direct supplier", productsCovered: "Sunset cultural visit", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "penida-coast-day", vendorId: "penida-coast-experiences", serviceId: "penida-coastal-day", supplierType: "Direct supplier", productsCovered: "Boat and coastal day", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "denpasar-flights-ground-desk", vendorId: "bali-ground-desk", serviceId: "denpasar-flight-coordination", supplierType: "Direct supplier", productsCovered: "Flight timing and handoff", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "bali-arrival-ground-desk", vendorId: "bali-ground-desk", serviceId: "bali-arrival-assistance", supplierType: "Direct supplier", productsCovered: "Arrival document support", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
+  { id: "bali-coordination-ground-desk", vendorId: "bali-ground-desk", serviceId: "bali-ground-coordination", supplierType: "Direct supplier", productsCovered: "Multi-service handoffs", rateCardId: "", rateCardName: "Rate to confirm", validity: "On request", status: "Draft" },
   { id: "trek-trailmakers", vendorId: "trailmakers", serviceId: "munnar-trek", supplierType: "Direct supplier", productsCovered: "Half day · max 12", rateCardId: "rc-acc-2627", rateCardName: "Activity tariff 2026", validity: "01 Jan–31 Dec 26", status: "Active" },
   { id: "trek-summit", vendorId: "summit", serviceId: "munnar-trek", supplierType: "Direct supplier", productsCovered: "Half day · max 10", rateCardId: "rc-acc-2526", rateCardName: "Guided trek rates", validity: "01 Oct 26–31 Mar 27", status: "Active" },
   { id: "trek-spice", vendorId: "spice-route", serviceId: "munnar-trek", supplierType: "DMC", productsCovered: "Private groups", rateCardId: "rc-hill-2627", rateCardName: "Munnar experiences", validity: "01 Oct 26–31 Mar 27", status: "Active" },
@@ -202,7 +244,6 @@ export const VENDOR_SERVICE_CONNECTIONS: VendorServiceConnection[] = [
 
 export function directoryCategoryForServiceType(type: ServiceType): DirectoryCategory | null {
   if (type === "Activity") return "Activities";
-  if (type === "DMC/Ground handling") return null;
   return type;
 }
 

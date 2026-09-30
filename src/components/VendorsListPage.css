@@ -322,11 +322,11 @@
 }
 
 .vendors-sheet--vendors {
-  --ven-cols: var(--ven-lead) minmax(270px, 1.2fr) minmax(300px, 1.25fr) minmax(190px, 0.85fr) 126px 72px;
+  --ven-cols: var(--ven-lead) minmax(270px, 1.25fr) minmax(160px, 0.7fr) minmax(300px, 1.35fr) 72px;
 }
 
 .vendors-sheet--services {
-  --ven-cols: var(--ven-lead) minmax(280px, 1.45fr) minmax(160px, 0.8fr) minmax(180px, 0.9fr) 100px 140px 72px;
+  --ven-cols: var(--ven-lead) minmax(280px, 1.45fr) minmax(160px, 0.8fr) minmax(180px, 0.9fr) 100px 72px;
 }
 
 .vendors-sheet .pt-sheet__row {
@@ -336,11 +336,11 @@
 }
 
 .vendors-sheet--vendors .pt-sheet__row {
-  min-width: 1000px;
+  min-width: 880px;
 }
 
 .vendors-sheet--services .pt-sheet__row {
-  min-width: 1012px;
+  min-width: 900px;
 }
 
 .directory-link:focus-visible {

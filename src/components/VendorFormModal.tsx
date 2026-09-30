@@ -1,10 +1,9 @@
 import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
-import { Button, IconButton, StatusChip } from "@paryatech/design-system";
+import { Button, IconButton } from "@paryatech/design-system";
 import {
   INTERNAL_OWNERS,
   SERVICE_CATEGORIES,
   VENDOR_COUNTRIES,
-  VENDOR_STATUS_OPTIONS,
   type Vendor,
 } from "../data/vendors";
 import { ForbiddenError, type OrgRole } from "../permissions";
@@ -217,7 +216,7 @@ export function VendorFormModal({
             </div>
           ) : null}
 
-          <ProfileSection title="Identity" description="Update the vendor’s name, status, and service identity.">
+          <ProfileSection title="Identity" description="Update the vendor’s name and service identity.">
             <div className="pt-profile-grid pt-profile-grid--2">
               <ProfileField label="Vendor or business name *" htmlFor="vf-name">
                 <input
@@ -234,24 +233,12 @@ export function VendorFormModal({
                   <input id="vf-code" className="pt-mf__i pt-mf__i--readonly pt-mono" value={vendor.code} readOnly />
                 </ProfileField>
               ) : null}
-              <ProfileField label="Status" htmlFor="vf-status">
-                <select
-                  id="vf-status"
-                  className="pt-mf__i"
-                  value={values.status}
-                  onChange={(event) => setField("status", event.target.value as VendorFormValues["status"])}
-                >
-                  {VENDOR_STATUS_OPTIONS.filter((status) => status !== "Archived" || orgRole === "Owner").map((status) => (
-                    <option key={status}>{status}</option>
-                  ))}
-                </select>
-              </ProfileField>
               <ProfileField label="Labels" htmlFor="vf-labels">
                 <input id="vf-labels" className="pt-mf__i" value={values.labels} onChange={(event) => setField("labels", event.target.value)} placeholder="Preferred, premium, Kerala" />
               </ProfileField>
             </div>
             <fieldset className="pt-mf pt-mf--wide">
-              <legend className="pt-mf__l">Service categories *</legend>
+              <legend className="pt-mf__l">Service categories</legend>
               <div className="pt-mf__chips">
                 {SERVICE_CATEGORIES.map((category) => (
                   <button
@@ -283,18 +270,18 @@ export function VendorFormModal({
                 <input id="vf-whatsapp" className="pt-mf__i" value={values.whatsapp} onChange={(event) => setField("whatsapp", event.target.value)} placeholder="+91 98470 10001" inputMode="tel" />
               </ProfileField>
             </div>
-            <p className="pt-profile-section__note">At least one of phone or email is required.</p>
+            <p className="pt-profile-section__note">Add a phone or email when contact details are available.</p>
           </ProfileSection>
 
           <ProfileSection title="Location" description="Maintain the vendor’s operating and mailing address.">
             <div className="pt-profile-grid pt-profile-grid--3">
-              <ProfileField label="City *" htmlFor="vf-city">
+              <ProfileField label="City" htmlFor="vf-city">
                 <input id="vf-city" className="pt-mf__i" value={values.city} onChange={(event) => setField("city", event.target.value)} placeholder="Kochi" autoComplete="address-level2" />
               </ProfileField>
               <ProfileField label="State or region" htmlFor="vf-state">
                 <input id="vf-state" className="pt-mf__i" value={values.state} onChange={(event) => setField("state", event.target.value)} placeholder="Kerala" autoComplete="address-level1" />
               </ProfileField>
-              <ProfileField label="Country *" htmlFor="vf-country">
+              <ProfileField label="Country" htmlFor="vf-country">
                 <select id="vf-country" className="pt-mf__i" value={values.country} onChange={(event) => setField("country", event.target.value)}>
                   {VENDOR_COUNTRIES.map((country) => <option key={country}>{country}</option>)}
                 </select>
@@ -313,7 +300,7 @@ export function VendorFormModal({
               <ProfileField label="Legal business name" htmlFor="vf-legal">
                 <input id="vf-legal" className="pt-mf__i" value={values.legalName} onChange={(event) => setField("legalName", event.target.value)} placeholder="Name on contracts and invoices" />
               </ProfileField>
-              <ProfileField label="Internal owner *" htmlFor="vf-owner">
+              <ProfileField label="Internal owner" htmlFor="vf-owner">
                 <select id="vf-owner" className="pt-mf__i" value={values.owner} onChange={(event) => setField("owner", event.target.value)}>
                   {INTERNAL_OWNERS.map((owner) => <option key={owner.name}>{owner.name}</option>)}
                 </select>
@@ -377,11 +364,10 @@ export function VendorFormModal({
                   <li key={match.id} className="pt-dup__item">
                     <div className="pt-dup__main">
                       <strong>{match.name}</strong>
-                      <span className="pt-dup__meta">{match.location} · {match.status}</span>
+                      <span className="pt-dup__meta">{match.location}</span>
                       <span className="pt-dup__reasons">{reasons.join(" · ")}</span>
                     </div>
                     <div className="pt-dup__side">
-                      <StatusChip tone={match.status === "Active" ? "done" : "open"}>{match.status}</StatusChip>
                       <Button variant="brand" size="sm" type="button" onClick={() => { onClose(); onViewExisting(match.id); }}>
                         View existing vendor
                       </Button>

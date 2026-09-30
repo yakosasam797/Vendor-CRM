@@ -142,14 +142,7 @@ export function NewVendorPage({
 
   const phone = values.phone.trim() ? `${values.phoneCode} ${values.phone.trim()}` : "";
   const previewCode = makeVendorCode(values.name || "New vendor", vendors);
-  const canSubmit = Boolean(
-    values.name.trim() &&
-      values.categories.length &&
-      values.city.trim() &&
-      values.country.trim() &&
-      values.owner.trim() &&
-      (values.phone.trim() || values.email.trim()),
-  );
+  const canSubmit = Boolean(values.name.trim());
   const duplicates = useMemo(
     () => findDuplicateVendors(vendors, { name: values.name, phone, email: values.email }),
     [phone, values.email, values.name, vendors],
@@ -198,7 +191,7 @@ export function NewVendorPage({
         ? `${values.whatsappCode} ${values.whatsapp.trim()}`
         : "",
       owner: values.owner,
-      status: "Draft",
+      status: "Active",
     };
     const nextErrors = validateVendorForm(coreValues);
     setErrors(nextErrors);
@@ -244,7 +237,7 @@ export function NewVendorPage({
 
         {errors.length || submitError ? (
           <div className="new-vendor-errors" role="alert" aria-live="polite">
-            <strong>Complete the required details</strong>
+            <strong>Check the vendor details</strong>
             {submitError ? <p>{submitError}</p> : null}
             {errors.map((error) => <p key={error}>{error}</p>)}
           </div>
@@ -267,7 +260,7 @@ export function NewVendorPage({
           </div>
 
           <fieldset className="new-vendor-role-field">
-            <legend>Service categories *</legend>
+            <legend>Service categories</legend>
             <div className="new-vendor-role-list">
               {SERVICE_CATEGORIES.map((category) => {
                 const selected = values.categories.includes(category);
@@ -358,12 +351,11 @@ export function NewVendorPage({
 
         <FormSection id="new-vendor-location" title="Location" description="Record the vendor’s operating and mailing location." icon={<IconPin size={18} />}>
           <div className="new-vendor-grid new-vendor-grid--3">
-            <Field label="City *">
+            <Field label="City">
               <span className="new-vendor-control new-vendor-control--suggestions">
                 <span className="new-vendor-control__icon"><IconPin size={17} /></span>
                 <input
                   name="city"
-                  required
                   value={values.city}
                   onChange={(event) => {
                     setField("city", event.target.value);
@@ -408,10 +400,10 @@ export function NewVendorPage({
                 <input name="state" value={values.state} onChange={(event) => setField("state", event.target.value)} placeholder="Kerala…" autoComplete="address-level1" />
               </span>
             </Field>
-            <Field label="Country *">
+            <Field label="Country">
               <span className="new-vendor-control">
                 <span className="new-vendor-control__icon"><IconGlobe size={17} /></span>
-                <select name="country" required value={values.country} onChange={(event) => setField("country", event.target.value)} autoComplete="country-name">
+                <select name="country" value={values.country} onChange={(event) => setField("country", event.target.value)} autoComplete="country-name">
                   {VENDOR_COUNTRIES.map((country) => <option key={country}>{country}</option>)}
                 </select>
               </span>
@@ -432,10 +424,10 @@ export function NewVendorPage({
             <Field label="Legal business name">
               <input name="legalName" value={values.legalName} onChange={(event) => setField("legalName", event.target.value)} placeholder="Name shown on contracts and invoices…" autoComplete="organization" />
             </Field>
-            <Field label="Internal owner *">
+            <Field label="Internal owner">
               <span className="new-vendor-control">
                 <span className="new-vendor-control__icon"><IconUser size={17} /></span>
-                <select name="owner" required value={values.owner} onChange={(event) => setField("owner", event.target.value)}>
+                <select name="owner" value={values.owner} onChange={(event) => setField("owner", event.target.value)}>
                   {INTERNAL_OWNERS.map((owner) => <option key={owner.name}>{owner.name}</option>)}
                 </select>
               </span>
@@ -463,7 +455,7 @@ export function NewVendorPage({
         <footer className="new-vendor-actions">
           <div>
             <Button variant="ghost" size="sm" type="button" onClick={onCancel}>Cancel</Button>
-            <Button variant="primary" size="sm" type="submit" disabled={!canSubmit}>Create draft vendor</Button>
+            <Button variant="primary" size="sm" type="submit" disabled={!canSubmit}>Add vendor</Button>
           </div>
         </footer>
       </form>

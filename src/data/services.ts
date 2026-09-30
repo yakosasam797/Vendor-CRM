@@ -108,11 +108,11 @@ function directoryService(input: {
       duration: input.type === "Accommodation" ? "Overnight or multi-night" : "Service based",
       ageSuitability: "All ages",
       difficulty: "Not applicable",
-      seasonality: "Available according to the linked rate-card validity.",
+      seasonality: input.rateCards.length ? "Available according to the linked rate-card validity." : "Subject to supplier availability and a confirmed quote.",
       searchText: `${input.name} ${input.location} ${input.type}`,
       exclusions: ["Items not listed in the confirmed rate card", "Personal expenses"],
     },
-    inclusions: ["Products listed on the linked rate card", "Vendor confirmation and support"],
+    inclusions: input.rateCards.length ? ["Products listed on the linked rate card", "Vendor confirmation and support"] : ["Service scope as confirmed by the supplier"],
     rateCardCount: input.rateCards.length,
     status: "active",
     imageUrl,
@@ -125,6 +125,10 @@ function directoryService(input: {
       usedInBanner: index === 0,
     })),
   };
+}
+
+function baliService(input: { id: string; vendorId: string; name: string; type: ServiceType; location: string; details: string; about: string; imageId: string }): VendorService {
+  return directoryService({ ...input, pricingLabel: "Supplier quote pending", rateCards: [] });
 }
 
 export const VENDOR_SERVICES: VendorService[] = [
@@ -193,6 +197,62 @@ export const VENDOR_SERVICES: VendorService[] = [
     rateCards: [{ id: "rc-air-2026", name: "Air ticketing fees · 2026" }],
     imageId: "photo-1436491865332-7a61a109cc05",
   }),
+  {
+    ...directoryService({
+      id: "svc-transfer-dps",
+      vendorId: "island-wheels-bali",
+      name: "Denpasar airport transfer",
+      type: "Transport",
+      location: "Denpasar, Bali, Indonesia",
+      details: "Private airport pickup or drop-off · rate to confirm",
+      about: "A Bali airport transfer profile for DPS arrivals and departures. Confirm the hotel route, passenger count, luggage, vehicle and supplier quote before pricing a proposal.",
+      pricingLabel: "Supplier quote pending",
+      rateCards: [],
+      imageId: "photo-1449965408869-eaa3f722e40d",
+    }),
+    inclusions: ["Private vehicle and driver as confirmed", "Airport pickup or drop-off as booked"],
+    profile: {
+      category: "Private airport transfer",
+      duration: "Route based",
+      ageSuitability: "All ages",
+      difficulty: "Not applicable",
+      seasonality: "Subject to supplier availability and a confirmed quote.",
+      searchText: "Bali Denpasar DPS airport transfer private pickup drop off transport",
+      exclusions: ["Unconfirmed waiting time", "Unscheduled route changes", "Items outside the supplier quote"],
+    },
+  },
+  {
+    ...directoryService({
+      id: "svc-ubud-day-car",
+      vendorId: "island-wheels-bali",
+      name: "Ubud private day car",
+      type: "Transport",
+      location: "Ubud, Bali, Indonesia",
+      details: "Private vehicle with driver · rate to confirm",
+      about: "A private day car for Ubud and nearby stops. Confirm the route, hours, vehicle capacity and supplier quote before pricing a proposal.",
+      pricingLabel: "Supplier quote pending",
+      rateCards: [],
+      imageId: "photo-1449965408869-eaa3f722e40d",
+    }),
+    inclusions: ["Private vehicle and driver as confirmed", "Planned route as agreed with supplier"],
+    profile: {
+      category: "Private day car",
+      duration: "Day based",
+      ageSuitability: "All ages",
+      difficulty: "Not applicable",
+      seasonality: "Subject to supplier availability and a confirmed quote.",
+      searchText: "Ubud Bali private day car driver vehicle transport",
+      exclusions: ["Unconfirmed overtime", "Unscheduled route changes", "Items outside the supplier quote"],
+    },
+  },
+  baliService({ id: "svc-ubud-garden-suites", vendorId: "ubud-stay-collective", name: "Ubud Garden Suites", type: "Accommodation", location: "Ubud, Bali, Indonesia", details: "Garden suites · breakfast option", about: "An inland Bali stay for multi-day itineraries. Confirm room category, occupancy, dates and meal plan before pricing.", imageId: "photo-1566073771259-6a8506099945" }),
+  baliService({ id: "svc-seminyak-coastal-stay", vendorId: "ubud-stay-collective", name: "Seminyak Coastal Stay", type: "Accommodation", location: "Seminyak, Bali, Indonesia", details: "Coastal rooms · family option", about: "A coastal stay for the first or final nights of a Bali trip. Confirm room category, occupancy and dates before pricing.", imageId: "photo-1571896349842-33c89424de2d" }),
+  baliService({ id: "svc-tegallalang-rice-walk", vendorId: "bali-heritage-studio", name: "Tegallalang rice terrace walk", type: "Activity", location: "Tegallalang, Bali, Indonesia", details: "Hosted walk · viewpoint stop", about: "A hosted rice terrace walk with viewpoint time. Confirm guide, access and schedule with the supplier.", imageId: "photo-1544735716-392fe2489ffa" }),
+  baliService({ id: "svc-uluwatu-sunset-visit", vendorId: "bali-heritage-studio", name: "Uluwatu sunset visit", type: "Activity", location: "Uluwatu, Bali, Indonesia", details: "Cultural visit · sunset timing", about: "A late-day coastal and cultural visit. Confirm admission, guide and transport before pricing.", imageId: "photo-1506905925346-21bda4d32df4" }),
+  baliService({ id: "svc-penida-coastal-day", vendorId: "penida-coast-experiences", name: "Nusa Penida coastal day", type: "Activity", location: "Nusa Penida, Bali, Indonesia", details: "Island day · boat and road segments", about: "A coastal island day combining boat coordination and local road transfers. Confirm operating conditions and supplier scope.", imageId: "photo-1469854523086-cc02fe5d8800" }),
+  baliService({ id: "svc-denpasar-flight-coordination", vendorId: "bali-ground-desk", name: "Denpasar flight coordination", type: "Flights", location: "Denpasar, Bali, Indonesia", details: "Arrival and return timing", about: "Coordinates flight timings with airport pickups and trip handoffs. Ticketing and supplier fees require separate confirmation.", imageId: "photo-1436491865332-7a61a109cc05" }),
+  baliService({ id: "svc-bali-arrival-assistance", vendorId: "bali-ground-desk", name: "Bali arrival assistance", type: "Visa", location: "Denpasar, Bali, Indonesia", details: "Document and arrival support", about: "Planning support for traveler documents and arrival handoff. Confirm current eligibility and requirements for each traveler.", imageId: "photo-1436491865332-7a61a109cc05" }),
+  baliService({ id: "svc-bali-ground-coordination", vendorId: "bali-ground-desk", name: "Bali ground coordination", type: "DMC/Ground handling", location: "Bali, Indonesia", details: "Hotel, transfer and activity handoffs", about: "One operations contact for multi-stop Bali trips. Confirm the scope of supplier coordination and any handling fee.", imageId: "photo-1449965408869-eaa3f722e40d" }),
   {
     id: "svc-lake",
     vendorId: "exhosp",
