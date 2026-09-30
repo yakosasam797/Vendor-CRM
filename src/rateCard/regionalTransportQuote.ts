@@ -35,13 +35,13 @@ export function calculateRegionalQuote(tariff: RegionalTransportTariff, input: R
   if (!fare || !vehicle || !season) blockers.push("Select a valid supplier fare and vehicle.");
   if (fare && tariff.enabledMethods && !tariff.enabledMethods.includes(fare.service)) blockers.push("This fare method is not offered by the supplier.");
   if (!input.pickup.trim() || !input.drop.trim()) blockers.push("Enter the customer pickup and final drop.");
-  if (!input.date || !season || input.date < season.start || input.date > season.end) blockers.push("Travel date is outside the selected fare season.");
-  if (input.date && tariff.seasons.filter((item) => input.date >= item.start && input.date <= item.end).length > 1) blockers.push("Multiple seasons cover this date; resolve the overlap before quoting.");
+  if (!input.date || !season || input.date < season.start || input.date > season.end) blockers.push("Travel date is outside the rate card validity.");
+  if (input.date && tariff.seasons.filter((item) => input.date >= item.start && input.date <= item.end).length > 1) blockers.push("Overlapping validity ranges need review before quoting.");
   const days = Math.max(1, input.billableDays, fare?.minDays || 1);
   if (input.date && season && days > 1 && fare?.crossSeasonPolicy !== "pickup") {
     const end = new Date(`${input.date}T00:00:00Z`);
     end.setUTCDate(end.getUTCDate() + days - 1);
-    if (end.toISOString().slice(0, 10) > season.end) blockers.push("Trip crosses the fare season boundary; price the next season separately.");
+    if (end.toISOString().slice(0, 10) > season.end) blockers.push("Trip extends beyond this rate card's validity; confirm the remaining dates separately.");
   }
   if (fare?.routeId && fare.routeId !== input.routeId) blockers.push("Select the defined route for this fare.");
   if (fare?.allowedRouteIds?.length && !fare.allowedRouteIds.includes(input.routeId || "")) blockers.push("Selected route is outside this saved tariff.");
@@ -113,33 +113,18 @@ export function calculateRegionalQuote(tariff: RegionalTransportTariff, input: R
   const fixedExtras = charges.filter((charge) => charge.treatment === "fixed" && !(charge.paidBy === "customer" && charge.collectedBy !== "agency")).reduce((total, charge) => total + chargeValue(charge, input, days), 0);
   const actuals = charges.filter((charge) => charge.treatment === "actuals").map((charge) => `${charge.label} · ${charge.paidBy} pays ${charge.collectedBy}`);
   const directPayments = charges.filter((charge) => charge.treatment === "fixed" && charge.paidBy === "customer" && charge.collectedBy !== "agency").map((charge) => charge.label);
-  const adjustments = (tariff.adjustments || []).filter((rule) => fare && (!rule.seasonIds?.length || rule.seasonIds.includes(fare.seasonId)) && (!rule.methods?.length || rule.methods.includes(fare.service)) && (!rule.fareIds.length || rule.fareIds.includes(fare.id)) && (rule.trigger === "weekend" ? [0, 6].includes(new Date(`${input.date}T00:00:00Z`).getUTCDay()) : rule.dates.includes(input.date)));
+  const adjustments = (tariff.adjustments || []).filter((rule) => fare && (!rule.seasonIds?.length || rule.seasonIds.includes(fare.seasonId)) && (!rule.methods?.length || rule.methods.includes(fare.service)) && (!rule.vehicleIds?.length || rule.vehicleIds.includes(fare.vehicleId)) && (!rule.fareIds.length || rule.fareIds.includes(fare.id)) && (rule.startDate ? input.date >= rule.startDate && input.date <= (rule.endDate || rule.startDate) : rule.trigger === "weekend" ? [0, 6].includes(new Date(`${input.date}T00:00:00Z`).getUTCDay()) : rule.dates.includes(input.date)));
   if (adjustments.some((rule) => rule.treatment === "unavailable")) blockers.push("Selected fare is unavailable on this date.");
   const priced = adjustments.filter((rule) => rule.treatment === "additional");
   const replacements = priced.filter((rule) => rule.stacking === "replace");
   if (replacements.length > 1) blockers.push("Several replacement adjustments match; choose a single applicable rule.");
   const replacement = replacements[0];
-  const adjustmentCharge = (replacement ? replacement.amount : priced.reduce((sum, rule) => sum + rule.amount, 0)) * input.vehicles;
+  const adjustmentValue = (rule: (typeof priced)[number]) => rule.valueType === "replacement" ? rule.amount * input.vehicles - (base || 0) : rule.valueType === "percent" ? (base || 0) * rule.amount / 100 : rule.amount * input.vehicles;
+  const adjustmentCharge = replacement ? adjustmentValue(replacement) : priced.reduce((sum, rule) => sum + adjustmentValue(rule), 0);
   const missingNumber = base == null || extraKm > 0 && fare?.extraKm == null || extraHours > 0 && fare?.extraHour == null || waitingMinutes > 0 && (!fare?.timeIncrementMinutes || fare.waitingRatePerHour == null) || extraStops > 0 && fare?.extraStop == null || extraDays > 0 && fare?.extraDayRate == null || replacements.length > 1 || charges.some((charge) => charge.treatment === "unconfirmed" || charge.treatment === "fixed" && charge.amount == null);
   const knownSubtotal = missingNumber ? null : base! + overage + driverAllowance + waitingCharge + stopCharge + extensionCharge + fixedExtras + adjustmentCharge;
-  const taxProfile = tariff.taxProfiles?.find((profile) => profile.id === fare?.taxProfileId);
-  const fareTaxReady = tariff.taxProfiles === undefined || !!taxProfile?.approved;
-  if (!fareTaxReady) blockers.push("Select an approved tax profile for this fare.");
-  const supplierCharges = charges.filter((charge) => charge.treatment === "fixed" && !(charge.paidBy === "customer" && charge.collectedBy !== "agency"));
-  const chargeTaxReady = tariff.taxProfiles === undefined || supplierCharges.every((charge) => !!tariff.taxProfiles?.find((profile) => profile.id === charge.taxProfileId && profile.approved));
-  if (!chargeTaxReady) blockers.push("Select an approved tax profile for each fixed charge.");
-  const fareSubtotal = knownSubtotal == null ? null : knownSubtotal - fixedExtras;
-  const fareTax = fareSubtotal == null ? 0 : fare?.taxPresentation === "included" ? fareSubtotal - fareSubtotal / (1 + (taxProfile?.rate || 0) / 100) : fareSubtotal * (taxProfile?.rate || 0) / 100;
-  const chargeTax = supplierCharges.reduce((sum, charge) => {
-    const rate = tariff.taxProfiles?.find((profile) => profile.id === charge.taxProfileId)?.rate || 0;
-    const value = chargeValue(charge, input, days);
-    return sum + (charge.taxPresentation === "included" ? value - value / (1 + rate / 100) : value * rate / 100);
-  }, 0);
-  const taxAmount = knownSubtotal == null || !fareTaxReady || !chargeTaxReady ? null : fareTax + chargeTax;
-  const supplierPayable = taxAmount == null || knownSubtotal == null ? null : knownSubtotal + (fare?.taxPresentation === "included" ? 0 : fareTax) + supplierCharges.reduce((sum, charge) => {
-    if (charge.taxPresentation === "included") return sum;
-    const rate = tariff.taxProfiles?.find((profile) => profile.id === charge.taxProfileId)?.rate || 0;
-    return sum + chargeValue(charge, input, days) * rate / 100;
-  }, 0);
+  if (tariff.taxPresentation === "additional") blockers.push("Confirm the excluded tax amount in Finance & docs before finalizing the supplier payable.");
+  const taxAmount = null;
+  const supplierPayable = tariff.taxPresentation === "included" ? knownSubtotal : null;
   return { fare, vehicle, season, minimumVehicles, billableKm, extraKm, extraHours, base, overage, driverAllowance, waitingCharge, stopCharge, extensionCharge, fixedExtras, adjustmentCharge, knownSubtotal, taxAmount, supplierPayable, blockers, actuals, directPayments, quoteBasis: blockers.length ? "needs-review" : actuals.length ? "base-plus-actuals" : "fixed" };
 }

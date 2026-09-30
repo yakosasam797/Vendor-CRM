@@ -65,6 +65,18 @@ export function saveCreatedDirectoryServices(services: DirectoryService[]) {
 
 export const DIRECTORY_SERVICES: DirectoryService[] = [
   {
+    id: "kochi-local-transfers", serviceId: "svc-kochi-local", profileVendorId: "bluewave",
+    name: "Kochi airport and local transport", category: "Transport", location: "Kochi",
+    description: "Private airport transfers and local hire within the Kochi operating area.",
+    attributes: [{ label: "Service scope", value: "Fixed transfer, local package" }],
+  },
+  {
+    id: "kerala-outstation-hire", serviceId: "svc-kerala-outstation", profileVendorId: "trailmakers",
+    name: "Kerala outstation transport", category: "Transport", location: "Kerala",
+    description: "Private outstation vehicles hired by kilometre or day from Kochi.",
+    attributes: [{ label: "Service scope", value: "Outstation per km, daily hire" }],
+  },
+  {
     id: "kerala-private-hire",
     serviceId: "svc-kerala-private-hire",
     profileVendorId: "bluewave",
@@ -165,6 +177,8 @@ export const DIRECTORY_SERVICES: DirectoryService[] = [
 ];
 
 export const VENDOR_SERVICE_CONNECTIONS: VendorServiceConnection[] = [
+  { id: "kochi-local-bluewave", vendorId: "bluewave", serviceId: "kochi-local-transfers", supplierType: "Direct supplier", productsCovered: "Fixed transfer · Local package", rateCardId: "rc-kochi-local-transfers", rateCardName: "Kochi airport and local transfers", validity: "01 Oct 26–31 Mar 27" },
+  { id: "kerala-km-trailmakers", vendorId: "trailmakers", serviceId: "kerala-outstation-hire", supplierType: "Direct supplier", productsCovered: "Outstation per km · Daily hire", rateCardId: "rc-kerala-km-tariff", rateCardName: "Kerala outstation kilometre tariff", validity: "01 Oct 26–31 Mar 27" },
   { id: "kerala-hire-bluewave", vendorId: "bluewave", serviceId: "kerala-private-hire", supplierType: "Direct supplier", productsCovered: "Sedan · MUV · Van · Coach", rateCardId: "rc-kerala-private-hire", rateCardName: "Kerala private hire rates", validity: "01 Oct 26–31 Mar 27" },
   { id: "taj-exotica-exhosp", vendorId: "exhosp", serviceId: "taj-exotica", supplierType: "Direct supplier", productsCovered: "12 room types", rateCardId: "rc-acc-2627", rateCardName: "Accommodation tariff 2026–27", validity: "01 Apr 26–31 Mar 27" },
   { id: "taj-exotica-wanderlust", vendorId: "wanderlust", serviceId: "taj-exotica", supplierType: "DMC", productsCovered: "8 room types", rateCardId: "rc-acc-2526", rateCardName: "Taj Goa contracted rates", validity: "01 Oct 26–30 Sep 27" },

@@ -35,7 +35,7 @@ test("capacity, route and season boundaries block use of an otherwise priced far
   const result = calculateRegionalQuote(tariff, { ...input, fareId: "fixed", pickup: "Munnar", travellers: 7, vehicles: 1, date: "2026-10-31", billableDays: 2 });
   assert.match(result.blockers.join(" "), /Fixed fare covers Kochi to Alleppey/);
   assert.match(result.blockers.join(" "), /do not fit/);
-  assert.match(result.blockers.join(" "), /season boundary/);
+  assert.match(result.blockers.join(" "), /rate card's validity/);
 });
 
 test("charges collected directly from the customer stay outside supplier subtotal", () => {
@@ -91,15 +91,15 @@ test("scoped charges do not leak to another route and unknown mandatory charges 
   assert.equal(unknown.knownSubtotal, null);
 });
 
-test("tax profiles are resolved per fare and fixed charge", () => {
-  const configured = { ...tariff, taxProfiles: [{ id: "approved", name: "Approved supplier profile", rate: 10, approved: true }], fares: tariff.fares.map((fare) => ({ ...fare, taxProfileId: "approved", taxPresentation: "additional" })), charges: [{ id: "parking", label: "Parking", treatment: "fixed", amount: 100, unit: "transfer", paidBy: "agency", collectedBy: "supplier", taxProfileId: "approved", taxPresentation: "additional" }] };
-  const result = calculateRegionalQuote(configured, input);
-  assert.equal(result.knownSubtotal, 3800);
-  assert.equal(result.taxAmount, 380);
-  assert.equal(result.supplierPayable, 4180);
-  const pending = calculateRegionalQuote({ ...configured, taxProfiles: [{ ...configured.taxProfiles[0], approved: false }] }, input);
-  assert.equal(pending.supplierPayable, null);
-  assert.match(pending.blockers.join(" "), /approved tax profile/);
+test("card-level tax treatment does not invent a tax amount", () => {
+  const included = calculateRegionalQuote(tariff, input);
+  assert.equal(included.knownSubtotal, 3700);
+  assert.equal(included.taxAmount, null);
+  assert.equal(included.supplierPayable, 3700);
+  const excluded = calculateRegionalQuote({ ...tariff, taxPresentation: "additional" }, input);
+  assert.equal(excluded.knownSubtotal, 3700);
+  assert.equal(excluded.supplierPayable, null);
+  assert.match(excluded.blockers.join(" "), /Finance & docs/);
 });
 
 test("night charges need a pickup time and date rules are scoped to their season", () => {
@@ -116,5 +116,23 @@ test("unsupported routes and overlapping seasons are held for review", () => {
   const configured = { ...tariff, routes: [{ id: "circuit", name: "Circuit", from: "Kochi", to: "Kochi", areaId: "kerala" }], fares: [{ ...tariff.fares[2], allowedRouteIds: ["circuit"] }], seasons: [...tariff.seasons, { id: "overlap", name: "Overlap", start: "2026-10-10", end: "2026-10-20" }] };
   const result = calculateRegionalQuote(configured, { ...input, fareId: "out", routeId: "other" });
   assert.match(result.blockers.join(" "), /outside this saved tariff/);
-  assert.match(result.blockers.join(" "), /Multiple seasons cover/);
+  assert.match(result.blockers.join(" "), /Overlapping validity ranges/);
+});
+
+test("enabled fare methods block a supplier method the card does not offer", () => {
+  const focused = { ...tariff, enabledMethods: ["one-way", "local"] };
+  const result = calculateRegionalQuote(focused, { ...input, fareId: "out" });
+  assert.match(result.blockers.join(" "), /not offered by the supplier/);
+});
+
+test("special-date adjustments respect range, vehicle and value type", () => {
+  const baseRule = { id: "holiday", name: "Holiday", trigger: "dates", dates: [], startDate: "2026-10-10", endDate: "2026-10-14", fareIds: [], methods: ["local"], vehicleIds: ["suv"], treatment: "additional", stacking: "combine" };
+  const percent = calculateRegionalQuote({ ...tariff, adjustments: [{ ...baseRule, amount: 10, valueType: "percent" }] }, input);
+  assert.equal(percent.adjustmentCharge, 300);
+  const replacement = calculateRegionalQuote({ ...tariff, adjustments: [{ ...baseRule, amount: 2500, valueType: "replacement" }] }, input);
+  assert.equal(replacement.adjustmentCharge, -500);
+  const outside = calculateRegionalQuote({ ...tariff, adjustments: [{ ...baseRule, amount: 500, valueType: "fixed" }] }, { ...input, date: "2026-10-15" });
+  assert.equal(outside.adjustmentCharge, 0);
+  const otherVehicle = calculateRegionalQuote({ ...tariff, adjustments: [{ ...baseRule, vehicleIds: ["van"], amount: 500, valueType: "fixed" }] }, input);
+  assert.equal(otherVehicle.adjustmentCharge, 0);
 });

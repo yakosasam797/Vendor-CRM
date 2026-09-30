@@ -111,6 +111,18 @@ function directoryService(input: {
 
 export const VENDOR_SERVICES: VendorService[] = [
   directoryService({
+    id: "svc-kochi-local", vendorId: "bluewave", name: "Kochi airport and local transport", type: "Transport", location: "Kochi",
+    details: "Airport transfers and local hire", about: "Private airport transfers and local hire within the Kochi operating area. Routes and package limits are defined on the linked card.",
+    pricingLabel: "Kochi airport and local transfers", rateCards: [{ id: "rc-kochi-local-transfers", name: "Kochi airport and local transfers" }],
+    imageId: "photo-1449965408869-eaa3f722e40d",
+  }),
+  directoryService({
+    id: "svc-kerala-outstation", vendorId: "trailmakers", name: "Kerala outstation transport", type: "Transport", location: "Kerala",
+    details: "Outstation per kilometre and daily vehicle hire", about: "Private outstation transport from Kochi. The supplier uses kilometre or daily hire terms according to the selected trip.",
+    pricingLabel: "Kerala outstation kilometre tariff", rateCards: [{ id: "rc-kerala-km-tariff", name: "Kerala outstation kilometre tariff" }],
+    imageId: "photo-1449965408869-eaa3f722e40d",
+  }),
+  directoryService({
     id: "svc-kerala-private-hire",
     vendorId: "bluewave",
     name: "Kerala private transport",

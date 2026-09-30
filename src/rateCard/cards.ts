@@ -1025,8 +1025,7 @@ const regionalPrivateHire: RegionalTransportTariff = {
     { id: "circuit-permit", label: "Circuit permit", treatment: "not-applicable", amount: null, unit: "hire", paidBy: "agency", collectedBy: "supplier", note: "Van circuit only", routeIds: ["kerala-circuit"], vehicleIds: ["van"] },
   ],
   adjustments: [
-    { id: "weekend-local", name: "Weekend supplement", trigger: "weekend", dates: [], fareIds: [], methods: ["local"], seasonIds: [regionalSeasonId], amount: 300, treatment: "additional", stacking: "combine" },
-    { id: "festival-transfer", name: "Festival supplement", trigger: "dates", dates: ["2026-12-25"], fareIds: [], methods: ["one-way"], seasonIds: [regionalSeasonId], amount: 500, treatment: "additional", stacking: "replace" },
+    { id: "festival-transfer", name: "Christmas transfer surcharge", trigger: "dates", dates: [], startDate: "2026-12-24", endDate: "2026-12-26", fareIds: [], methods: ["one-way"], vehicleIds: [], amount: 500, valueType: "fixed", treatment: "additional", stacking: "combine" },
   ],
   taxProfiles: [{ id: "approved-transport", name: "Transport tax profile pending approval", rate: 0, approved: false }],
   distanceBasis: "Customer pickup to final drop",
@@ -1049,6 +1048,36 @@ const regionalCard = (): RateCardDetail => ({
 });
 
 DETAIL_CARDS["rc-kerala-private-hire"] = regionalCard();
+
+function focusedTransportCard(id: string, name: string, methods: RegionalTransportTariff["enabledMethods"], vendor: string, property: string): RateCardDetail {
+  const card = structuredClone(regionalCard());
+  const selected = methods || [];
+  const tariff = card.regionalTransport!;
+  card.id = id;
+  card.ref = id === "rc-kochi-local-transfers" ? "RC-KOCHI-LOCAL" : "RC-KERALA-KM";
+  card.name = name;
+  card.vendor = vendor;
+  card.property = property;
+  card.regionalTransport = {
+    ...tariff,
+    enabledMethods: selected,
+    fares: tariff.fares.filter((fare) => selected.includes(fare.service)).map((fare) => ({ ...fare, allowedRouteIds: selected.includes("one-way") ? fare.allowedRouteIds : [] })),
+    routes: selected.includes("one-way") ? tariff.routes?.filter((route) => route.id !== "kerala-circuit") : [],
+    localPackages: selected.includes("local") ? tariff.localPackages : [],
+    operatingAreas: selected.includes("one-way") ? [{ id: "kochi", name: "Kochi local area" }] : [{ id: "kerala-circuit", name: "Kerala circuit" }],
+    activeAreaIds: selected.includes("one-way") ? ["kochi"] : ["kerala-circuit"],
+    coverage: selected.includes("one-way") ? "Kochi airport and local area" : "Kerala outstation routes",
+    startingHub: selected.includes("outstation") ? "Kochi" : undefined,
+    charges: tariff.charges.filter((charge) => selected.includes("one-way") ? charge.id === "night-pickup" : charge.id !== "night-pickup").map((charge) => selected.includes("one-way") ? charge : { ...charge, routeIds: [] }),
+    adjustments: [],
+    source: "Illustrative supplier terms; confirm before quoting",
+    sourceDocument: "Reference card",
+  };
+  return card;
+}
+
+DETAIL_CARDS["rc-kochi-local-transfers"] = focusedTransportCard("rc-kochi-local-transfers", "Kochi airport and local transfers", ["one-way", "local"], "BlueWave Transfers", "Kochi airport and local transport");
+DETAIL_CARDS["rc-kerala-km-tariff"] = focusedTransportCard("rc-kerala-km-tariff", "Kerala outstation kilometre tariff", ["outstation", "daily"], "Trailmakers Experiences", "Kerala outstation transport");
 
 function airportTransferWorkbook(card: RateCardDetail): RegionalTransportTariff | undefined {
   const old = card.transport;

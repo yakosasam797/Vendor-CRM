@@ -59,6 +59,18 @@ function propertyMedia(name: string) {
 
 export const RATE_CARDS: RateCard[] = [
   {
+    id: "rc-kochi-local-transfers", ref: "RC-KOCHI-LOCAL", title: "Kochi airport and local transfers",
+    category: "Transport", currency: "INR", ...propertyMedia("Fleet — Kochi"),
+    validity: "01 Oct 2026 – 31 Mar 2027", validityNote: "Fixed transfer · Local package",
+    status: "draft", coverageCount: 2, coverageUnit: "fare methods", coverageDetail: "Supplier review needed", action: "continue",
+  },
+  {
+    id: "rc-kerala-km-tariff", ref: "RC-KERALA-KM", title: "Kerala outstation kilometre tariff",
+    category: "Transport", currency: "INR", ...propertyMedia("Fleet — Kochi"),
+    validity: "01 Oct 2026 – 31 Mar 2027", validityNote: "Outstation per km · Daily hire",
+    status: "draft", coverageCount: 2, coverageUnit: "fare methods", coverageDetail: "Supplier review needed", action: "continue",
+  },
+  {
     id: "rc-kerala-private-hire",
     ref: "RC-KERALA-HIRE",
     title: "Kerala private hire rates",

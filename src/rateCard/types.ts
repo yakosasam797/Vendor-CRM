@@ -204,6 +204,10 @@ export interface RegionalAdjustment {
   name: string;
   trigger: "weekend" | "dates";
   dates: string[];
+  startDate?: string;
+  endDate?: string;
+  vehicleIds?: string[];
+  valueType?: "fixed" | "percent" | "replacement";
   fareIds: string[];
   methods?: RegionalFare["service"][];
   seasonIds?: string[];
@@ -215,6 +219,7 @@ export interface RegionalAdjustment {
 export interface RegionalTransportTariff {
   schemaVersion?: number;
   coverage: string;
+  startingHub?: string;
   source: string;
   sourceDocument?: string;
   sourceStatus: "illustrative" | "supplier-confirmed";
